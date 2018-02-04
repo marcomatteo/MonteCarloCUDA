@@ -24,6 +24,7 @@
 //Switch to 1 for testing with random numbers
 #define RAND 0
 
+
 // Matrix structure
 typedef struct{
     // the matrix is converted to a 1-dimensional vector
