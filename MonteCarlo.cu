@@ -6,7 +6,7 @@
 //  Copyright © 2017 Marco Matteo Buzzulini. All rights reserved.
 //
 
-#include "MonteCarloOriginal.h"
+#include "MonteCarlo.h"
 
 /////////////////////////////////////////////////////
 //////////  KERNEL FUNCTIONS
@@ -92,6 +92,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         devMultiStVal(s, bt, D_T, D_R, N);
         for(j=0;j<N;j++)
             st_sum += s[j] * D_W[j];
+        //Option payoff
         price = st_sum - D_K;
         if(price<0)
             price = 0.0f;
@@ -112,18 +113,17 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         halfblock /= 2;
     }while ( halfblock != 0 );
     __syncthreads();
-    
-    // Keeping the first element for each block using one thread
+    //Keeping the first element for each block using one thread
     if (threadIdx.x == 0){
-        /*      Price computations for each block
-         int nSim = SIM;
-         sum.Expected = exp(-(D_R*D_T)) * (s_Sum[0]/(double)nSim);
-         sum.Confidence = sqrt((double)((double)nSim * s_Sum2[0] - s_Sum[0] * s_Sum[0])
-         /((double)nSim * (double)(nSim - 1)));
-         d_CallValue[blockIndex].Confidence = 1.96 * (double)sum.Confidence / (double)sqrt((double)nSim);
-         d_CallValue[blockIndex].Expected = sum.Expected;*/
-        d_CallValue[blockIndex].Expected = s_Sum[0];
-        d_CallValue[blockIndex].Confidence = s_Sum2[0];
+        /*	Price computations for each block
+        int nSim = SIM;
+	sum.Expected = exp(-(D_R*D_T)) * (s_Sum[0]/(double)nSim);
+        sum.Confidence = sqrt((double)((double)nSim * s_Sum2[0] - s_Sum[0] * s_Sum[0])
+                         /((double)nSim * (double)(nSim - 1)));
+        d_CallValue[blockIndex].Confidence = 1.96 * (double)sum.Confidence / (double)sqrt((double)nSim);
+        d_CallValue[blockIndex].Expected = sum.Expected;*/
+	d_CallValue[blockIndex].Expected = s_Sum[0];
+	d_CallValue[blockIndex].Confidence = s_Sum2[0];
     }
 }
 
@@ -140,21 +140,21 @@ __global__ void randomSetup( curandState *randSeed ){
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
-    const double K = 55.f;
-    const double R = 0.05f;
-    const double T = 3.f;
+    const double K = 100.f;
+    const double R = 0.048790164;
+    const double T = 1.f;
     double dw = (double)1/(double)N;
-    
+        
     /*--------------------------- SIMULATION VARs -----------------------------------*/
     int SIMS = MAX_BLOCKS*SIM;
     
     /*--------------------------- PREPARATION -----------------------------------*/
     // Static
-    double v[N]={ 0.14, 0.22, 0.19 }, s[N]={ 50, 55, 60 }, w[N]={dw,dw,dw},
+    double v[N]={ 0.2, 0.3, 0.2 }, s[N]={100, 100, 100 }, w[N]={dw,dw,dw},
     p[N][N]={
-        {   1,      -0.7,   0.2  },
-        {   -0.7,   1,      0.2  },
-        {   0.2,    0.2,    1   }
+        {   1,      -0.5,   -0.5  },
+        {   -0.5,   1,      -0.5  },
+        {   -0.5,    -0.5,    1   }
     }, d[N]={0,0,0};
     
     double *st,*randRho,*randV,*wp,*drift;
@@ -162,7 +162,8 @@ int main(int argc, const char * argv[]) {
     // Dinamic
     srand((unsigned)time(NULL));
     if(RAND==1){
-        st=(double*)malloc(N*sizeof(double));
+        printf("\n\t-\tExecution mode: RANDOM\t-\n\n");
+	st=(double*)malloc(N*sizeof(double));
         wp=(double*)malloc(N*sizeof(double));
         drift=(double*)malloc(N*sizeof(double));
         for(i=0;i<N;i++){
@@ -174,6 +175,7 @@ int main(int argc, const char * argv[]) {
         randV = getRandomSigma(N);
     }
     else{
+	printf("\n\t-\tExecution mode: GIVEN DATA\t-\n\n");
         st=s;
         randRho=&p[0][0];
         randV=v;
@@ -185,15 +187,16 @@ int main(int argc, const char * argv[]) {
     MultiOptionData option;
     OptionValue CPU_sim, GPU_sim;
     
-    float CPU_timeSpent, GPU_timeSpent, comp;
+    float CPU_timeSpent, GPU_timeSpent, speedup;
     double price;
     clock_t start, stop;
     
     Matrix cov;
     //Init cov matrix for the gaussian vect
     cov.cols = N; cov.rows = N;
-    cov.data=getCovMat(randV, randRho, N);
-    
+    //cov.data=getCovMat(randV, randRho, N);
+    cov.data=randRho;
+
     option.s = st;
     option.v = randV;
     option.p = randRho;
@@ -203,11 +206,11 @@ int main(int argc, const char * argv[]) {
     option.r = R;
     option.t = T;
     option.n = N;
-
+    
     printMultiOpt(&option);
     //Substitute option data with cholevski correlation matrix
     option.p = Chol(&cov);
-    
+
     // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
     start = clock();
@@ -232,9 +235,9 @@ int main(int argc, const char * argv[]) {
     
     // Comparing time spent with the two methods
     printf( "-\tComparing results:\t-\n");
-    comp = abs(CPU_timeSpent-GPU_timeSpent) / GPU_timeSpent;
-    printf( "The GPU runs the Monte Carlo simulation %.2f %% %s\n", comp*100, (CPU_timeSpent>GPU_timeSpent)?("faster."):("slower."));
-    mat_free(&cov);
+    speedup = abs(CPU_timeSpent / GPU_timeSpent);
+    printf( "The GPU's speedup: %.2f \n", speedup);
+    //mat_free(&cov);
     if(RAND==1){
         free(st);
         free(randV);
@@ -247,13 +250,13 @@ int main(int argc, const char * argv[]) {
 
 
 void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
-    int i;
+    int i; 
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;
     //Allocation pinned host memory for prices
     HANDLE_ERROR(cudaHostAlloc(&h_CallValue, sizeof(OptionValue)*(MAX_BLOCKS),cudaHostAllocDefault));
     
-    /*------------------ CONSTANT MEMORY ----------------*/
+    /*--------------- CONSTANT MEMORY ----------------*/
     
     HANDLE_ERROR(cudaMemcpyToSymbol(D_DRIFTVECT,option->d,N*sizeof(double)));
     HANDLE_ERROR(cudaMemcpyToSymbol(D_CHOLMAT,option->p,N*N*sizeof(double)));
@@ -302,10 +305,10 @@ void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
         sum2 += h_CallValue[i].Confidence;
     }
     /*callValue->Expected = sum/(double)MAX_BLOCKS;
-     callValue->Confidence = sum2/(double)MAX_BLOCKS;*/
+    callValue->Confidence = sum2/(double)MAX_BLOCKS;*/
     price = exp(-(option->r*option->t)) * (sum/(double)nSim);
     empstd = sqrt((double)((double)nSim * sum2 - sum * sum)
-                  /((double)nSim * (double)(nSim - 1)));
+                         /((double)nSim * (double)(nSim - 1)));
     callValue->Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
     callValue->Expected = price;
     
@@ -348,7 +351,7 @@ void mat_print( Matrix *mat ){
 }
 
 void printOption( OptionData o){
-    printf("\n\t-\tOption data\t-\n\n");
+    printf("\n-\tOption data\t-\n\n");
     printf("Underlying asset price:\t € %.2f\n", o.s);
     printf("Strike price:\t\t € %.2f\n", o.k);
     printf("Risk free interest rate: %.2f %%\n", o.r * 100);
@@ -358,7 +361,7 @@ void printOption( OptionData o){
 
 void printMultiOpt( MultiOptionData *o){
     int n=o->n;
-    printf("\n\t-\tBasket Option data\t-\n\n");
+    printf("\n-\tBasket Option data\t-\n\n");
     printf("Number of assets: %d\n",n);
     printf("Underlying assets prices:\n");
     printVect(o->s, n);
@@ -372,7 +375,6 @@ void printMultiOpt( MultiOptionData *o){
     printf("Risk free interest rate %.2f \n", o->r);
     printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
 }
-
 //////////////////////////////////////////////////////
 //////////   MATRIX FUNCTIONS
 //////////////////////////////////////////////////////
