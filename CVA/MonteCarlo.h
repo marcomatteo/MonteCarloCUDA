@@ -9,6 +9,26 @@
 #define MONTECARLO_H_
 
 #include "Options.h"
+#include <math.h>
+#include <time.h>
+#include <stdlib.h>
+
+
+#ifndef N
+#define N 3
+#endif	/* N */
+#ifndef RAND
+#define RAND 0
+#endif	/* RAND	*/
+#ifndef MAX_BLOCKS
+#define MAX_BLOCKS 1000
+#endif	/* MAX_BLOCKS	*/
+#ifndef	MAX_THREADS
+#define MAX_THREADS 1024
+#endif	/*	MAX_THREADS	*/
+#ifndef	SIM
+#define SIM 10000
+#endif	/*	SIM	*/
 
 // set Random Data
 double* getRandomSigma(int n);

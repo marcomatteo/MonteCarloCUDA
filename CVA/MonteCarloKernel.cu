@@ -8,13 +8,16 @@
  * is strictly prohibited.
  */
 
+//#include <helper_cuda.h>
+#include <curand.h>
+#include <curand_kernel.h>
 #include "MonteCarlo.h"
 
 /**
  * This macro checks return value of the CUDA runtime call and exits
  * the application if the call failed.
  */
-#ifndef CudaCheck(value)
+#ifndef CudaCheck
 #define CudaCheck(value) {											\
 	cudaError_t _m_cudaStat = value;										\
 	if (_m_cudaStat != cudaSuccess) {										\
@@ -24,12 +27,7 @@
 	} }
 #endif
 
-<<<<<<< HEAD
-
-=======
->>>>>>> refs/remotes/eclipse_auto/master
 __device__ __constant__ double D_DRIFTVECT[N], D_CHOLMAT[N][N], D_S[N], D_V[N], D_W[N], D_K, D_T, D_R;
-
 
 __device__ void prodConstMat(Matrix *second, Matrix *result){
     if(N != second->rows){
@@ -149,48 +147,48 @@ void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;
     //Allocation pinned host memory for prices
-    HANDLE_ERROR(cudaHostAlloc(&h_CallValue, sizeof(OptionValue)*(MAX_BLOCKS),cudaHostAllocDefault));
+    CudaCheck(cudaHostAlloc(&h_CallValue, sizeof(OptionValue)*(MAX_BLOCKS),cudaHostAllocDefault));
 
     /*--------------- CONSTANT MEMORY ----------------*/
 
-    HANDLE_ERROR(cudaMemcpyToSymbol(D_DRIFTVECT,option->d,N*sizeof(double)));
-    HANDLE_ERROR(cudaMemcpyToSymbol(D_CHOLMAT,option->p,N*N*sizeof(double)));
-    HANDLE_ERROR(cudaMemcpyToSymbol(D_S,option->s,N*sizeof(double)));
-    HANDLE_ERROR(cudaMemcpyToSymbol(D_V,option->v,N*sizeof(double)));
-    HANDLE_ERROR(cudaMemcpyToSymbol(D_W,option->w,N*sizeof(double)));
-    HANDLE_ERROR(cudaMemcpyToSymbol(D_K,&option->k,sizeof(double)));
-    HANDLE_ERROR(cudaMemcpyToSymbol(D_T,&option->t,sizeof(double)));
-    HANDLE_ERROR(cudaMemcpyToSymbol(D_R,&option->r,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(D_DRIFTVECT,option->d,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(D_CHOLMAT,option->p,N*N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(D_S,option->s,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(D_V,option->v,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(D_W,option->w,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(D_K,&option->k,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(D_T,&option->t,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(D_R,&option->r,sizeof(double)));
 
     /*----------------- DEVICE MEMORY -------------------*/
     OptionValue *d_CallValue;
-    HANDLE_ERROR(cudaMalloc(&d_CallValue, sizeof(OptionValue)*(MAX_BLOCKS)));
+    CudaCheck(cudaMalloc(&d_CallValue, sizeof(OptionValue)*(MAX_BLOCKS)));
 
     /*------------ RNGs and TIME VARIABLES --------------*/
     curandState *RNG;
     cudaEvent_t start, stop;
-    HANDLE_ERROR( cudaEventCreate( &start ));
-    HANDLE_ERROR( cudaEventCreate( &stop ));
+    CudaCheck( cudaEventCreate( &start ));
+    CudaCheck( cudaEventCreate( &stop ));
     float time;
 
     // RANDOM NUMBER GENERATION KERNEL
     //Allocate states for pseudo random number generators
-    HANDLE_ERROR(cudaMalloc((void **) &RNG, MAX_BLOCKS * MAX_THREADS * sizeof(curandState)));
+    CudaCheck(cudaMalloc((void **) &RNG, MAX_BLOCKS * MAX_THREADS * sizeof(curandState)));
     //Setup for the random number sequence
     randomSetup<<<MAX_BLOCKS, MAX_THREADS>>>(RNG);
 
     //MONTE CARLO KERNEL
-    HANDLE_ERROR( cudaEventRecord( start, 0 ));
+    CudaCheck( cudaEventRecord( start, 0 ));
     MultiMCBasketOptKernel<<<MAX_BLOCKS, MAX_THREADS>>>(RNG,(OptionValue *)(d_CallValue));
-    HANDLE_ERROR( cudaEventRecord( stop, 0));
-    HANDLE_ERROR( cudaEventSynchronize( stop ));
-    HANDLE_ERROR( cudaEventElapsedTime( &time, start, stop ));
+    CudaCheck( cudaEventRecord( stop, 0));
+    CudaCheck( cudaEventSynchronize( stop ));
+    CudaCheck( cudaEventElapsedTime( &time, start, stop ));
     printf( "\nMonte Carlo simulations done in %f milliseconds\n", time);
-    HANDLE_ERROR( cudaEventDestroy( start ));
-    HANDLE_ERROR( cudaEventDestroy( stop ));
+    CudaCheck( cudaEventDestroy( start ));
+    CudaCheck( cudaEventDestroy( stop ));
 
     //MEMORY CPY: prices per block
-    HANDLE_ERROR(cudaMemcpy(h_CallValue, d_CallValue, MAX_BLOCKS * sizeof(OptionValue), cudaMemcpyDeviceToHost));
+    CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, MAX_BLOCKS * sizeof(OptionValue), cudaMemcpyDeviceToHost));
 
     // Closing Monte Carlo
     long double sum=0, sum2=0, price, empstd;
@@ -206,7 +204,7 @@ void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
     callValue->Expected = price;
 
     //Free memory space
-    HANDLE_ERROR(cudaFree(RNG));
-    HANDLE_ERROR(cudaFreeHost(h_CallValue));
-    HANDLE_ERROR(cudaFree(d_CallValue));
+    CudaCheck(cudaFree(RNG));
+    CudaCheck(cudaFreeHost(h_CallValue));
+    CudaCheck(cudaFree(d_CallValue));
 }
