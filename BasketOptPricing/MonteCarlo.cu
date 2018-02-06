@@ -12,7 +12,6 @@
 //////////  KERNEL FUNCTIONS
 //////////////////////////////////////////////////////
 
-
 __device__ __constant__ double D_DRIFTVECT[N], D_CHOLMAT[N][N], D_S[N], D_V[N], D_W[N], D_K, D_T, D_R;
 
 
