@@ -14,6 +14,10 @@
 
 __device__ __constant__ double D_DRIFTVECT[N], D_CHOLMAT[N][N], D_S[N], D_V[N], D_W[N], D_K, D_T, D_R;
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> refs/remotes/eclipse_auto/master
 __device__ void prodConstMat(Matrix *second, Matrix *result){
     if(N != second->rows){
         printf("Non si può effettuare la moltiplicazione\n");
