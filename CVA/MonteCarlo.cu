@@ -8,6 +8,20 @@
 
 #include "MonteCarlo.h"
 
+/**
+ * This macro checks return value of the CUDA runtime call and exits
+ * the application if the call failed.
+ */
+#ifndef CudaCheck
+#define CudaCheck(value) {											\
+	cudaError_t _m_cudaStat = value;										\
+	if (_m_cudaStat != cudaSuccess) {										\
+		fprintf(stderr, "Error %s at line %d in file %s\n",					\
+				cudaGetErrorString(_m_cudaStat), __LINE__, __FILE__);		\
+		exit(1);															\
+	} }
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                      MAIN
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -24,6 +38,7 @@ int main(int argc, const char * argv[]) {
     
     /*--------------------------- PREPARATION -----------------------------------*/
     // Static
+
     double v[N]={ 0.2, 0.3, 0.2 }, s[N]={100, 100, 100 }, w[N]={dw,dw,dw},
     p[N][N]={
         {   1,      -0.5,   -0.5  },
@@ -65,8 +80,8 @@ int main(int argc, const char * argv[]) {
     double price;
     clock_t h_start, h_stop;
     cudaEvent_t d_start, d_stop;
-    HANDLE_ERROR( cudaEventCreate( &d_start ));
-    HANDLE_ERROR( cudaEventCreate( &d_stop ));
+    CudaCheck( cudaEventCreate( &d_start ));
+    CudaCheck( cudaEventCreate( &d_stop ));
     
     Matrix cov;
     //	Init correlation matrix for multivariate random variable
@@ -101,11 +116,11 @@ int main(int argc, const char * argv[]) {
     
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
-    HANDLE_ERROR( cudaEventRecord( d_start, 0 ));
+    CudaCheck( cudaEventRecord( d_start, 0 ));
     GPUBasketOpt(&option, &GPU_sim);
-    HANDLE_ERROR( cudaEventRecord( d_stop, 0));
-    HANDLE_ERROR( cudaEventSynchronize( d_stop ));
-    HANDLE_ERROR( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
+    CudaCheck( cudaEventRecord( d_stop, 0));
+    CudaCheck( cudaEventSynchronize( d_stop ));
+    CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     GPU_timeSpent /= CLOCKS_PER_SEC;
     
     price = GPU_sim.Expected;
