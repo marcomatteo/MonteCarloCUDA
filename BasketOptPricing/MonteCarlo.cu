@@ -208,6 +208,7 @@ int main(int argc, const char * argv[]) {
     option.n = N;
     
     printMultiOpt(&option);
+
     //Substitute option data with cholevski correlation matrix
     option.p = Chol(&cov);
 
