@@ -12,12 +12,10 @@
 //////////  KERNEL FUNCTIONS
 //////////////////////////////////////////////////////
 
+
 __device__ __constant__ double D_DRIFTVECT[N], D_CHOLMAT[N][N], D_S[N], D_V[N], D_W[N], D_K, D_T, D_R;
 
-<<<<<<< HEAD
 
-=======
->>>>>>> refs/remotes/eclipse_auto/master
 __device__ void prodConstMat(Matrix *second, Matrix *result){
     if(N != second->rows){
         printf("Non si può effettuare la moltiplicazione\n");
@@ -119,15 +117,8 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     __syncthreads();
     //Keeping the first element for each block using one thread
     if (threadIdx.x == 0){
-        /*	Price computations for each block
-        int nSim = SIM;
-	sum.Expected = exp(-(D_R*D_T)) * (s_Sum[0]/(double)nSim);
-        sum.Confidence = sqrt((double)((double)nSim * s_Sum2[0] - s_Sum[0] * s_Sum[0])
-                         /((double)nSim * (double)(nSim - 1)));
-        d_CallValue[blockIndex].Confidence = 1.96 * (double)sum.Confidence / (double)sqrt((double)nSim);
-        d_CallValue[blockIndex].Expected = sum.Expected;*/
-	d_CallValue[blockIndex].Expected = s_Sum[0];
-	d_CallValue[blockIndex].Confidence = s_Sum2[0];
+    	d_CallValue[blockIndex].Expected = s_Sum[0];
+    	d_CallValue[blockIndex].Confidence = s_Sum2[0];
     }
 }
 
@@ -166,8 +157,8 @@ int main(int argc, const char * argv[]) {
     // Dinamic
     srand((unsigned)time(NULL));
     if(RAND==1){
-        printf("\n\t-\tExecution mode: RANDOM\t-\n\n");
-	st=(double*)malloc(N*sizeof(double));
+        printf("\t-\tExecution mode: RANDOM\t-\n\n");
+        st=(double*)malloc(N*sizeof(double));
         wp=(double*)malloc(N*sizeof(double));
         drift=(double*)malloc(N*sizeof(double));
         for(i=0;i<N;i++){
@@ -179,7 +170,7 @@ int main(int argc, const char * argv[]) {
         randV = getRandomSigma(N);
     }
     else{
-	printf("\n\t-\tExecution mode: GIVEN DATA\t-\n\n");
+	printf("\t-\tExecution mode: GIVEN DATA\t-\n\n");
         st=s;
         randRho=&p[0][0];
         randV=v;
@@ -193,14 +184,16 @@ int main(int argc, const char * argv[]) {
     
     float CPU_timeSpent, GPU_timeSpent, speedup;
     double price;
-    clock_t start, stop;
+    clock_t h_start, h_stop;
+    cudaEvent_t d_start, d_stop;
+    HANDLE_ERROR( cudaEventCreate( &d_start ));
+    HANDLE_ERROR( cudaEventCreate( &d_stop ));
     
     Matrix cov;
-    //Init cov matrix for the gaussian vect
+    //	Init correlation matrix for multivariate random variable
     cov.cols = N; cov.rows = N;
-    //cov.data=getCovMat(randV, randRho, N);
     cov.data=randRho;
-
+    //	Setting up the option
     option.s = st;
     option.v = randV;
     option.p = randRho;
@@ -210,18 +203,18 @@ int main(int argc, const char * argv[]) {
     option.r = R;
     option.t = T;
     option.n = N;
-    
+    //	Print Option details
     printMultiOpt(&option);
 
-    //Substitute option data with cholevski correlation matrix
+    //	Cholevski factorization
     option.p = Chol(&cov);
 
     // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
-    start = clock();
+    h_start = clock();
     CPU_sim=CPUBasketOptCall(&option, SIMS);
-    stop = clock();
-    CPU_timeSpent = ((float)(stop - start)) / CLOCKS_PER_SEC;
+    h_stop = clock();
+    CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
     
     price = CPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
@@ -229,10 +222,12 @@ int main(int argc, const char * argv[]) {
     
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
-    start = clock();
+    HANDLE_ERROR( cudaEventRecord( d_start, 0 ));
     GPUBasketOpt(&option, &GPU_sim);
-    stop = clock();
-    GPU_timeSpent = ((float)(stop - start)) / CLOCKS_PER_SEC;
+    HANDLE_ERROR( cudaEventRecord( d_stop, 0));
+    HANDLE_ERROR( cudaEventSynchronize( d_stop ));
+    HANDLE_ERROR( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
+    GPU_timeSpent /= CLOCKS_PER_SEC;
     
     price = GPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price-GPU_sim.Confidence, price + GPU_sim.Confidence);
@@ -309,8 +304,6 @@ void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
         sum += h_CallValue[i].Expected;
         sum2 += h_CallValue[i].Confidence;
     }
-    /*callValue->Expected = sum/(double)MAX_BLOCKS;
-    callValue->Confidence = sum2/(double)MAX_BLOCKS;*/
     price = exp(-(option->r*option->t)) * (sum/(double)nSim);
     empstd = sqrt((double)((double)nSim * sum2 - sum * sum)
                          /((double)nSim * (double)(nSim - 1)));
