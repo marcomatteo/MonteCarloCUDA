@@ -127,6 +127,7 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price-GPU_sim.Confidence, price + GPU_sim.Confidence);
     printf("Total execution time: %f s\n\n", GPU_timeSpent);
     
+
     // Comparing time spent with the two methods
     printf( "-\tComparing results:\t-\n");
     speedup = abs(CPU_timeSpent / GPU_timeSpent);

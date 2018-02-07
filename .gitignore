@@ -1,1 +1,7 @@
 /.ptp-sync/
+#ignoro i file oggetto
+*.o
+#ignoro tutti i file che iniziano con .
+.*
+#escudo solo .gitignore
+!.gitignore
