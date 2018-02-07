@@ -106,7 +106,7 @@ static void multiStockValue(double *s, double *v, double *g, double t, double r,
     }
 }
 
-extern "C" void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N){
+void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N){
 	int i;
 	srand((unsigned)time(NULL));
 	st=(double*)malloc(N*sizeof(double));
@@ -121,7 +121,7 @@ extern "C" void RandomBasketOpt(double *st, double *randRho, double *randV, doub
 	randV = getRandomSigma(N);
 }
 
-extern "C" void FreeBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift){
+void FreeBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift){
 	free(st);
 	free(randV);
 	free(randRho);
@@ -129,7 +129,7 @@ extern "C" void FreeBasketOpt(double *st, double *randRho, double *randV, double
 	free(drift);
 }
 
-extern "C" OptionValue CPUBasketOptCall(MultiOptionData *option, int sim){
+OptionValue CPUBasketOptCall(MultiOptionData *option, int sim){
     int i,j, n = option->n;
 
     //Monte Carlo algorithm

@@ -128,7 +128,7 @@ __global__ void randomSetup( curandState *randSeed ){
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
 
-extern "C" void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
+void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
     int i;
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;

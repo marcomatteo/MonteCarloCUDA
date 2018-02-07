@@ -9,9 +9,9 @@
 #include "MonteCarlo.h"
 
 //	Host declarations
-extern "C" double* Chol( Matrix *c );
-extern "C" void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N);
-extern "C" void FreeBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift);
+double* Chol( Matrix *c );
+void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N);
+void FreeBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift);
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS
