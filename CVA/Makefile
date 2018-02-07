@@ -1,11 +1,11 @@
-Matrix.o:Matrix.c
-	nvcc -arch=sm_35 -o $@ -c $<
+#Matrix.o:Matrix.c
+#	nvcc -arch=sm_35 -o $@ -c $<
 
-MonteCarloHost.o:MonteCarloHost.c
-	nvcc -arch=sm_35 -o $@ -c $<
+#MonteCarloHost.o:MonteCarloHost.c
+#	nvcc -arch=sm_35 -o $@ -c $<
 
-MonteCarloKernel.o:MonteCarloKernel.cu
-	nvcc -arch=sm_35 -o $@ -c $<
+#MonteCarloKernel.o:MonteCarloKernel.cu
+#	nvcc -arch=sm_35 -o $@ -c $<
 	
 main.o:main.cu
 	nvcc -arch=sm_35 -o $@ -c $<

@@ -106,7 +106,7 @@ static void multiStockValue(double *s, double *v, double *g, double t, double r,
     }
 }
 
-void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N){
+void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N, double K){
 	int i;
 	srand((unsigned)time(NULL));
 	st=(double*)malloc(N*sizeof(double));
@@ -114,7 +114,7 @@ void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, dou
 	drift=(double*)malloc(N*sizeof(double));
 	for(i=0;i<N;i++){
 		st[i]=randMinMax(K-10, K+10);
-        wp[i]=dw;
+        wp[i]=(1/N);
         drift[i]=0;
 	}
 	randRho = getRandomRho(N);

@@ -10,8 +10,8 @@
 
 //	Host declarations
 double* Chol( Matrix *c );
-void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N);
-void FreeBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift);
+void RandomBasketOpt(double *, double *, double *, double *, double *, int, double);
+void FreeBasketOpt(double *, double *, double *, double *, double *);
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS
@@ -66,12 +66,13 @@ int main(int argc, const char * argv[]) {
     }, d[N]={0,0,0};
     
     double *st,*randRho,*randV,*wp,*drift;
-    int i;
+    st = randRho = randV = wp = drift = NULL;
+
     // Dinamic
     srand((unsigned)time(NULL));
     if(RAND==1){
         printf("\t-\tExecution mode: RANDOM\t-\n\n");
-        RandomBasketOpt(st, randRho, randV, wp, drift, N);
+        RandomBasketOpt(st, randRho, randV, wp, drift, N, K);
     }
     else{
 	printf("\t-\tExecution mode: GIVEN DATA\t-\n\n");
