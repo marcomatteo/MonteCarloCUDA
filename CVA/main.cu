@@ -8,19 +8,39 @@
 
 #include "MonteCarlo.h"
 
-/**
- * This macro checks return value of the CUDA runtime call and exits
- * the application if the call failed.
- */
-#ifndef CudaCheck
-#define CudaCheck(value) {											\
-	cudaError_t _m_cudaStat = value;										\
-	if (_m_cudaStat != cudaSuccess) {										\
-		fprintf(stderr, "Error %s at line %d in file %s\n",					\
-				cudaGetErrorString(_m_cudaStat), __LINE__, __FILE__);		\
-		exit(1);															\
-	} }
-#endif
+//	Host declarations
+extern "C" double* Chol( Matrix *c );
+extern "C" void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N);
+extern "C" void FreeBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift);
+
+///////////////////////////////////
+//	PRINT FUNCTIONS
+///////////////////////////////////
+void printOption( OptionData o){
+    printf("\n-\tOption data\t-\n\n");
+    printf("Underlying asset price:\t € %.2f\n", o.s);
+    printf("Strike price:\t\t € %.2f\n", o.k);
+    printf("Risk free interest rate: %.2f %%\n", o.r * 100);
+    printf("Volatility:\t\t\t %.2f %%\n", o.v * 100);
+    printf("Time to maturity:\t\t %.2f %s\n", o.t, (o.t>1)?("years"):("year"));
+}
+
+void printMultiOpt( MultiOptionData *o){
+    int n=o->n;
+    printf("\n-\tBasket Option data\t-\n\n");
+    printf("Number of assets: %d\n",n);
+    printf("Underlying assets prices:\n");
+    printVect(o->s, n);
+    printf("Volatility:\n");
+    printVect(o->v, n);
+    printf("Weights:");
+    printVect(o->w, n);
+    printf("Correlation matrix:\n");
+    printMat(o->p, n, n);
+    printf("Strike price:\t € %.2f\n", o->k);
+    printf("Risk free interest rate %.2f \n", o->r);
+    printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                      MAIN
@@ -38,7 +58,6 @@ int main(int argc, const char * argv[]) {
     
     /*--------------------------- PREPARATION -----------------------------------*/
     // Static
-
     double v[N]={ 0.2, 0.3, 0.2 }, s[N]={100, 100, 100 }, w[N]={dw,dw,dw},
     p[N][N]={
         {   1,      -0.5,   -0.5  },
@@ -52,16 +71,7 @@ int main(int argc, const char * argv[]) {
     srand((unsigned)time(NULL));
     if(RAND==1){
         printf("\t-\tExecution mode: RANDOM\t-\n\n");
-        st=(double*)malloc(N*sizeof(double));
-        wp=(double*)malloc(N*sizeof(double));
-        drift=(double*)malloc(N*sizeof(double));
-        for(i=0;i<N;i++){
-            st[i]=randMinMax(K-10, K+10);
-            wp[i]=dw;
-            drift[i]=0;
-        }
-        randRho = getRandomRho(N);
-        randV = getRandomSigma(N);
+        RandomBasketOpt(st, randRho, randV, wp, drift, N);
     }
     else{
 	printf("\t-\tExecution mode: GIVEN DATA\t-\n\n");
@@ -127,17 +137,14 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price-GPU_sim.Confidence, price + GPU_sim.Confidence);
     printf("Total execution time: %f s\n\n", GPU_timeSpent);
     
+
     // Comparing time spent with the two methods
     printf( "-\tComparing results:\t-\n");
     speedup = abs(CPU_timeSpent / GPU_timeSpent);
     printf( "The GPU's speedup: %.2f \n", speedup);
     //mat_free(&cov);
     if(RAND==1){
-        free(st);
-        free(randV);
-        free(randRho);
-        free(wp);
-        free(drift);
+    	FreeBasketOpt(st, randRho, randV, wp, drift);
     }
     return 0;
 }

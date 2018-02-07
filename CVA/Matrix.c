@@ -95,7 +95,7 @@ void ProdMat( double *first, double *second, int rows, int n, int cols, double *
     }
 }
 
-double* Chol( Matrix *c ){
+extern "C" double* Chol( Matrix *c ){
     if(c->rows != c->cols){
         printf("Cholevski necessita di una matrice quadrata\n");
         return NULL;

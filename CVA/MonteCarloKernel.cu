@@ -13,20 +13,6 @@
 #include <curand_kernel.h>
 #include "MonteCarlo.h"
 
-/**
- * This macro checks return value of the CUDA runtime call and exits
- * the application if the call failed.
- */
-#ifndef CudaCheck
-#define CudaCheck(value) {											\
-	cudaError_t _m_cudaStat = value;										\
-	if (_m_cudaStat != cudaSuccess) {										\
-		fprintf(stderr, "Error %s at line %d in file %s\n",					\
-				cudaGetErrorString(_m_cudaStat), __LINE__, __FILE__);		\
-		exit(1);															\
-	} }
-#endif
-
 __device__ __constant__ double D_DRIFTVECT[N], D_CHOLMAT[N][N], D_S[N], D_V[N], D_W[N], D_K, D_T, D_R;
 
 __device__ void prodConstMat(Matrix *second, Matrix *result){
@@ -142,7 +128,7 @@ __global__ void randomSetup( curandState *randSeed ){
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
 
-void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
+extern "C" void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
     int i;
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;
