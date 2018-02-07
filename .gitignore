@@ -5,3 +5,4 @@
 .*
 #escudo .gitignore
 !.gitignore
+CVA/.DS_Store
