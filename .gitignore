@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-/.ptp-sync/
 #ignoro i file oggetto
 *.o
-#ignoro tutti i file che iniziano con .
-.*
-#escudo solo .gitignore
-!.gitignore
-=======
-#ignoro tutti i file object
-*.o
-#escudo .gitignore
-!.gitignore
 CVA/.DS_Store
->>>>>>> 1af1b82c68d44e89a3c15787a1c014fa05a7f267
