@@ -11,13 +11,13 @@
 //////////   FINANCE FUNCTIONS
 //////////////////////////////////////////////////////
 
-double randMinMax(double min, double max){
+static double randMinMax(double min, double max){
     double x=(double)rand()/(double)(RAND_MAX);
     return max*x+(1.0f-x)*min;
 }
 
 //Generator of a normal pseudo-random number with mean mu and volatility sigma
-double gaussian( double mu, double sigma ){
+static double gaussian( double mu, double sigma ){
     double x = randMinMax(0, 1);
     double y = randMinMax(0, 1);
     return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
@@ -77,7 +77,7 @@ double* getCovMat(double *std, double *rho, int n){
 //Step 1: Compute the square root of the matrix ∑, generate lower triangular matrix A
 //Step 2: Simulate n indipendent standard random variables G ~ N(0,1)
 //Step 3: Return m + A*G
-void simGaussVect(double *drift, double *volatility, int n, double *result){
+static void simGaussVect(double *drift, double *volatility, int n, double *result){
     int i;
     double *g=NULL;
     g=(double*)malloc(n*sizeof(double));
@@ -97,13 +97,36 @@ void simGaussVect(double *drift, double *volatility, int n, double *result){
     free(g);
 }
 
-void multiStockValue(double *s, double *v, double *g, double t, double r, int n, double *values){
+static void multiStockValue(double *s, double *v, double *g, double t, double r, int n, double *values){
     int i;
     for(i=0;i<n;i++){
         double mu = (r - 0.5 * v[i] * v[i])*t;
         double si = v[i] * g[i] * sqrt(t);
         values[i] = s[i] * exp(mu+si);
     }
+}
+
+void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N){
+	int i;
+	srand((unsigned)time(NULL));
+	st=(double*)malloc(N*sizeof(double));
+	wp=(double*)malloc(N*sizeof(double));
+	drift=(double*)malloc(N*sizeof(double));
+	for(i=0;i<N;i++){
+		st[i]=randMinMax(K-10, K+10);
+        wp[i]=dw;
+        drift[i]=0;
+	}
+	randRho = getRandomRho(N);
+	randV = getRandomSigma(N);
+}
+
+void FreeBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift){
+	free(st);
+	free(randV);
+	free(randRho);
+	free(wp);
+	free(drift);
 }
 
 OptionValue CPUBasketOptCall(MultiOptionData *option, int sim){

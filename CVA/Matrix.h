@@ -35,6 +35,5 @@ void mat_setData( double *data, Matrix *mat );
 void mat_prod( Matrix *first, Matrix *second, Matrix *result);
 void ProdMat( double *first, double *second, int rows, int n, int cols, double *result);
 
-double* Chol( Matrix *c );
 
 #endif /* MATRIX_H_ */
