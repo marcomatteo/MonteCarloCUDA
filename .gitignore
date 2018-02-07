@@ -1,8 +1,5 @@
-!.ptp-sync
 #ignoro tutti i file object
 *.o
-#ignoro anche i file temporanei che iniziano con il punto
-.*
 #escudo .gitignore
 !.gitignore
 CVA/.DS_Store
