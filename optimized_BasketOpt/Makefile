@@ -261,7 +261,7 @@ BasketOption: main.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) cp $@ $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 
 run: build
-	$(EXEC) ./matrixMul
+	$(EXEC) ./BasketOption
 
 clean:
 	rm -f BasketOption main.o MonteCarloHost.o MonteCarloKernel.o

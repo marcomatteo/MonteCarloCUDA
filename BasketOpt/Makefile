@@ -246,25 +246,19 @@ else
 	@echo "Sample is ready - all dependencies have been met"
 endif
 
-MonteCarloHost.o:MonteCarloHost.c
+MonteCarlo.o:MonteCarlo.c
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-MonteCarloKernel.o:MonteCarloKernel.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-
-main.o:main.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-
-BasketOption: main.o MonteCarloHost.o MonteCarloKernel.o
+BasketOption: MonteCarlo.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 	$(EXEC) mkdir -p $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 	$(EXEC) cp $@ $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 
 run: build
-	$(EXEC) ./matrixMul
+	$(EXEC) ./BasketOption
 
 clean:
-	rm -f BasketOption main.o MonteCarloHost.o MonteCarloKernel.o
+	rm -f BasketOption MonteCarlo.o 
 	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/BasketOption
 	rmdir $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 	rmdir $(TARGET_ARCH)/$(TARGET_OS)
