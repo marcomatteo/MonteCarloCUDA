@@ -266,5 +266,8 @@ run: build
 clean:
 	rm -f BasketOption main.o MonteCarloHost.o MonteCarloKernel.o
 	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/BasketOption
+	rmdir $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
+	rmdir $(TARGET_ARCH)/$(TARGET_OS)
+	rmdir $(TARGET_ARCH)
 
 clobber: clean
