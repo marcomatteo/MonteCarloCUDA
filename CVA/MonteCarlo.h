@@ -8,27 +8,10 @@
 #ifndef MONTECARLO_H_
 #define MONTECARLO_H_
 
-#include "Matrix.h"
-
+#include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include <time.h>
-#include <stdlib.h>
-
-#ifndef N
-#define N 3
-#endif	/* N */
-#ifndef RAND
-#define RAND 0
-#endif	/* RAND	*/
-#ifndef MAX_BLOCKS
-#define MAX_BLOCKS 1000
-#endif	/* MAX_BLOCKS	*/
-#ifndef	MAX_THREADS
-#define MAX_THREADS 1024
-#endif	/*	MAX_THREADS	*/
-#ifndef	SIM
-#define SIM 10000
-#endif	/*	SIM	*/
 
 /**
  * This macro checks return value of the CUDA runtime call and exits
@@ -91,7 +74,7 @@ void simGaussVect(double *drift, double *volatility, int n, double *result);
 */
 
 // Monte Carlo functions
-extern "C" OptionValue CPUBasketOptCall(MultiOptionData *option, int sim);
-extern "C" void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue);
+OptionValue CPUBasketOptCall(MultiOptionData *option, int sim);
+void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue);
 
 #endif /* MONTECARLO_H_ */

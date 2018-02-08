@@ -124,3 +124,4 @@ double* Chol( Matrix *c ){
     }
     return a;
 }
+

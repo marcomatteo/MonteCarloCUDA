@@ -8,10 +8,14 @@
 
 #include "MonteCarlo.h"
 
-//	Host declarations
-double* Chol( Matrix *c );
-void RandomBasketOpt(double *, double *, double *, double *, double *, int, double);
-void FreeBasketOpt(double *, double *, double *, double *, double *);
+
+#define N 3
+#define MAX_BLOCKS 1000
+#define MAX_THREADS 1024
+#define PATH 10000
+
+//	Host utility functions declarations
+double* Chol( double *c, int n);
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS
@@ -48,40 +52,23 @@ void printMultiOpt( MultiOptionData *o){
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
-    const double K = 100.f;
-    const double R = 0.048790164;
-    const double T = 1.f;
-    double dw = (double)1/(double)N;
+	const double
+	    v[N]={ 0.2, 0.3, 0.2 },
+	    s[N]={ 100, 100, 100 },
+	    w[N]={ dw, dw, dw },
+	    p[N][N]={
+	        {   1,      -0.5,   -0.5  },
+	        {   -0.5,   1,      -0.5  },
+	        {   -0.5,    -0.5,    1   }
+	    },
+	    d[N]={0,0,0};
+		K = 100.f;
+		R = 0.048790164;
+		T = 1.f;
+		dw = (double)1/(double)N;
         
-    /*--------------------------- SIMULATION VARs -----------------------------------*/
-    int SIMS = MAX_BLOCKS*SIM;
-    
-    /*--------------------------- PREPARATION -----------------------------------*/
-    // Static
-    double v[N]={ 0.2, 0.3, 0.2 }, s[N]={100, 100, 100 }, w[N]={dw,dw,dw},
-    p[N][N]={
-        {   1,      -0.5,   -0.5  },
-        {   -0.5,   1,      -0.5  },
-        {   -0.5,    -0.5,    1   }
-    }, d[N]={0,0,0};
-    
-    double *st,*randRho,*randV,*wp,*drift;
-    st = randRho = randV = wp = drift = NULL;
-
-    // Dinamic
-    srand((unsigned)time(NULL));
-    if(RAND==1){
-        printf("\t-\tExecution mode: RANDOM\t-\n\n");
-        RandomBasketOpt(st, randRho, randV, wp, drift, N, K);
-    }
-    else{
-	printf("\t-\tExecution mode: GIVEN DATA\t-\n\n");
-        st=s;
-        randRho=&p[0][0];
-        randV=v;
-        wp=w;
-        drift=d;
-    }
+    /*--------------------------- CPU PATHULATION -----------------------------------*/
+    int SIMS = MAX_BLOCKS*PATH;
     
     /*--------------------------------- MAIN ---------------------------------------*/
     MultiOptionData option;
@@ -94,16 +81,12 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
     
-    Matrix cov;
-    //	Init correlation matrix for multivariate random variable
-    cov.cols = N; cov.rows = N;
-    cov.data=randRho;
     //	Setting up the option
-    option.s = st;
-    option.v = randV;
-    option.p = randRho;
-    option.d = drift;
-    option.w = wp;
+    option.s = s;
+    option.v = v;
+    option.p = &p[0][0];
+    option.d = d;
+    option.w = w;
     option.k = K;
     option.r = R;
     option.t = T;
@@ -112,7 +95,7 @@ int main(int argc, const char * argv[]) {
     printMultiOpt(&option);
 
     //	Cholevski factorization
-    option.p = Chol(&cov);
+    option.p = Chol(&p[0][0], option.n);
 
     // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
@@ -138,14 +121,37 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price-GPU_sim.Confidence, price + GPU_sim.Confidence);
     printf("Total execution time: %f s\n\n", GPU_timeSpent);
     
-
     // Comparing time spent with the two methods
     printf( "-\tComparing results:\t-\n");
     speedup = abs(CPU_timeSpent / GPU_timeSpent);
     printf( "The GPU's speedup: %.2f \n", speedup);
-    //mat_free(&cov);
-    if(RAND==1){
-    	FreeBasketOpt(st, randRho, randV, wp, drift);
-    }
     return 0;
+}
+
+
+double* Chol( double *c, int n ){
+    int i,j,k;
+    double *a=(double*)malloc(n*n*sizeof(double));
+    double v[n];
+    for( i=0; i<n; i++){
+        for( j=0; j<n; j++ ){
+            if( j>=i ){
+                //Triangolare inferiore
+            	//v[j]=c[j][i]
+                v[j] = c[i+j*n];
+                for(k=0; k<i; k++)    //Scorre tutta
+                    //v[j] = v[j] - a[i][k] * a[j][k]
+                    v[j] = v[j]-(a[k+i*n] * a[k+j*n]);
+                //a[j][i] = v[j] / sqrt( v[i] )
+                if(v[i]>0)
+                    a[i+j*n] = v[j]/sqrt( v[i] );
+                else
+                    a[i+j*n] = 0.0f;
+            }
+            else
+                //Triangolare superiore a[j][i]
+                a[i+j*n] = 0.0f;
+        }
+    }
+    return a;
 }

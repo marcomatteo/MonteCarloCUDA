@@ -1,11 +1,8 @@
-/* *
- * Copyright 1993-2012 NVIDIA Corporation.  All rights reserved.
+/*
+ * MonteCarloKernel.cu
  *
- * Please refer to the NVIDIA end user license agreement (EULA) associated
- * with this source code for terms and conditions that govern your use of
- * this software. Any use, reproduction, disclosure, or distribution of
- * this software and related documentation outside the terms of the EULA
- * is strictly prohibited.
+ *  Created on: 06/feb/2018
+ *  Author: marco
  */
 
 //#include <helper_cuda.h>
@@ -13,61 +10,24 @@
 #include <curand_kernel.h>
 #include "MonteCarlo.h"
 
-__device__ __constant__ double D_DRIFTVECT[N], D_CHOLMAT[N][N], D_S[N], D_V[N], D_W[N], D_K, D_T, D_R;
-
-__device__ void prodConstMat(Matrix *second, Matrix *result){
-    if(N != second->rows){
-        printf("Non si può effettuare la moltiplicazione\n");
-        return;
-    }
-    double somma;
-    int i,j,k;
-    result->rows = N;
-    result->cols = second->cols;
-    for(i=0;i<result->rows;i++){
-        for(j=0;j<result->cols;j++){
-            somma = 0;
-            for(k=0;k<N;k++)
-                //somma += first->data[i][k]*second->data[k][j];
-                somma += D_CHOLMAT[i][k] * second->data[j+k*second->cols];
-            //result->data[i][j] = somma;
-            result->data[j+i*result->cols] = somma;
-        }
-    }
-}
-
-__device__ void devGaussVect(curandState *threadState, double *result, const int n){
-    int i;
-    // Random number vector
-    double g[N];
-    // RNGs
-    for(i=0;i<n;i++)
-        g[i]=curand_normal(threadState);
-    Matrix gauss, r;
-    gauss.rows = n;     r.rows=n;
-    gauss.cols = 1;     r.cols=1;
-    gauss.data = &g[0]; r.data=result;
-    //A*G
-    prodConstMat(&gauss,&r);
-    //X=m+A*G
-    for(i=0;i<n;i++){
-        r.data[i] += D_DRIFTVECT[i];
-    }
-}
-
-__device__ void devMultiStVal(double *values, double *g, double t, double r, int n){
-    int i;
-    for(i=0;i<n;i++){
-        double mu = (r - 0.5 * D_V[i] * D_V[i])*t;
-        double si = D_V[i] * g[i] * sqrt(t);
-        values[i] = D_S[i] * exp(mu+si);
-    }
-}
+__constant__ MultiOptionData OPTION;
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
     int i,j;
     int cacheIndex = threadIdx.x;
     int blockIndex = blockIdx.x;
+    /*-------------- From CONSTANT to LOCAL	---------------*/
+    double drift[N], rho[N][N], spot[N], vol[N], weights[N],
+    strike=OPTION->k, time=OPTION->t, rate=OPTION->r;
+    for(i=0;i<N;i++){
+    	spot[i]=OPTION->s[i];
+    	vol[i]=OPTION->v[i];
+    	weights[i]=OPTION->w[i];
+    	drift[i]=OPTION->d[i];
+    	for(j=0;j<N;j++)
+    		rho[i][j]=OPTION->p[i][j];
+    }
+
     /*------------------ SHARED MEMORY DICH ----------------*/
     __shared__ double s_Sum[MAX_THREADS];
     __shared__ double s_Sum2[MAX_THREADS];
@@ -89,14 +49,42 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     for( i=cacheIndex; i<SIM; i+=blockDim.x){
         st_sum = 0;
         //Simulation of stock prices
-        devGaussVect(&threadState,bt,N);
-        devMultiStVal(s, bt, D_T, D_R, N);
+
+        // First step: Brownian motion
+        double g[N];
+        // RNGs
+        for(j=0;j<n;j++)
+        	g[j]=curand_normal(threadState);
+        //A*G
+        double somma;
+        int j,k;
+        for(j=0;j<N;j++){
+        	somma = 0;
+         	for(k=0;k<N;k++)
+         		//somma += first->data[i][k]*second->data[k][j];
+                somma += rho[i][k] * g[k];
+         	//result->data[i][j] = somma;
+            bt[j] = somma;
+        }
+        //X=m+A*G
+        for(i=0;i<n;i++)
+            bt[i] += drift[i];
+
+        //	Second step: Price simulation
+        for(j=0;j<n;j++){
+                s[j] = spot[j] * exp((rate - 0.5 * vol[j] * vol[j])*time+vol[j] * bt[j] * sqrt(time));
+        }
+
+        // Third step: Mean price
         for(j=0;j<N;j++)
-            st_sum += s[j] * D_W[j];
-        //Option payoff
-        price = st_sum - D_K;
+            st_sum += s[j] * weights[j];
+
+        //	Fourth step: Option payoff
+        price = st_sum - strike;
         if(price<0)
             price = 0.0f;
+
+        //	Fifth step:	Monte Carlo price sum
         sum.Expected += price;
         sum.Confidence += price*price;
     }
@@ -137,14 +125,14 @@ void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
 
     /*--------------- CONSTANT MEMORY ----------------*/
 
-    CudaCheck(cudaMemcpyToSymbol(D_DRIFTVECT,option->d,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(D_CHOLMAT,option->p,N*N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(D_S,option->s,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(D_V,option->v,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(D_W,option->w,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(D_K,&option->k,sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(D_T,&option->t,sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(D_R,&option->r,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION->d,option->d,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION->p,option->p,N*N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION->s,option->s,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION->v,option->v,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION->w,option->w,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION->k,&option->k,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION->t,&option->t,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION->r,&option->r,sizeof(double)));
 
     /*----------------- DEVICE MEMORY -------------------*/
     OptionValue *d_CallValue;
