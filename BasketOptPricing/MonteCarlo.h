@@ -19,7 +19,11 @@
 #define RAND 0
 #define N 3
 #define MAX_BLOCKS 1000
+<<<<<<< HEAD
+#define MAX_THREADS 256
+=======
 #define MAX_THREADS 1024
+>>>>>>> refs/remotes/eclipse_auto/master
 #define SIM 10000
 
 // Matrix structure

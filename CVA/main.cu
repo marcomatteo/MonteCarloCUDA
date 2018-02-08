@@ -9,11 +9,29 @@
 #include "MonteCarlo.h"
 
 //	Host utility functions declarations
-double* Chol( double *c, int n);
+void Chol( double c[N][N], double a[N][N] );
+
+//	Host MonteCarlo
+extern "C" OptionValue CPUBasketOptCall(MultiOptionData*, int);
+
+//	Device MonteCarlo
+extern "C" void GPUBasketOpt(MultiOptionData *, OptionValue *);
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS
 ///////////////////////////////////
+void printVect( double *mat, int c ){
+    int i,j,r=1;
+    for(i=0; i<r; i++){
+        printf("\n!\t");
+        for(j=0; j<c; j++){
+            printf("\t%f\t",mat[j+i*c]);
+        }
+        printf("\t!");
+    }
+    printf("\n\n");
+}
+
 void printOption( OptionData o){
     printf("\n-\tOption data\t-\n\n");
     printf("Underlying asset price:\t € %.2f\n", o.s);
@@ -23,18 +41,29 @@ void printOption( OptionData o){
     printf("Time to maturity:\t\t %.2f %s\n", o.t, (o.t>1)?("years"):("year"));
 }
 
+void printMat( double *mat, int r, int c ){
+    int i,j;
+    for(i=0; i<r; i++){
+        printf("\n!\t");
+        for(j=0; j<c; j++){
+            printf("\t%f\t",mat[j+i*c]);
+        }
+        printf("\t!");
+    }
+    printf("\n\n");
+}
+
 void printMultiOpt( MultiOptionData *o){
-    int n=o->n;
     printf("\n-\tBasket Option data\t-\n\n");
-    printf("Number of assets: %d\n",n);
+    printf("Number of assets: %d\n",N);
     printf("Underlying assets prices:\n");
-    printVect(o->s, n);
+    printVect(o->s, N);
     printf("Volatility:\n");
-    printVect(o->v, n);
+    printVect(o->v, N);
     printf("Weights:");
-    printVect(o->w, n);
+    printVect(o->w, N);
     printf("Correlation matrix:\n");
-    printMat(o->p, n, n);
+    printMat(&o->p[0][0], N, N);
     printf("Strike price:\t € %.2f\n", o->k);
     printf("Risk free interest rate %.2f \n", o->r);
     printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
@@ -46,26 +75,51 @@ void printMultiOpt( MultiOptionData *o){
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
-	const double
-	    v[N]={ 0.2, 0.3, 0.2 },
-	    s[N]={ 100, 100, 100 },
-	    w[N]={ dw, dw, dw },
-	    p[N][N]={
-	        {   1,      -0.5,   -0.5  },
-	        {   -0.5,   1,      -0.5  },
-	        {   -0.5,    -0.5,    1   }
-	    },
-	    d[N]={0,0,0};
-		K = 100.f;
-		R = 0.048790164;
-		T = 1.f;
-		dw = (double)1/(double)N;
-        
-    /*--------------------------- CPU PATHULATION -----------------------------------*/
+	double dw = (double)1/(double)N;
+	MultiOptionData option;
+	//	Volatility
+	option.v[0] = 0.2;
+	option.v[1] = 0.3;
+	option.v[2] = 0.2;
+	//	Spot prices
+	option.s[0] = 100;
+	option.s[1] = 100;
+	option.s[2] = 100;
+	//	Weights
+	option.w[0] = dw;
+	option.w[1] = dw;
+	option.w[2] = dw;
+	//	Correlations
+	option.p[0][0] = 1;
+			option.p[0][1] = -0.5;
+					option.p[0][2] = -0.5;
+	option.p[1][0] = -0.5;
+			option.p[1][1] = 1;
+					option.p[1][2] = -0.5;
+	option.p[2][0] = -0.5;
+			option.p[2][1] = -0.5;
+					option.p[2][2] = 1;
+	//	Drift vectors for the brownians
+	option.d[0] = 0;
+	option.d[1] = 0;
+	option.d[2] = 0;
+	option.k= 100.f;
+	option.r= 0.048790164;
+	option.t= 1.f;
+
+    //	Print Option details
+    printMultiOpt(&option);
+
     int SIMS = MAX_BLOCKS*PATH;
     
     /*--------------------------------- MAIN ---------------------------------------*/
-    MultiOptionData option;
+    //	Cholevski factorization
+    double cholRho[N][N];
+    int i,j;
+    Chol(option.p, cholRho);
+    for(i=0;i<N;i++)
+    	for(j=0;j<N;j++)
+           	option.p[i][j]=cholRho[i][j];
     OptionValue CPU_sim, GPU_sim;
     
     float CPU_timeSpent, GPU_timeSpent, speedup;
@@ -74,29 +128,18 @@ int main(int argc, const char * argv[]) {
     cudaEvent_t d_start, d_stop;
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
-    
-    //	Setting up the option
-    option.s = s;
-    option.v = v;
-    option.p = &p[0][0];
-    option.d = d;
-    option.w = w;
-    option.k = K;
-    option.r = R;
-    option.t = T;
-    option.n = N;
-    //	Print Option details
-    printMultiOpt(&option);
-
-    //	Cholevski factorization
-    option.p = Chol(&p[0][0], option.n);
 
     // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
-    h_start = clock();
+    //h_start = clock();
+    CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=CPUBasketOptCall(&option, SIMS);
-    h_stop = clock();
-    CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
+    //h_stop = clock();
+    //CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
+    CudaCheck( cudaEventRecord( d_stop, 0));
+    CudaCheck( cudaEventSynchronize( d_stop ));
+    CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
+    CPU_timeSpent /= 1000;
     
     price = CPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
@@ -109,7 +152,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
-    GPU_timeSpent /= CLOCKS_PER_SEC;
+    GPU_timeSpent /= 1000;
     
     price = GPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price-GPU_sim.Confidence, price + GPU_sim.Confidence);
@@ -122,30 +165,27 @@ int main(int argc, const char * argv[]) {
     return 0;
 }
 
-
-double* Chol( double *c, int n ){
+void Chol( double c[N][N], double a[N][N] ){
     int i,j,k;
-    double *a=(double*)malloc(n*n*sizeof(double));
-    double v[n];
-    for( i=0; i<n; i++){
-        for( j=0; j<n; j++ ){
+    double v[N];
+    for( i=0; i<N; i++){
+        for( j=0; j<N; j++ ){
             if( j>=i ){
                 //Triangolare inferiore
             	//v[j]=c[j][i]
-                v[j] = c[i+j*n];
+            	v[j]=c[j][i];
                 for(k=0; k<i; k++)    //Scorre tutta
                     //v[j] = v[j] - a[i][k] * a[j][k]
-                    v[j] = v[j]-(a[k+i*n] * a[k+j*n]);
+                    v[j] = v[j] - a[i][k] * a[j][k];
                 //a[j][i] = v[j] / sqrt( v[i] )
                 if(v[i]>0)
-                    a[i+j*n] = v[j]/sqrt( v[i] );
+                	a[j][i] = v[j] / sqrt( v[i] );
                 else
-                    a[i+j*n] = 0.0f;
+                	a[j][i] = 0.0f;
             }
             else
                 //Triangolare superiore a[j][i]
-                a[i+j*n] = 0.0f;
+            	a[j][i] = 0.0f;
         }
     }
-    return a;
 }

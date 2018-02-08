@@ -15,7 +15,7 @@
 
 #define N 3
 #define MAX_BLOCKS 1000
-#define MAX_THREADS 1024
+#define MAX_THREADS 256
 #define PATH 10000
 
 /**
@@ -39,7 +39,7 @@ typedef struct {
     float v;    // the volatility
     float t;    // time to maturity
 } OptionData;
-
+/*
 typedef struct{
     double *s;  //Stock vector
     double *v;  //Volatility vector
@@ -51,35 +51,21 @@ typedef struct{
     double r;
     int n;
 } MultiOptionData;
+*/
+typedef struct{
+    double s[N];  //Stock vector
+    double v[N];  //Volatility vector
+    double p[N][N];  //Correlation matrix
+    double d[N];  //Drift vector
+    double w[N];  //Weight vector
+    double k;
+    double t;
+    double r;
+} MultiOptionData;
 
 typedef struct {
     double Expected;   // the simulated price
     double Confidence;    // confidence intervall
 } OptionValue;
-
-/////////////////////////////////////////////////////////////
-// Option Functions
-/////////////////////////////////////////////////////////////
-/*
-void printOption ( OptionData o );
-void printMultiOpt(MultiOptionData *o);
-
-// set Random Data
-double* getRandomSigma(int n);
-double* getRandomRho( int n );
-double* getCovMat(double *std, double *rho, int n);
-double randMinMax(double min, double max);
-double gaussian(double mu, double sigma);
-
-//simulation of stock values from a dependent random number g with the Geometric Brownian Motion
-void multiStockValue(double *s, double *v, double *g, double t, double r, int n, double *values);
-
-// simulation of a Gaussian Vector with drift vectors and volatility variance-covariance matrix reduced with cholevski algorithm
-void simGaussVect(double *drift, double *volatility, int n, double *result);
-*/
-
-// Monte Carlo functions
-OptionValue CPUBasketOptCall(MultiOptionData *option, int sim);
-void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue);
 
 #endif /* MONTECARLO_H_ */
