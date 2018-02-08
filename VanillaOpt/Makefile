@@ -237,7 +237,7 @@ endif
 # Target rules
 all: build
 
-build: BasketOption
+build: VanillaOption 
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -259,7 +259,7 @@ run: build
 
 clean:
 	rm -f VanillaOption 
-	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/BasketOption
+	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/VanillaOption
 	rmdir $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 	rmdir $(TARGET_ARCH)/$(TARGET_OS)
 	rmdir $(TARGET_ARCH)

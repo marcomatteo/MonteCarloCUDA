@@ -183,7 +183,7 @@ int main(int argc, const char * argv[]) {
     
     float CPU_timeSpent, GPU_timeSpent, speedup;
     double price;
-    clock_t h_start, h_stop;
+    
     cudaEvent_t d_start, d_stop;
     HANDLE_ERROR( cudaEventCreate( &d_start ));
     HANDLE_ERROR( cudaEventCreate( &d_stop ));
@@ -210,11 +210,13 @@ int main(int argc, const char * argv[]) {
 
     // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
-    h_start = clock();
+    HANDLE_ERROR( cudaEventRecord( d_start, 0 ));
     CPU_sim=CPUBasketOptCall(&option, SIMS);
-    h_stop = clock();
-    CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
-    
+    HANDLE_ERROR( cudaEventRecord( d_stop, 0));
+    HANDLE_ERROR( cudaEventSynchronize( d_stop ));
+    HANDLE_ERROR( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
+    CPU_timeSpent /= 1000;
+        
     price = CPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
     printf("Total execution time: %f s\n\n", CPU_timeSpent);
@@ -226,7 +228,7 @@ int main(int argc, const char * argv[]) {
     HANDLE_ERROR( cudaEventRecord( d_stop, 0));
     HANDLE_ERROR( cudaEventSynchronize( d_stop ));
     HANDLE_ERROR( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
-    GPU_timeSpent /= CLOCKS_PER_SEC;
+    GPU_timeSpent /= 1000;
     
     price = GPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price-GPU_sim.Confidence, price + GPU_sim.Confidence);
