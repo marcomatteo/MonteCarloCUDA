@@ -1,11 +1,33 @@
 /*
- * MonteCarlo.c
+ * MonteCarloHost.c
  *
  *  Created on: 06/feb/2018
- *      Author: marco
+ *  Author: marco
  */
 
 #include "MonteCarlo.h"
+
+void ProdMat(
+		double *first,
+		double *second,
+		double *result,
+		int f_rows,
+		int f_cols,
+		int s_cols
+){
+    double somma;
+    int i,j,k;
+    for(i=0;i<f_rows;i++){
+        for(j=0;j<s_cols;j++){
+            somma = 0;
+            for(k=0;k<f_cols;k++)
+                //somma += first->data[i][k]*second->data[k][j];
+                somma += first[k+i*cols] * second[j+k*cols];
+            //result->data[i][j] = somma;
+            result[j+i*cols] = somma;
+        }
+    }
+}
 
 //////////////////////////////////////////////////////
 //////////   FINANCE FUNCTIONS
@@ -23,7 +45,7 @@ static double gaussian( double mu, double sigma ){
     return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
 }
 
-//Simulation std, rho and covariance matrix
+/*	Random std, rho and covariance matrix
 double* getRandomSigma( int n ){
     Matrix std;
     //init the vectors of std
@@ -72,6 +94,7 @@ double* getCovMat(double *std, double *rho, int n){
         }
     return sigma.data;
 }
+*/
 //----------------------------------------------------
 //Simulation of a Gaussian vector X~N(m,∑)
 //Step 1: Compute the square root of the matrix ∑, generate lower triangular matrix A
@@ -84,15 +107,10 @@ static void simGaussVect(double *drift, double *volatility, int n, double *resul
     //RNGs
     for(i=0;i<n;i++)
         g[i]=gaussian(0, 1);
-    Matrix gauss, r, vol;
-    gauss.rows = n;     r.rows=n;       vol.cols = n;
-    gauss.cols = 1;     r.cols=1;       vol.rows = n;
-    gauss.data = &g[0]; r.data=result;  vol.data = volatility;
-    //A*G
-    mat_prod(&vol,&gauss,&r);
+    ProdMat(volatility, &g[0], result, n, n, 1);
     //X=m+A*G
     for(i=0;i<n;i++){
-        r.data[i] += drift[i];
+        result[i] += drift[i];
     }
     free(g);
 }
@@ -104,29 +122,6 @@ static void multiStockValue(double *s, double *v, double *g, double t, double r,
         double si = v[i] * g[i] * sqrt(t);
         values[i] = s[i] * exp(mu+si);
     }
-}
-
-void RandomBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift, int N, double K){
-	int i;
-	srand((unsigned)time(NULL));
-	st=(double*)malloc(N*sizeof(double));
-	wp=(double*)malloc(N*sizeof(double));
-	drift=(double*)malloc(N*sizeof(double));
-	for(i=0;i<N;i++){
-		st[i]=randMinMax(K-10, K+10);
-        wp[i]=(1/N);
-        drift[i]=0;
-	}
-	randRho = getRandomRho(N);
-	randV = getRandomSigma(N);
-}
-
-void FreeBasketOpt(double *st, double *randRho, double *randV, double *wp, double *drift){
-	free(st);
-	free(randV);
-	free(randRho);
-	free(wp);
-	free(drift);
 }
 
 OptionValue CPUBasketOptCall(MultiOptionData *option, int sim){
