@@ -22,9 +22,9 @@ void ProdMat(
             somma = 0;
             for(k=0;k<f_cols;k++)
                 //somma += first->data[i][k]*second->data[k][j];
-                somma += first[k+i*cols] * second[j+k*cols];
+                somma += first[k+i*f_cols] * second[j+k*s_cols];
             //result->data[i][j] = somma;
-            result[j+i*cols] = somma;
+            result[j+i*s_cols] = somma;
         }
     }
 }
@@ -45,56 +45,6 @@ static double gaussian( double mu, double sigma ){
     return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
 }
 
-/*	Random std, rho and covariance matrix
-double* getRandomSigma( int n ){
-    Matrix std;
-    //init the vectors of std
-    mat_init(&std, 1, n);
-    //creating the vectors of stds
-    int i;
-    for(i=0;i<n;i++)
-        std.data[i] = randMinMax(0, 1);
-    //printf("Stampo per debug vettore sigma:\n");
-    //mat_print(&std);
-    return std.data;
-}
-double* getRandomRho( int n ){
-    Matrix rho;
-    //init the vectors of rhos
-    mat_init(&rho, n, n);
-    int i,j;
-    //creating the vectors of rhos
-    for(i=0;i<n;i++){
-        for(j=i;j<n;j++){
-            double r;
-            if(i==j)
-                r=1;
-            else
-                r=randMinMax(-1, 1);
-            rho.data[j+i*n] = r;
-            rho.data[i+j*n] = r;
-        }
-    }
-    //printf("Stampo per debug matrice rho:\n");
-    //mat_print(&rho);
-    return rho.data;
-}
-
-double* getCovMat(double *std, double *rho, int n){
-    Matrix sigma;
-    int i,j;
-    //init the variance-covariance matrix
-    mat_init(&sigma, n, n);
-    //creating variance-covariance matrix
-    for(i=0;i<n;i++)
-        for(j=i;j<n;j++){
-            double val = std[i]*std[j]*rho[j+i*n];
-            sigma.data[j+i*n] = val;
-            sigma.data[i+j*n] = val;
-        }
-    return sigma.data;
-}
-*/
 //----------------------------------------------------
 //Simulation of a Gaussian vector X~N(m,∑)
 //Step 1: Compute the square root of the matrix ∑, generate lower triangular matrix A
@@ -125,7 +75,7 @@ static void multiStockValue(double *s, double *v, double *g, double t, double r,
 }
 
 OptionValue CPUBasketOptCall(MultiOptionData *option, int sim){
-    int i,j, n = option->n;
+    int i,j;
 
     //Monte Carlo algorithm
     OptionValue callValue;
@@ -141,9 +91,9 @@ OptionValue CPUBasketOptCall(MultiOptionData *option, int sim){
     for(i=0; i<sim; i++){
         st_sum = 0;
         //Simulation of stock prices
-        simGaussVect(option->d, option->p, n, bt);
-        multiStockValue(option->s, option->v, bt, t, r, n, s);
-        for(j=0;j<n;j++)
+        simGaussVect(option->d, &option->p[0][0], N, bt);
+        multiStockValue(option->s, option->v, bt, t, r, N, s);
+        for(j=0;j<N;j++)
             st_sum += s[j]*option->w[j];
         price = st_sum - k;
         if(price<0)

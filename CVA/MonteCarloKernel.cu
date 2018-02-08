@@ -10,23 +10,12 @@
 #include <curand_kernel.h>
 #include "MonteCarlo.h"
 
-__constant__ MultiOptionData OPTION;
+__device__ __constant__ MultiOptionData OPTION;
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
     int i,j;
     int cacheIndex = threadIdx.x;
     int blockIndex = blockIdx.x;
-    /*-------------- From CONSTANT to LOCAL	---------------*/
-    double drift[N], rho[N][N], spot[N], vol[N], weights[N],
-    strike=OPTION.k, time=OPTION.t, rate=OPTION.r;
-    for(i=0;i<N;i++){
-    	spot[i]=OPTION.s[i];
-    	vol[i]=OPTION.v[i];
-    	weights[i]=OPTION.w[i];
-    	drift[i]=OPTION.d[i];
-    	for(j=0;j<N;j++)
-    		rho[i][j]=OPTION.p[i][j];
-    }
 
     /*------------------ SHARED MEMORY DICH ----------------*/
     __shared__ double s_Sum[MAX_THREADS];
@@ -46,15 +35,13 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     OptionValue sum = {0, 0};
 
-    for( i=cacheIndex; i<SIM; i+=blockDim.x){
+    for( i=cacheIndex; i<PATH; i+=blockDim.x){
         st_sum = 0;
-        //Simulation of stock prices
-
         // First step: Brownian motion
         double g[N];
         // RNGs
-        for(j=0;j<n;j++)
-        	g[j]=curand_normal(threadState);
+        for(j=0;j<N;j++)
+        	g[j]=curand_normal(&threadState);
         //A*G
         double somma;
         int j,k;
@@ -62,25 +49,25 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         	somma = 0;
          	for(k=0;k<N;k++)
          		//somma += first->data[i][k]*second->data[k][j];
-                somma += rho[i][k] * g[k];
+                somma += OPTION.p[j][k] * g[k];
          	//result->data[i][j] = somma;
             bt[j] = somma;
         }
         //X=m+A*G
-        for(i=0;i<n;i++)
-            bt[i] += drift[i];
+        for(j=0;j<N;j++)
+            bt[j] += OPTION.d[j];
 
         //	Second step: Price simulation
-        for(j=0;j<n;j++){
-                s[j] = spot[j] * exp((rate - 0.5 * vol[j] * vol[j])*time+vol[j] * bt[j] * sqrt(time));
+        for(j=0;j<N;j++){
+                s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
         }
 
         // Third step: Mean price
         for(j=0;j<N;j++)
-            st_sum += s[j] * weights[j];
+            st_sum += s[j] * OPTION.w[j];
 
         //	Fourth step: Option payoff
-        price = st_sum - strike;
+        price = st_sum - OPTION.k;
         if(price<0)
             price = 0.0f;
 
@@ -116,7 +103,7 @@ __global__ void randomSetup( curandState *randSeed ){
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
 
-void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
+extern "C" void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue){
     int i;
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;
@@ -124,16 +111,7 @@ void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
     CudaCheck(cudaHostAlloc(&h_CallValue, sizeof(OptionValue)*(MAX_BLOCKS),cudaHostAllocDefault));
 
     /*--------------- CONSTANT MEMORY ----------------*/
-
-    CudaCheck(cudaMemcpyToSymbol(OPTION.d,option->d,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION.p,option->p,N*N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION.s,option->s,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION.v,option->v,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION.w,option->w,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION.k,&option->k,sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION.t,&option->t,sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION.r,&option->r,sizeof(double)));
-
+    CudaCheck(cudaMemcpyToSymbol(OPTION,option,sizeof(MultiOptionData)));
     /*----------------- DEVICE MEMORY -------------------*/
     OptionValue *d_CallValue;
     CudaCheck(cudaMalloc(&d_CallValue, sizeof(OptionValue)*(MAX_BLOCKS)));
@@ -166,7 +144,7 @@ void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
 
     // Closing Monte Carlo
     long double sum=0, sum2=0, price, empstd;
-    long int nSim = MAX_BLOCKS * SIM;
+    long int nSim = MAX_BLOCKS * PATH;
     for ( i = 0; i < MAX_BLOCKS; i++ ){
         sum += h_CallValue[i].Expected;
         sum2 += h_CallValue[i].Confidence;
