@@ -8,12 +8,6 @@
 
 #include "MonteCarlo.h"
 
-
-#define N 3
-#define MAX_BLOCKS 1000
-#define MAX_THREADS 1024
-#define PATH 10000
-
 //	Host utility functions declarations
 double* Chol( double *c, int n);
 

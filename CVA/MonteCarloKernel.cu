@@ -18,14 +18,14 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     int blockIndex = blockIdx.x;
     /*-------------- From CONSTANT to LOCAL	---------------*/
     double drift[N], rho[N][N], spot[N], vol[N], weights[N],
-    strike=OPTION->k, time=OPTION->t, rate=OPTION->r;
+    strike=OPTION.k, time=OPTION.t, rate=OPTION.r;
     for(i=0;i<N;i++){
-    	spot[i]=OPTION->s[i];
-    	vol[i]=OPTION->v[i];
-    	weights[i]=OPTION->w[i];
-    	drift[i]=OPTION->d[i];
+    	spot[i]=OPTION.s[i];
+    	vol[i]=OPTION.v[i];
+    	weights[i]=OPTION.w[i];
+    	drift[i]=OPTION.d[i];
     	for(j=0;j<N;j++)
-    		rho[i][j]=OPTION->p[i][j];
+    		rho[i][j]=OPTION.p[i][j];
     }
 
     /*------------------ SHARED MEMORY DICH ----------------*/
@@ -125,14 +125,14 @@ void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue ){
 
     /*--------------- CONSTANT MEMORY ----------------*/
 
-    CudaCheck(cudaMemcpyToSymbol(OPTION->d,option->d,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION->p,option->p,N*N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION->s,option->s,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION->v,option->v,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION->w,option->w,N*sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION->k,&option->k,sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION->t,&option->t,sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION->r,&option->r,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION.d,option->d,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION.p,option->p,N*N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION.s,option->s,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION.v,option->v,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION.w,option->w,N*sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION.k,&option->k,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION.t,&option->t,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION.r,&option->r,sizeof(double)));
 
     /*----------------- DEVICE MEMORY -------------------*/
     OptionValue *d_CallValue;
