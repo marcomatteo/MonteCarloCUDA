@@ -135,11 +135,11 @@ int main(int argc, const char * argv[]) {
     //CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_basketOpt(&option, SIMS);
     h_stop = clock();
-    //CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
+    CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
     //CudaCheck( cudaEventRecord( d_stop, 0));
     //CudaCheck( cudaEventSynchronize( d_stop ));
     //CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
-    CPU_timeSpent /= CLOCKS_PER_SEC;
+    //CPU_timeSpent /= CLOCKS_PER_SEC;
     
     price = CPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
