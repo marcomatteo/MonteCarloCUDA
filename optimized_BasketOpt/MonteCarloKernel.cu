@@ -103,8 +103,9 @@ __global__ void randomSetup( curandState *randSeed ){
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
 
-extern "C" void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue){
+extern "C" OptionValue dev_basketOpt(MultiOptionData *option){
     int i;
+    OptionValue callValue
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;
     //Allocation pinned host memory for prices
@@ -152,11 +153,13 @@ extern "C" void GPUBasketOpt(MultiOptionData *option, OptionValue *callValue){
     price = exp(-(option->r*option->t)) * (sum/(double)nSim);
     empstd = sqrt((double)((double)nSim * sum2 - sum * sum)
                          /((double)nSim * (double)(nSim - 1)));
-    callValue->Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
-    callValue->Expected = price;
+    callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
+    callValue.Expected = price;
 
     //Free memory space
     CudaCheck(cudaFree(RNG));
     CudaCheck(cudaFreeHost(h_CallValue));
     CudaCheck(cudaFree(d_CallValue));
+
+    return callValue;
 }

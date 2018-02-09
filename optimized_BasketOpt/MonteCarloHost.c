@@ -7,7 +7,7 @@
 
 #include "MonteCarlo.h"
 
-void ProdMat(
+void prodMat(
 		double *first,
 		double *second,
 		double *result,
@@ -38,11 +38,31 @@ static double randMinMax(double min, double max){
     return max*x+(1.0f-x)*min;
 }
 
-//Generator of a normal pseudo-random number with mean mu and volatility sigma
+//Generator of a normal pseudo-random number with mean mu and volatility sigma with Box-Muller method
 static double gaussian( double mu, double sigma ){
     double x = randMinMax(0, 1);
     double y = randMinMax(0, 1);
     return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
+}
+
+static double cnd(double d){
+    const double       A1 = 0.31938153;
+    const double       A2 = -0.356563782;
+    const double       A3 = 1.781477937;
+    const double       A4 = -1.821255978;
+    const double       A5 = 1.330274429;
+    const double ONEOVER2PI = 0.39894228040143267793994605993438;
+    double K = 1.0 / (1.0 + 0.2316419 * fabs(d));
+    double cnd = ONEOVER2PI * exp(- 0.5 * d * d) * (K * (A1 + K * (A2 + K * (A3 + K * (A4 + K * A5)))));
+    if (d > 0)
+        cnd = 1.0 - cnd;
+    return cnd;
+}
+
+double host_bsCall ( OptionData option ){
+    double d1 = ( log(option.s / option.k) + (option.r + 0.5 * option.v * option.v) * option.t) / (option.v * sqrt(option.t));
+    double d2 = d1 - option.v * sqrt(option.t);
+    return option.s * cnd(d1) - option.k * exp(- option.r * option.t) * cnd(d2);
 }
 
 //----------------------------------------------------
@@ -57,12 +77,18 @@ static void simGaussVect(double *drift, double *volatility, int n, double *resul
     //RNGs
     for(i=0;i<n;i++)
         g[i]=gaussian(0, 1);
-    ProdMat(volatility, &g[0], result, n, n, 1);
+    prodMat(volatility, &g[0], result, n, n, 1);
     //X=m+A*G
     for(i=0;i<n;i++){
         result[i] += drift[i];
     }
     free(g);
+}
+
+// Call payoff
+static double callPayoff( double s, double k, double t, double r, double v){
+    double value = s * exp( (r - 0.5 * v * v) * t + gaussian(0,1) * sqrt(t) * v ) - k;
+    return (value>0) ? (value):(0);
 }
 
 static void multiStockValue(double *s, double *v, double *g, double t, double r, int n, double *values){
@@ -74,7 +100,33 @@ static void multiStockValue(double *s, double *v, double *g, double t, double r,
     }
 }
 
-OptionValue CPUBasketOptCall(MultiOptionData *option, int sim){
+// Monte Carlo simulation on the CPU
+OptionValue host_MC ( OptionData option, int path){
+    long double sum, var_sum, price, emp_stdev;
+    OptionValue callValue;
+    int i;
+    sum = var_sum = 0.0f;
+    srand((unsigned)time(NULL));
+
+    for( i=0; i<path; i++){
+        price = callPayoff(option.s,option.k,option.t,option.r,option.v);
+        sum += price;
+        var_sum += price * price;
+    }
+
+    price = exp(-r*t) * (sum/(double)path);
+    emp_stdev = sqrt(
+                     ((double)path * var_sum - sum * sum)
+                     /
+                     ((double)path * (double)(path - 1))
+                     );
+
+    callValue.Expected = price;
+    callValue.Confidence = 1.96 * emp_stdev/sqrt(path);
+    return callValue;
+}
+
+OptionValue host_basketOpt(MultiOptionData *option, int sim){
     int i,j;
 
     //Monte Carlo algorithm

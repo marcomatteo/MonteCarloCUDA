@@ -12,10 +12,10 @@
 void Chol( double c[N][N], double a[N][N] );
 
 //	Host MonteCarlo
-extern "C" OptionValue CPUBasketOptCall(MultiOptionData*, int);
+extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
 
 //	Device MonteCarlo
-extern "C" void GPUBasketOpt(MultiOptionData *, OptionValue *);
+extern "C" OptionValue dev_basketOpt(MultiOptionData *);
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS
@@ -131,15 +131,15 @@ int main(int argc, const char * argv[]) {
 
     // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
-    //h_start = clock();
-    CudaCheck( cudaEventRecord( d_start, 0 ));
-    CPU_sim=CPUBasketOptCall(&option, SIMS);
-    //h_stop = clock();
+    h_start = clock();
+    //CudaCheck( cudaEventRecord( d_start, 0 ));
+    CPU_sim=host_basketOpt(&option, SIMS);
+    h_stop = clock();
     //CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
-    CudaCheck( cudaEventRecord( d_stop, 0));
-    CudaCheck( cudaEventSynchronize( d_stop ));
-    CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
-    CPU_timeSpent /= 1000;
+    //CudaCheck( cudaEventRecord( d_stop, 0));
+    //CudaCheck( cudaEventSynchronize( d_stop ));
+    //CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
+    CPU_timeSpent /= CLOCKS_PER_SEC;
     
     price = CPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
@@ -148,7 +148,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    GPUBasketOpt(&option, &GPU_sim);
+    GPU_sim = dev_basketOpt(&option);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
