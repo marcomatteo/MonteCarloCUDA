@@ -105,7 +105,7 @@ __global__ void randomSetup( curandState *randSeed ){
 
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option){
     int i;
-    OptionValue callValue
+    OptionValue callValue;
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;
     //Allocation pinned host memory for prices
