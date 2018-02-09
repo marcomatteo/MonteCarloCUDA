@@ -103,7 +103,7 @@ __global__ void randomSetup( curandState *randSeed ){
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
 
-extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, numThreads){
+extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads){
     int i;
     OptionValue callValue;
     /*----------------- HOST MEMORY -------------------*/
