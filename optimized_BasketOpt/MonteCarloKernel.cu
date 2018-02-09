@@ -14,12 +14,12 @@ __device__ __constant__ MultiOptionData OPTION;
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
     int i,j;
-    int cacheIndex = threadIdx.x;
+    int sumIndex = threadIdx.x;
+    int sum2Index = sumIndex + blockDim.x;
     int blockIndex = blockIdx.x;
 
     /*------------------ SHARED MEMORY DICH ----------------*/
-    __shared__ double s_Sum[MAX_THREADS];
-    __shared__ double s_Sum2[MAX_THREADS];
+    extern __shared__ double s_Sum[];
 
     //Monte Carlo variables
     double st_sum=0.0f, price;
@@ -35,7 +35,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     OptionValue sum = {0, 0};
 
-    for( i=cacheIndex; i<PATH; i+=blockDim.x){
+    for( i=sumIndex; i<PATH; i+=blockDim.x){
         st_sum = 0;
         // First step: Brownian motion
         double g[N];
@@ -75,24 +75,24 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         sum.Expected += price;
         sum.Confidence += price*price;
     }
-    s_Sum[cacheIndex] = sum.Expected;
-    s_Sum2[cacheIndex] = sum.Confidence;
+    s_Sum[sumIndex] = sum.Expected;
+    s_Sum[sum2Index] = sum.Confidence;
     __syncthreads();
     //Reduce shared memory accumulators and write final result to global memory
     int halfblock = blockDim.x/2;
     do{
-        if ( cacheIndex < halfblock ){
-            s_Sum[cacheIndex] += s_Sum[cacheIndex+halfblock];
-            s_Sum2[cacheIndex] += s_Sum2[cacheIndex+halfblock];
+        if ( sumIndex < halfblock ){
+            s_Sum[sumIndex] += s_Sum[sumIndex+halfblock];
+            s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
             __syncthreads();
         }
         halfblock /= 2;
     }while ( halfblock != 0 );
     __syncthreads();
     //Keeping the first element for each block using one thread
-    if (threadIdx.x == 0){
-    	d_CallValue[blockIndex].Expected = s_Sum[0];
-    	d_CallValue[blockIndex].Confidence = s_Sum2[0];
+    if (sumIndex == 0){
+    	d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
+    	d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
     }
 }
 
@@ -103,19 +103,23 @@ __global__ void randomSetup( curandState *randSeed ){
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
 
-extern "C" OptionValue dev_basketOpt(MultiOptionData *option){
+extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, numThreads){
     int i;
     OptionValue callValue;
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;
     //Allocation pinned host memory for prices
-    CudaCheck(cudaHostAlloc(&h_CallValue, sizeof(OptionValue)*(MAX_BLOCKS),cudaHostAllocDefault));
+    CudaCheck(cudaHostAlloc(&h_CallValue, sizeof(OptionValue)*(numBlocks),cudaHostAllocDefault));
 
     /*--------------- CONSTANT MEMORY ----------------*/
     CudaCheck(cudaMemcpyToSymbol(OPTION,option,sizeof(MultiOptionData)));
+
     /*----------------- DEVICE MEMORY -------------------*/
     OptionValue *d_CallValue;
-    CudaCheck(cudaMalloc(&d_CallValue, sizeof(OptionValue)*(MAX_BLOCKS)));
+    CudaCheck(cudaMalloc(&d_CallValue, sizeof(OptionValue)*(numBlocks)));
+
+    /*----------------- SHARED MEMORY -------------------*/
+    int numShared = sizeof(double) * numThreads * 2;
 
     /*------------ RNGs and TIME VARIABLES --------------*/
     curandState *RNG;
@@ -126,13 +130,13 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option){
 
     // RANDOM NUMBER GENERATION KERNEL
     //Allocate states for pseudo random number generators
-    CudaCheck(cudaMalloc((void **) &RNG, MAX_BLOCKS * MAX_THREADS * sizeof(curandState)));
+    CudaCheck(cudaMalloc((void **) &RNG, numBlocks * numThreads * sizeof(curandState)));
     //Setup for the random number sequence
-    randomSetup<<<MAX_BLOCKS, MAX_THREADS>>>(RNG);
+    randomSetup<<<numBlocks, numThreads>>>(RNG);
 
     //MONTE CARLO KERNEL
     CudaCheck( cudaEventRecord( start, 0 ));
-    MultiMCBasketOptKernel<<<MAX_BLOCKS, MAX_THREADS>>>(RNG,(OptionValue *)(d_CallValue));
+    MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue));
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
@@ -141,12 +145,12 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option){
     CudaCheck( cudaEventDestroy( stop ));
 
     //MEMORY CPY: prices per block
-    CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, MAX_BLOCKS * sizeof(OptionValue), cudaMemcpyDeviceToHost));
+    CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
 
     // Closing Monte Carlo
     long double sum=0, sum2=0, price, empstd;
-    long int nSim = MAX_BLOCKS * PATH;
-    for ( i = 0; i < MAX_BLOCKS; i++ ){
+    long int nSim = numBlocks * PATH;
+    for ( i = 0; i < numBlocks; i++ ){
         sum += h_CallValue[i].Expected;
         sum2 += h_CallValue[i].Confidence;
     }

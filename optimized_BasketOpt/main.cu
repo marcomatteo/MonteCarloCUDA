@@ -15,7 +15,7 @@ void Chol( double c[N][N], double a[N][N] );
 extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
 
 //	Device MonteCarlo
-extern "C" OptionValue dev_basketOpt(MultiOptionData *);
+extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS
@@ -148,7 +148,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    GPU_sim = dev_basketOpt(&option);
+    GPU_sim = dev_basketOpt(&option, MAX_BLOCKS, MAX_THREADS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
