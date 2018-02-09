@@ -114,7 +114,7 @@ OptionValue host_MC ( OptionData option, int path){
         var_sum += price * price;
     }
 
-    price = exp(-r*t) * (sum/(double)path);
+    price = exp(-option.r*option.t) * (sum/(double)path);
     emp_stdev = sqrt(
                      ((double)path * var_sum - sum * sum)
                      /
