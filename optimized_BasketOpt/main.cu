@@ -106,8 +106,6 @@ int main(int argc, const char * argv[]) {
 	option.k= 100.f;
 	option.r= 0.048790164;
 	option.t= 1.f;
-
-    int SIMS = MAX_BLOCKS*PATH;
     
     /*--------------------------------- MAIN ---------------------------------------*/
     //	Cholevski factorization
@@ -132,10 +130,13 @@ int main(int argc, const char * argv[]) {
 
     //	Definizione dei parametri CUDA per l'esecuzione in parallelo
     int numBlocks, numThreads;
-    printf("Scegli il numero di Blocchi:");
+    printf("\nParametri CUDA:\n");
+    printf("Scegli il numero di Blocchi: ");
     scanf("%d",&numBlocks);
-    printf("Scegli il numero di Threads per blocco:");
+    printf("Scegli il numero di Threads per blocco: ");
     scanf("%d",&numThreads);
+
+    int SIMS = numBlocks*numThreads;
 
     /* CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
