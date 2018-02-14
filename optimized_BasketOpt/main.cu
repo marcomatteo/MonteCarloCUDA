@@ -84,7 +84,6 @@ void sizeAdjust(int *numBlocks, int *numThreads){
 	CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
 	int maxGridSize = deviceProp.maxGridSize[0];
 	int maxBlockSize = deviceProp.maxThreadsPerBlock;
-	size_t maxConstant = deviceProp.totalConstMem;
 	//	Replacing in case of wrong size
 	if(*numBlocks > maxGridSize){
 		*numBlocks = maxGridSize;
@@ -100,6 +99,7 @@ void memAdjust(int *numThreads){
 		cudaDeviceProp deviceProp;
 		CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
 		size_t maxShared = deviceProp.sharedMemPerBlock;
+		size_t maxConstant = deviceProp.totalConstMem;
 		int sizeDouble = sizeof(double);
 		int numShared = sizeDouble * *numThreads * 2;
 		if(maxConstant<sizeof(MultiOptionData)){
