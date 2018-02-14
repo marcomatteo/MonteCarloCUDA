@@ -83,7 +83,7 @@ void sizeAdjust(int *numBlocks, int *numThreads){
 	if(*numBlocks > maxGridSize){
 		*numBlocks = maxGridSize;
 	}
-	if(*numBThreads > maxBlockSize)
+	if(*numThreads > maxBlockSize)
 		*numThreads = maxBlockSize;
 	//	Mem check
 	size_t maxShared = deviceProp.sharedMemPerBlock;
@@ -141,7 +141,7 @@ int main(int argc, const char * argv[]) {
 	scanf("%d",&numBlocks);
 	printf("Scegli il numero di Threads per blocco: ");
 	scanf("%d",&numThreads);
-	adjustSize(&numBlocks, &numThreads);
+	sizeAdjust(&numBlocks, &numThreads);
 	int SIMS = numBlocks*numThreads;
 
     /*---------------- CORE COMPUTATIONS ----------------*/
