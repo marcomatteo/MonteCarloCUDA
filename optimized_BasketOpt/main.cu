@@ -80,8 +80,8 @@ void printMultiOpt( MultiOptionData *o){
 ///////////////////////////////////
 
 void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
-	int maxGridSize = deviceProp.maxGridSize[0];
-	int maxBlockSize = deviceProp.maxThreadsPerBlock;
+	int maxGridSize = *deviceProp.maxGridSize[0];
+	int maxBlockSize = *deviceProp.maxThreadsPerBlock;
 	//	Replacing in case of wrong size
 	if(*numBlocks > maxGridSize){
 		*numBlocks = maxGridSize;
@@ -94,8 +94,8 @@ void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
 }
 
 void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
-		size_t maxShared = deviceProp.sharedMemPerBlock;
-		size_t maxConstant = deviceProp.totalConstMem;
+		size_t maxShared = *deviceProp.sharedMemPerBlock;
+		size_t maxConstant = *deviceProp.totalConstMem;
 		int sizeDouble = sizeof(double);
 		int numShared = sizeDouble * *numThreads * 2;
 		if(sizeof(MultiOptionData) > maxConstant){
@@ -116,11 +116,11 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
 }
 
 void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
-	int multiProcessors = deviceProp.multiProcessorCount;
-	int cudaCoresPM = _ConvertSMVer2Cores(deviceProp.major, deviceProp.minor);
+	int multiProcessors = *deviceProp.multiProcessorCount;
+	int cudaCoresPM = _ConvertSMVer2Cores(*deviceProp.major, *deviceProp.minor);
 	*numBlocks = multiProcessors * 40;
 	*numThreads = cudaCoresPM * 4;
-	sizeAdjust(&deviceProp,numBlocks, numThreads);
+	sizeAdjust(deviceProp,numBlocks, numThreads);
 }
 
 void choseParameters(int *numBlocks, int *numThreads){
