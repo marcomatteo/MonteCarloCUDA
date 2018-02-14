@@ -89,19 +89,19 @@ void sizeAdjust(int *numBlocks, int *numThreads){
 	size_t maxShared = deviceProp.sharedMemPerBlock;
 	int sizeDouble = sizeof(double);
 	int numShared = sizeDouble * *numThreads * 2;
-	if(maxConstant>sizeof(MultiOptionData)){
-		printf("\nWarning: Excess use of constant memory: %ld\n",maxConstant);
+	if(maxConstant<sizeof(MultiOptionData)){
+		printf("\nWarning: Excess use of constant memory: %zu\n",maxConstant);
 		printf("A double variable size is: %d\n",sizeDouble);
-		printf("In a MultiOptionData struct there's 8 doubles for a consumption of %d constant memory for 1-dimension\n",8*sizeof(double));
-		printf("In this Basket Option there's %d-dimensions\n",N);
+		printf("In a MultiOptionData struct there's a consumption of %d constant memory\n",sizeof(MultiOptionData));
+		printf("In this Basket Option there's %d stocks\n",N);
 		int maxDim = (int)maxConstant/(sizeDouble*8);
-		printf("The optimum number of dims should be: %d\n",maxDim);
+		printf("The optimal number of dims should be: %d stocks\n",maxDim);
 	}
-	if(maxShared>numShared){
-		printf("\nWarning: Excess use of shared memory: %ld\n",maxShared);
+	if(maxShared<numShared){
+		printf("\nWarning: Excess use of shared memory: %zu\n",maxShared);
 		printf("A double variable size is: %d\n",sizeDouble);
 		int maxThreads = (int)maxShared / (2*sizeDouble);
-		printf("The optimum number of thread should be: %d\n",maxThreads);
+		printf("The optimal number of thread should be: %d\n",maxThreads);
 	}
 	printf("\n");
 }
