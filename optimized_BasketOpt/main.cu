@@ -7,6 +7,12 @@
 //
 
 #include "MonteCarlo.h"
+#include <cuda_runtime.h>
+
+// includes, project
+#include <helper_functions.h> // Helper functions (utilities, parsing, timing)
+#include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
+#include <multithreading.h>
 
 //	Host utility functions declarations
 void Chol( double c[N][N], double a[N][N] );
