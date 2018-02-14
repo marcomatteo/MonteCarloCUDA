@@ -14,11 +14,14 @@
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 #include <multithreading.h>
 
+//	Host Black & Scholes
+extern "C" double host_bsCall ( OptionData );
+
 //	Host MonteCarlo
-extern "C" OptionValue host_vanillaOpt(MultiOptionData*, int);
+extern "C" OptionValue host_vanillaOpt(OptionData, int);
 
 //	Device MonteCarlo
-extern "C" OptionValue dev_vanillaOpt(MultiOptionData *, int, int);
+extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS
@@ -122,7 +125,7 @@ int main(int argc, const char * argv[]) {
 	int SIMS = numBlocks*PATH;
 
 	//	Print Option details
-	printOption(&option);
+	printOption(option);
 
     /*---------------- CORE COMPUTATIONS ----------------*/
 
