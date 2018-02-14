@@ -76,7 +76,7 @@ void printMultiOpt( MultiOptionData *o){
 void sizeAdjust(int *numBlocks, int *numThreads){
 	cudaDeviceProp deviceProp;
 	CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-	int maxGridSize = deviceProp.multiProcessorCount * 40;
+	int maxGridSize = deviceProp.maxGridSize[0];
 	int maxBlockSize = deviceProp.maxThreadsPerBlock;
 	size_t maxConstant = deviceProp.totalConstMem;
 	//	Replacing in case of wrong size
@@ -92,7 +92,7 @@ void sizeAdjust(int *numBlocks, int *numThreads){
 	if(maxConstant<sizeof(MultiOptionData)){
 		printf("\nWarning: Excess use of constant memory: %zu\n",maxConstant);
 		printf("A double variable size is: %d\n",sizeDouble);
-		printf("In a MultiOptionData struct there's a consumption of %d constant memory\n",sizeof(MultiOptionData));
+		printf("In a MultiOptionData struct there's a consumption of %zu constant memory\n",sizeof(MultiOptionData));
 		printf("In this Basket Option there's %d stocks\n",N);
 		int maxDim = (int)maxConstant/(sizeDouble*8);
 		printf("The optimal number of dims should be: %d stocks\n",maxDim);
@@ -192,7 +192,7 @@ int main(int argc, const char * argv[]) {
     printf("Total execution time: %f s\n\n", CPU_timeSpent);
     */
     // GPU Monte Carlo
-    printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
+    printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d * %d\n",SIMS, PATH);
     CudaCheck( cudaEventRecord( d_start, 0 ));
     GPU_sim = dev_basketOpt(&option, numBlocks, numThreads);
     CudaCheck( cudaEventRecord( d_stop, 0));
