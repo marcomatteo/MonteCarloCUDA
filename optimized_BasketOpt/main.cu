@@ -79,9 +79,7 @@ void printMultiOpt( MultiOptionData *o){
 //	ADJUST FUNCTIONS
 ///////////////////////////////////
 
-void sizeAdjust(int *numBlocks, int *numThreads){
-	cudaDeviceProp deviceProp;
-	CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
+void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
 	int maxGridSize = deviceProp.maxGridSize[0];
 	int maxBlockSize = deviceProp.maxThreadsPerBlock;
 	//	Replacing in case of wrong size
@@ -95,14 +93,12 @@ void sizeAdjust(int *numBlocks, int *numThreads){
 	}
 }
 
-void memAdjust(int *numThreads){
-		cudaDeviceProp deviceProp;
-		CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
+void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
 		size_t maxShared = deviceProp.sharedMemPerBlock;
 		size_t maxConstant = deviceProp.totalConstMem;
 		int sizeDouble = sizeof(double);
 		int numShared = sizeDouble * *numThreads * 2;
-		if(maxConstant<sizeof(MultiOptionData)){
+		if(sizeof(MultiOptionData) > maxConstant){
 			printf("\nWarning: Excess use of constant memory: %zu\n",maxConstant);
 			printf("A double variable size is: %d\n",sizeDouble);
 			printf("In a MultiOptionData struct there's a consumption of %zu constant memory\n",sizeof(MultiOptionData));
@@ -110,7 +106,7 @@ void memAdjust(int *numThreads){
 			int maxDim = (int)maxConstant/(sizeDouble*8);
 			printf("The optimal number of dims should be: %d stocks\n",maxDim);
 		}
-		if(maxShared<numShared){
+		if(numShared > maxShared){
 			printf("\nWarning: Excess use of shared memory: %zu\n",maxShared);
 			printf("A double variable size is: %d\n",sizeDouble);
 			int maxThreads = (int)maxShared / (2*sizeDouble);
@@ -119,14 +115,30 @@ void memAdjust(int *numThreads){
 		printf("\n");
 }
 
-void optimalAdjust(int *numBlocks, int *numThreads){
-	cudaDeviceProp deviceProp;
-	CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
+void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
 	int multiProcessors = deviceProp.multiProcessorCount;
 	int cudaCoresPM = _ConvertSMVer2Cores(deviceProp.major, deviceProp.minor);
 	*numBlocks = multiProcessors * 40;
 	*numThreads = cudaCoresPM * 4;
-	sizeAdjust(numBlocks, numThreads);
+	sizeAdjust(&deviceProp,numBlocks, numThreads);
+}
+
+void choseParameters(int *numBlocks, int *numThreads){
+		cudaDeviceProp deviceProp;
+		CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
+		char risp;
+		printf("\nParametri CUDA:\n");
+		printf("Scegli il numero di Blocchi: ");
+		scanf("%d",numBlocks);
+		printf("Scegli il numero di Threads per blocco: ");
+		scanf("%d",numThreads);
+		printf("Vuoi ottimizzare i parametri inseriti? (Y/N) ");
+		scanf("%s",&risp);
+		if(risp=='Y')
+			optimalAdjust(&deviceProp,numBlocks, numThreads);
+		else
+			sizeAdjust(&deviceProp,numBlocks, numThreads);
+		memAdjust(&deviceProp,numThreads);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -170,19 +182,9 @@ int main(int argc, const char * argv[]) {
 
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
 	int numBlocks, numThreads;
-	char risp;
-	printf("\nParametri CUDA:\n");
-	printf("Scegli il numero di Blocchi: ");
-	scanf("%d",&numBlocks);
-	printf("Scegli il numero di Threads per blocco: ");
-	scanf("%d",&numThreads);
-	printf("Vuoi ottimizzare i parametri inseriti? (Y/N) ");
-	scanf("%s",&risp);
-	if(risp=='Y')
-		optimalAdjust(&numBlocks, &numThreads);
-	else
-		sizeAdjust(&numBlocks, &numThreads);
-	memAdjust(&numThreads);
+	choseParameters(&numBlocks, &numThreads);
+
+	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
 	int SIMS = numBlocks*numThreads;
 
 	//	Print Option details
