@@ -12,6 +12,12 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <cuda_runtime.h>
+
+// includes, project
+#include <helper_functions.h> // Helper functions (utilities, parsing, timing)
+#include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
+#include <multithreading.h>
 
 #define N 3
 #define MAX_BLOCKS 1000
