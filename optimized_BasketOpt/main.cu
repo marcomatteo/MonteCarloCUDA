@@ -65,7 +65,7 @@ void printMultiOpt( MultiOptionData *o){
     printf("Correlation matrix:\n");
     printMat(&o->p[0][0], N, N);
     printf("Strike price:\t € %.2f\n", o->k);
-    printf("Risk free interest rate %.2f \n", o->r);
+    printf("Risk free interest rate: %.2f \n", o->r);
     printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
 }
 
@@ -104,6 +104,16 @@ void sizeAdjust(int *numBlocks, int *numThreads){
 		printf("The optimal number of thread should be: %d\n",maxThreads);
 	}
 	printf("\n");
+}
+
+void optimalAdjust(int *numBlocks, int *numThreads){
+	cudaDeviceProp deviceProp;
+	CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
+	int multiProcessors = deviceProp.multiProcessorCount;
+	int cudaCoresPM = _ConvertSMVer2Cores(deviceProp.major, deviceProp.minor);
+	*numBlocks = multiProcessors * 40;
+	*numThreads = cudaCoresPM * 4;
+	sizeAdjust(numBlocks, numThreads);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +162,7 @@ int main(int argc, const char * argv[]) {
 	scanf("%d",&numBlocks);
 	printf("Scegli il numero di Threads per blocco: ");
 	scanf("%d",&numThreads);
-	sizeAdjust(&numBlocks, &numThreads);
+	optimalAdjust(&numBlocks, &numThreads);
 	int SIMS = numBlocks*numThreads;
 
 	//	Print Option details
