@@ -119,7 +119,7 @@ void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
 	int multiProcessors = deviceProp->multiProcessorCount;
 	int cudaCoresPM = _ConvertSMVer2Cores(deviceProp->major, deviceProp->minor);
 	*numBlocks = multiProcessors * 40;
-	*numThreads = pow(2,(log(cudaCoresPM)/log(2)));
+	*numThreads = pow(2,(int)(log(cudaCoresPM)/log(2)));
 	sizeAdjust(deviceProp,numBlocks, numThreads);
 }
 
