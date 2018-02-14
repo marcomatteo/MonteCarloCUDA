@@ -185,7 +185,7 @@ int main(int argc, const char * argv[]) {
 	choseParameters(&numBlocks, &numThreads);
 
 	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
-	int SIMS = numBlocks*numThreads;
+	int SIMS = numBlocks*PATH;
 
 	//	Print Option details
 	printMultiOpt(&option);
@@ -224,7 +224,7 @@ int main(int argc, const char * argv[]) {
     printf("Total execution time: %f s\n\n", CPU_timeSpent);
     */
     // GPU Monte Carlo
-    printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d * %d\n",SIMS, PATH);
+    printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
     GPU_sim = dev_basketOpt(&option, numBlocks, numThreads);
     CudaCheck( cudaEventRecord( d_stop, 0));
