@@ -132,7 +132,13 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
     //Allocate states for pseudo random number generators
     CudaCheck(cudaMalloc((void **) &RNG, numBlocks * numThreads * sizeof(curandState)));
     //Setup for the random number sequence
+    CudaCheck( cudaEventRecord( start, 0 ));
     randomSetup<<<numBlocks, numThreads>>>(RNG);
+    CudaCheck( cudaEventRecord( stop, 0));
+    CudaCheck( cudaEventSynchronize( stop ));
+    CudaCheck( cudaEventElapsedTime( &time, start, stop ));
+    printf( "\nRandom number generation done in %f milliseconds\n", time);
+
 
     //MONTE CARLO KERNEL
     CudaCheck( cudaEventRecord( start, 0 ));
