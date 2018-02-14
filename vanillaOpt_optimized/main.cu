@@ -133,7 +133,7 @@ int main(int argc, const char * argv[]) {
     
     float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
     double price, bs_price, difference;
-    //clock_t h_start, h_stop;
+    clock_t h_start, h_stop;
     cudaEvent_t d_start, d_stop;
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
@@ -146,7 +146,7 @@ int main(int argc, const char * argv[]) {
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
     h_start = clock();
     //CudaCheck( cudaEventRecord( d_start, 0 ));
-    CPU_sim=host_vanillaOpt(&option, SIMS);
+    CPU_sim=host_vanillaOpt(option, SIMS);
     h_stop = clock();
     CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
     //CudaCheck( cudaEventRecord( d_stop, 0));
