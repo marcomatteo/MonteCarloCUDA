@@ -142,7 +142,7 @@ int main(int argc, const char * argv[]) {
     bs_price = host_bsCall(option);
     printf("\nPrezzo Black & Scholes: %f\n",bs_price);
 
-    /* CPU Monte Carlo
+    // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
     h_start = clock();
     //CudaCheck( cudaEventRecord( d_start, 0 ));
@@ -157,7 +157,7 @@ int main(int argc, const char * argv[]) {
     price = CPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
     printf("Total execution time: %f s\n\n", CPU_timeSpent);
-    */
+
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
