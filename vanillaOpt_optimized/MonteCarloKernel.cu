@@ -193,7 +193,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     option.r = opt->r;
     option.t = opt->t;
 
-    CudaCheck(cudaMemcpyToSymbol(OPTION,option,sizeof(MultiOptionData)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION,&option,sizeof(MultiOptionData)));
 
     /*----------------- DEVICE MEMORY -------------------*/
     OptionValue *d_CallValue;
@@ -241,7 +241,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
         sum += h_CallValue[i].Expected;
         sum2 += h_CallValue[i].Confidence;
     }
-    price = exp(-(option->r*option->t)) * (sum/(double)nSim);
+    price = exp(-(option.r*option.t)) * (sum/(double)nSim);
     empstd = sqrt((double)((double)nSim * sum2 - sum * sum)
                          /((double)nSim * (double)(nSim - 1)));
     callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
