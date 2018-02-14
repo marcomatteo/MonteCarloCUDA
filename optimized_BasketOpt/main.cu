@@ -89,9 +89,9 @@ void sizeAdjust(int *numBlocks, int *numThreads){
 	size_t maxShared = deviceProp.sharedMemPerBlock;
 	int numShared = sizeof(double) * *numThreads * 2;
 	if(maxConstant>sizeof(MultiOptionData))
-		printf("\nWarning: Excess use of constant memory!\n");
+		printf("\nWarning: Excess use of constant memory: %d\n",maxConstant);
 	if(maxShared>numShared)
-		printf("\nWarning: Excess use of shared memory!\n");
+		printf("\nWarning: Excess use of shared memory: %d\n",maxShared);
 	printf("\n");
 }
 
@@ -144,6 +144,9 @@ int main(int argc, const char * argv[]) {
 	sizeAdjust(&numBlocks, &numThreads);
 	int SIMS = numBlocks*numThreads;
 
+	//	Print Option details
+	printMultiOpt(&option);
+
     /*---------------- CORE COMPUTATIONS ----------------*/
     //	Cholevski factorization
     double cholRho[N][N];
@@ -160,9 +163,6 @@ int main(int argc, const char * argv[]) {
     cudaEvent_t d_start, d_stop;
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
-
-    //	Print Option details
-    printMultiOpt(&option);
 
     /* CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
