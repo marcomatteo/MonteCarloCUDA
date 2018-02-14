@@ -137,7 +137,7 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "\nRandom number generation done in %f milliseconds\n", time);
+    printf( "RNG done in %f milliseconds\n", time);
 
 
     //MONTE CARLO KERNEL
@@ -146,7 +146,7 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "\nMonte Carlo simulations done in %f milliseconds\n", time);
+    printf( "Monte Carlo simulations done in %f milliseconds\n", time);
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
 
