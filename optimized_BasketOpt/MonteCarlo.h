@@ -16,7 +16,7 @@
 #define N 3
 #define MAX_BLOCKS 1000
 #define MAX_THREADS 256
-#define PATH 10000
+#define PATH 100000
 
 /**
  * This macro checks return value of the CUDA runtime call and exits

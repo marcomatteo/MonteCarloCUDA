@@ -69,6 +69,32 @@ void printMultiOpt( MultiOptionData *o){
     printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
 }
 
+///////////////////////////////////
+//	ADJUST FUNCTIONS
+///////////////////////////////////
+
+void sizeAdjust(int *numBlocks, int *numThreads){
+	cudaDeviceProp deviceProp;
+	CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
+	int maxGridSize = deviceProp.multiProcessorCount * 40;
+	int maxBlockSize = deviceProp.maxThreadsPerBlock;
+	size_t maxConstant = deviceProp.totalConstMem;
+	//	Replacing in case of wrong size
+	if(*numBlocks > maxGridSize){
+		*numBlocks = maxGridSize;
+	}
+	if(*numBThreads > maxBlockSize)
+		*numThreads = maxBlockSize;
+	//	Mem check
+	size_t maxShared = deviceProp.sharedMemPerBlock;
+	int numShared = sizeof(double) * *numThreads * 2;
+	if(maxConstant>sizeof(MultiOptionData))
+		printf("\nWarning: Excess use of constant memory!\n");
+	if(maxShared>numShared)
+		printf("\nWarning: Excess use of shared memory!\n");
+	printf("\n");
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                      MAIN
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -106,8 +132,19 @@ int main(int argc, const char * argv[]) {
 	option.k= 100.f;
 	option.r= 0.048790164;
 	option.t= 1.f;
-    
-    /*--------------------------------- MAIN ---------------------------------------*/
+	printf("Basket Option Pricing\n");
+
+	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
+	int numBlocks, numThreads;
+	printf("\nParametri CUDA:\n");
+	printf("Scegli il numero di Blocchi: ");
+	scanf("%d",&numBlocks);
+	printf("Scegli il numero di Threads per blocco: ");
+	scanf("%d",&numThreads);
+	adjustSize(&numBlocks, &numThreads);
+	int SIMS = numBlocks*numThreads;
+
+    /*---------------- CORE COMPUTATIONS ----------------*/
     //	Cholevski factorization
     double cholRho[N][N];
     int i,j;
@@ -124,19 +161,8 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
 
-    printf("Basket Option Pricing\n");
     //	Print Option details
     printMultiOpt(&option);
-
-    //	Definizione dei parametri CUDA per l'esecuzione in parallelo
-    int numBlocks, numThreads;
-    printf("\nParametri CUDA:\n");
-    printf("Scegli il numero di Blocchi: ");
-    scanf("%d",&numBlocks);
-    printf("Scegli il numero di Threads per blocco: ");
-    scanf("%d",&numThreads);
-
-    int SIMS = numBlocks*numThreads;
 
     /* CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
