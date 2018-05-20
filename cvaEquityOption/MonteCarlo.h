@@ -60,11 +60,11 @@ typedef struct{
 } MultiOptionData;
 */
 typedef struct{
-    double s[N];  //Stock vector
-    double v[N];  //Volatility vector
-    double p[N][N];  //Correlation matrix
-    double d[N];  //Drift vector
-    double w[N];  //Weight vector
+    double s[N];  	//Stock vector
+    double v[N];  	//Volatility vector
+    double p[N][N]; //Correlation matrix
+    double d[N];  	//Drift vector
+    double w[N];  	//Weight vector
     double k;
     double t;
     double r;

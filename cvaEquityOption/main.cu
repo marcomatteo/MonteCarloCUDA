@@ -23,6 +23,10 @@ extern "C" OptionValue host_vanillaOpt(OptionData, int);
 //	Device MonteCarlo
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
 
+//	CVA: per ora è in test la simulazione delle Expected Exposures
+extern "C" double* dev_cvaEquityOption(OptionData *, CreditData, int, int, int);
+
+
 ///////////////////////////////////
 //	PRINT FUNCTIONS
 ///////////////////////////////////
@@ -115,7 +119,7 @@ int main(int argc, const char * argv[]) {
 	option.k= 100.f;
 	option.r= 0.048790164;
 	option.t= 1.f;
-	printf("Vanilla Option Pricing\n");
+	printf("Expected Exposures of an Equity Option\n");
 
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
 	int numBlocks, numThreads;
@@ -127,22 +131,38 @@ int main(int argc, const char * argv[]) {
 	//	Print Option details
 	printOption(option);
 
-    /*---------------- CORE COMPUTATIONS ----------------*/
+	// PARAMETRI PER LA SIMULAZIONE EE
+	// Scelta da tastiera del numero di simulazioni: di default 40
+	int n = 40, i;
+	double dt = t/(double)n;
 
-    OptionValue CPU_sim = {0,0}, GPU_sim = {0,0};
+    /*---------------- CORE COMPUTATIONS ----------------*/
+	// Puntatore al vettore di prezzi simulati
+    OptionValue *GPU_sim = (OptionValue *)malloc(sizeof(OptionValue)*n);;
     
     float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
-    double price, bs_price, difference;
+    double *price = (double*)malloc(sizeof(double)*n);
+    double *bs_price = (double*)malloc(sizeof(double)*n);
+    double difference;
+
     clock_t h_start, h_stop;
     cudaEvent_t d_start, d_stop;
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
 
     //	Black & Scholes price
-    bs_price = host_bsCall(option);
-    printf("\nPrezzo Black & Scholes: %f\n",bs_price);
+    for(i=0;i<n;i++){
+    	bs_price[i] = host_bsCall(option);
+    	option.t -= dt;
+    }
+
+   	printf("\nPrezzi Black & Scholes:\n");
+   	printf("|\ti\t|\tPrezzo\t|");
+   	for(i=0;i<n;i++)
+   		printf("|\t%d\t|\t%.2d\t|\n",i,bs_price[i]);
 
     // CPU Monte Carlo
+    /*
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
     h_start = clock();
     CPU_sim=host_vanillaOpt(option, SIMS);
@@ -152,24 +172,32 @@ int main(int argc, const char * argv[]) {
     price = CPU_sim.Expected;
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
     printf("Total execution time: %f s\n\n", CPU_timeSpent);
+     */
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    GPU_sim = dev_vanillaOpt(&option, numBlocks, numThreads);
+    GPU_sim = dev_cvaEquityOption(&option, numBlocks, numThreads);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     GPU_timeSpent /= 1000;
     
-    price = GPU_sim.Expected;
-    printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price-GPU_sim.Confidence, price + GPU_sim.Confidence);
+    printf("\nPrezzi Simulati:\n");
+   	printf("|\ti\t|\tPrezzo\t|");
+   	for(i=0;i<n;i++)
+   		printf("|\t%d\t|\t%.2d\t|\n",i,GPU_sim[i].Expected);
+
     printf("Total execution time: %f s\n\n", GPU_timeSpent);
     
     // Comparing time spent with the two methods
     printf( "-\tComparing results:\t-\n");
-    difference = abs(price - bs_price);
-    speedup = abs(CPU_timeSpent / GPU_timeSpent);
-    printf( "The GPU's speedup: %.2f \nDifference from Black & Schole price: %.2f\n", speedup, difference);
+    printf("\nDifferenza Prezzi:\n");
+  	printf("|\ti\t|\tPrezzo\t|");
+  	for(i=0;i<n;i++){
+  		difference = abs(GPU_sim[i].Expected - bs_price[i]);
+   		printf("|\t%d\t|\t%.2d\t|\n",i,difference);
+  	}
+
     return 0;
 }

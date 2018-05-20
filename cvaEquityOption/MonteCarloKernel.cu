@@ -14,8 +14,10 @@ __device__ __constant__ MultiOptionData OPTION;
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
     int i,j;
+    // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
+    // Parameter for reduction
     int blockIndex = blockIdx.x;
 
     /*------------------ SHARED MEMORY DICH ----------------*/
@@ -255,11 +257,11 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return callValue;
 }
 
-extern "C" double dev_cvaEquityOption(OptionData *opt, CreditData credit, int n, int numBlocks, int numThreads){
+extern "C" double* dev_cvaEquityOption(OptionData *opt, CreditData credit, int n, int numBlocks, int numThreads){
     int i;
     double dt = opt->t / n;
-
-    OptionValue callValue;
+    // Alloco dinamicamente il vettore di prezzi EE simulati con Monte Carlo
+    OptionValue *callValue = (OptionValue *)malloc(sizeof(OptionValue)*n);
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;
     //Allocation pinned host memory for prices
@@ -304,32 +306,35 @@ extern "C" double dev_cvaEquityOption(OptionData *opt, CreditData credit, int n,
 
 
     //MONTE CARLO KERNEL
+    /*
     CudaCheck( cudaEventRecord( start, 0 ));
-    for( i=0; i<opt->t; i+=dt){
-    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue));
-    }
+
+    // Qui ci andrebbe Monte Carlo
+
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
     printf( "Monte Carlo simulations done in %f milliseconds\n", time);
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
+	*/
 
-    //MEMORY CPY: prices per block
-    CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
-
-    // Closing Monte Carlo
-    long double sum=0, sum2=0, price, empstd;
-    long int nSim = numBlocks * PATH;
-    for ( i = 0; i < numBlocks; i++ ){
-        sum += h_CallValue[i].Expected;
-        sum2 += h_CallValue[i].Confidence;
-    }
-    price = exp(-(option.r*option.t)) * (sum/(double)nSim);
-    empstd = sqrt((double)((double)nSim * sum2 - sum * sum)
-                         /((double)nSim * (double)(nSim - 1)));
-    callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
-    callValue.Expected = price;
+	for( i=0; i<opt->t; i+=dt){
+    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue));
+    	//MEMORY CPY: prices per block
+    	CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
+    	// Closing Monte Carlo
+    	long double sum=0, sum2=0, price, empstd;
+        long int nSim = numBlocks * PATH;
+   	    for ( i = 0; i < numBlocks; i++ ){
+   	        sum += h_CallValue[i].Expected;
+   	        sum2 += h_CallValue[i].Confidence;
+   	    }
+   	    price = exp(-(option.r*option.t)) * (sum/(double)nSim);
+        empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    	callValue[i].Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
+    	callValue[i].Expected = price;
+	}
 
     //Free memory space
     CudaCheck(cudaFree(RNG));
