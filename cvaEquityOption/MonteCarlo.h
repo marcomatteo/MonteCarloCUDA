@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include "helper_cuda.h"
 
 #define N 1
 #define MAX_BLOCKS 1000
@@ -30,27 +31,6 @@
 				cudaGetErrorString(_m_cudaStat), __LINE__, __FILE__);		\
 		exit(1);															\
 	} }
-#endif
-
-#ifdef __DRIVER_TYPES_H__
-// This will output the proper CUDA error strings in the event that a CUDA host call returns an error
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
-
-// This will output the proper error string when calling cudaGetLastError
-#define getLastCudaError(msg)      __getLastCudaError (msg, __FILE__, __LINE__)
-
-inline void __getLastCudaError(const char *errorMessage, const char *file, const int line)
-{
-    cudaError_t err = cudaGetLastError();
-
-    if (cudaSuccess != err)
-    {
-        fprintf(stderr, "%s(%i) : getLastCudaError() CUDA error : %s : (%d) %s.\n",
-                file, line, errorMessage, (int)err, cudaGetErrorString(err));
-        DEVICE_RESET
-        exit(EXIT_FAILURE);
-    }
-}
 #endif
 
 typedef struct {
