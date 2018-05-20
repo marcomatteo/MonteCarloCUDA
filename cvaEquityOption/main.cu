@@ -24,7 +24,7 @@ extern "C" OptionValue host_vanillaOpt(OptionData, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
 
 //	CVA: per ora è in test la simulazione delle Expected Exposures
-extern "C" double* dev_cvaEquityOption(OptionData *, CreditData, int, int, int);
+extern "C" OptionValue* dev_cvaEquityOption(OptionData *, CreditData, int, int, int);
 
 
 ///////////////////////////////////

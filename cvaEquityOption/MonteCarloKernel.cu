@@ -257,7 +257,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return callValue;
 }
 
-extern "C" double* dev_cvaEquityOption(OptionData *opt, CreditData credit, int n, int numBlocks, int numThreads){
+extern "C" OptionValue* dev_cvaEquityOption(OptionData *opt, CreditData credit, int n, int numBlocks, int numThreads){
     int i;
     double dt = opt->t / n;
     // Alloco dinamicamente il vettore di prezzi EE simulati con Monte Carlo
