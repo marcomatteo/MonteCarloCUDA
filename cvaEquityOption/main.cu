@@ -144,7 +144,8 @@ int main(int argc, const char * argv[]) {
     OptionValue *GPU_sim = (OptionValue *)malloc(sizeof(OptionValue)*(n+1));
     OptionValue gpuPrice;
     
-    //float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
+    //float CPU_timeSpent=0, speedup;
+    float GPU_timeSpent=0;
     double *price = (double*)malloc(sizeof(double)*(n+1));
     double *bs_price = (double*)malloc(sizeof(double)*(n+1));
     double difference;
