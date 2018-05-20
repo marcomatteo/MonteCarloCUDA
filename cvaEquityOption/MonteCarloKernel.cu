@@ -63,9 +63,9 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
             bt[j] += OPTION.d[j];
 
         //	Second step: Price simulation
-        for(j=0;j<N;j++){
+        for(j=0;j<N;j++)
                 s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*t+OPTION.v[j] * bt[j] * sqrt(t));
-        }
+
 
         // Third step: Mean price
         for(j=0;j<N;j++)
