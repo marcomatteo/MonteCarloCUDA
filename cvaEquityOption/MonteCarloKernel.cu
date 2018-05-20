@@ -329,9 +329,9 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
 
 	for( i=0; i<(n+1); i+=2){
     	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream0>>>(RNG,(OptionValue *)(d_CallValue0),((double)i*dt));
-    	getLastCudaError("MultiMCBasketOptKernel - 1 execution failed\n");
+    	cuda_error_check("Primo kernel","");
     	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream1>>>(RNG,(OptionValue *)(d_CallValue1),((double)(i+1)*dt));
-    	getLastCudaError("MultiMCBasketOptKernel - 2 execution failed\n");
+    	cuda_error_check("Secondo kernel","");
     	//MEMORY CPY: prices per block
     	CudaCheck(cudaMemcpyAsync(h_CallValue0, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
     	CudaCheck(cudaMemcpyAsync(h_CallValue1, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
@@ -352,6 +352,8 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     	empstd = sqrt((double)((double)nSim * sum4 - sum3 * sum3)/((double)nSim * (double)(nSim - 1)));
         callValue[i+1].Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
         callValue[i+1].Expected = price;
+        CudaCheck(cudaStreamSynchronize(stream0));
+        CudaCheck(cudaStreamSynchronize(stream1));
 	}
 
     //Free memory space
@@ -360,4 +362,6 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     CudaCheck(cudaFree(d_CallValue0));
     CudaCheck(cudaFreeHost(h_CallValue1));
     CudaCheck(cudaFree(d_CallValue1));
+    CudaCheck(cudaStreamDestroy(stream0));
+    CudaCheck(cudaStreamDestroy(stream1));
 }
