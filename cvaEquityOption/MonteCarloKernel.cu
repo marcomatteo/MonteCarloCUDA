@@ -264,9 +264,10 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     int i;
     double dt = opt.t / (double)n;
     /*----------------- HOST MEMORY -------------------*/
-    OptionValue *h_CallValue;
+    OptionValue *h_CallValue0, *h_CallValue1;
     //Allocation pinned host memory for prices
-    CudaCheck(cudaHostAlloc(&h_CallValue, sizeof(OptionValue)*(numBlocks),cudaHostAllocDefault));
+    CudaCheck(cudaHostAlloc(&h_CallValue0, sizeof(OptionValue)*(numBlocks),cudaHostAllocDefault));
+    CudaCheck(cudaHostAlloc(&h_CallValue1, sizeof(OptionValue)*(numBlocks),cudaHostAllocDefault));
 
     /*--------------- CONSTANT MEMORY ----------------*/
     MultiOptionData option;
@@ -280,9 +281,15 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     option.t = opt.t;
     CudaCheck(cudaMemcpyToSymbol(OPTION,&option,sizeof(MultiOptionData)));
 
+    /*-------------	STREAMS -----------------*/
+    cudaStream_t stream0, stream1;
+    CudaCheck(cudaStreamCreate(&stream0));
+    CudaCheck(cudaStreamCreate(&stream1));
+
     /*----------------- DEVICE MEMORY -------------------*/
-    OptionValue *d_CallValue;
-    CudaCheck(cudaMalloc(&d_CallValue, sizeof(OptionValue)*(numBlocks)));
+    OptionValue *d_CallValue0,*d_CallValue1;
+    CudaCheck(cudaMalloc(&d_CallValue0, sizeof(OptionValue)*(numBlocks)));
+    CudaCheck(cudaMalloc(&d_CallValue1, sizeof(OptionValue)*(numBlocks)));
 
     /*----------------- SHARED MEMORY -------------------*/
     int numShared = sizeof(double) * numThreads * 2;
@@ -320,22 +327,29 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     CudaCheck( cudaEventDestroy( stop ));
 	*/
 
-	for( i=0; i<n+1; i++){
-    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue),((double)i*dt));
+	for( i=0; i<(n+1); i+=2){
+    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream0>>>(RNG,(OptionValue *)(d_CallValue0),((double)i*dt));
+    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream1>>>(RNG,(OptionValue *)(d_CallValue1),((double)(i+1)*dt));
     	//MEMORY CPY: prices per block
-    	CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
+    	CudaCheck(cudaMemcpyAsync(h_CallValue0, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
+    	CudaCheck(cudaMemcpyAsync(h_CallValue1, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
     	// Closing Monte Carlo
-    	long double sum=0, sum2=0, price, empstd;
+    	long double sum1=0, sum2=0, sum3=0, sum4=0, price, empstd;
         long int nSim = numBlocks * PATH;
    	    for ( i = 0; i < numBlocks; i++ ){
-   	        sum += h_CallValue[i].Expected;
+   	        sum1 += h_CallValue[i].Expected;
    	        sum2 += h_CallValue[i].Confidence;
+   	        sum3 += h_CallValue[i].Expected;
+   	       	sum4 += h_CallValue[i].Confidence;
    	    }
-   	    price = exp(-(option.r*option.t)) * (sum/(double)nSim);
-        empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+   	    price = exp(-(option.r*option.t)) * (sum1/(double)nSim);
+        empstd = sqrt((double)((double)nSim * sum2 - sum1 * sum1)/((double)nSim * (double)(nSim - 1)));
         callValue[i].Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
     	callValue[i].Expected = price;
-    	printf("\nPrezzo simulato[%d]: %f\n",i, price);
+    	price = exp(-(option.r*option.t)) * (sum3/(double)nSim);
+    	empstd = sqrt((double)((double)nSim * sum4 - sum3 * sum3)/((double)nSim * (double)(nSim - 1)));
+        callValue[i+1].Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
+        callValue[i+1].Expected = price;
 	}
 
     //Free memory space
