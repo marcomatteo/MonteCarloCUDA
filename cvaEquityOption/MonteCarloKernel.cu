@@ -329,7 +329,7 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     /*
     CudaCheck( cudaEventRecord( start, 0 ));
 
-    // Qui ci andrebbe Monte Carlo
+    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream0>>>(RNG,(OptionValue *)(d_CallValue0),((double)i*dt));
 
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
