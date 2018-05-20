@@ -337,10 +337,10 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     	long double sum1=0, sum2=0, sum3=0, sum4=0, price, empstd;
         long int nSim = numBlocks * PATH;
    	    for ( i = 0; i < numBlocks; i++ ){
-   	        sum1 += h_CallValue[i].Expected;
-   	        sum2 += h_CallValue[i].Confidence;
-   	        sum3 += h_CallValue[i].Expected;
-   	       	sum4 += h_CallValue[i].Confidence;
+   	        sum1 += h_CallValue0[i].Expected;
+   	        sum2 += h_CallValue0[i].Confidence;
+   	        sum3 += h_CallValue1[i].Expected;
+   	       	sum4 += h_CallValue1[i].Confidence;
    	    }
    	    price = exp(-(option.r*option.t)) * (sum1/(double)nSim);
         empstd = sqrt((double)((double)nSim * sum2 - sum1 * sum1)/((double)nSim * (double)(nSim - 1)));
@@ -354,6 +354,8 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
 
     //Free memory space
     CudaCheck(cudaFree(RNG));
-    CudaCheck(cudaFreeHost(h_CallValue));
-    CudaCheck(cudaFree(d_CallValue));
+    CudaCheck(cudaFreeHost(h_CallValue0));
+    CudaCheck(cudaFree(d_CallValue0));
+    CudaCheck(cudaFreeHost(h_CallValue1));
+    CudaCheck(cudaFree(d_CallValue1));
 }
