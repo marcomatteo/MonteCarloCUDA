@@ -190,7 +190,7 @@ int main(int argc, const char * argv[]) {
     GPU_timeSpent /= 1000;
     
     printf("\nPrezzi Simulati:\n");
-   	printf("|\ti\t|\tPrezzi\t|\n");
+   	printf("|\ti\t|\tPrezzi\t\t|\n");
    	for(i=0;i<n+1;i++)
    		printf("|\t%d\t|\t%f\t|\n",i,GPU_sim[i].Expected);
 
@@ -199,7 +199,7 @@ int main(int argc, const char * argv[]) {
     // Comparing time spent with the two methods
     printf( "-\tComparing results:\t-\n");
     printf("\nDifferenza Prezzi:\n");
-  	printf("|\ti\t|\tPrezzo\t|\n");
+  	printf("|\ti\t|\tPrezzi\t\t|\n");
   	for(i=0;i<n+1;i++){
   		difference = abs(GPU_sim[i].Expected - bs_price[i]);
    		printf("|\t%d\t|\t%f\t|\n",i,difference);

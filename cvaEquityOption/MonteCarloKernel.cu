@@ -334,7 +334,7 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     	cuda_error_check("Secondo kernel","");
     	//MEMORY CPY: prices per block
     	CudaCheck(cudaMemcpyAsync(h_CallValue0, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
-    	CudaCheck(cudaMemcpyAsync(h_CallValue1, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
+    	CudaCheck(cudaMemcpyAsync(h_CallValue1, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream1));
     	// Closing Monte Carlo
     	long double sum1=0, sum2=0, sum3=0, sum4=0, price, empstd;
         int nSim = numBlocks * PATH;
