@@ -119,6 +119,9 @@ int main(int argc, const char * argv[]) {
 	option.k= 100.f;
 	option.r= 0.048790164;
 	option.t= 1.f;
+
+	CreditData credit = {0,0,0};
+
 	printf("Expected Exposures of an Equity Option\n");
 
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
@@ -134,7 +137,7 @@ int main(int argc, const char * argv[]) {
 	// PARAMETRI PER LA SIMULAZIONE EE
 	// Scelta da tastiera del numero di simulazioni: di default 40
 	int n = 40, i;
-	double dt = t/(double)n;
+	double dt = option.t/(double)n;
 
     /*---------------- CORE COMPUTATIONS ----------------*/
 	// Puntatore al vettore di prezzi simulati
@@ -177,7 +180,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    GPU_sim = dev_cvaEquityOption(&option, numBlocks, numThreads);
+    GPU_sim = dev_cvaEquityOption(&option, credit, n, numBlocks, numThreads);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
