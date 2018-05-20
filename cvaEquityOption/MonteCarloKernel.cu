@@ -335,6 +335,7 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
         empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
         callValue[i].Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
     	callValue[i].Expected = price;
+    	printf("\nPrezzo simulato[%d]: %f\n",i, price);
 	}
 
     //Free memory space
