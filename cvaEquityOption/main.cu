@@ -24,7 +24,7 @@ extern "C" OptionValue host_vanillaOpt(OptionData, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
 
 //	CVA: per ora è in test la simulazione delle Expected Exposures
-extern "C" OptionValue* dev_cvaEquityOption(OptionData *, CreditData, int, int, int);
+extern "C" void dev_cvaEquityOption(OptionValue*, OptionData, CreditData, int, int, int);
 
 
 ///////////////////////////////////
@@ -114,10 +114,10 @@ void choseParameters(int *numBlocks, int *numThreads){
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
 	OptionData option;
-	option.v = 0.2;
+	option.v = 0.25;
 	option.s = 100;
 	option.k= 100.f;
-	option.r= 0.048790164;
+	option.r= 0.05;
 	option.t= 1.f;
 
 	CreditData credit = {0,0,0};
@@ -141,7 +141,7 @@ int main(int argc, const char * argv[]) {
 
     /*---------------- CORE COMPUTATIONS ----------------*/
 	// Puntatore al vettore di prezzi simulati
-    OptionValue *GPU_sim = (OptionValue *)malloc(sizeof(OptionValue)*n);;
+    OptionValue *GPU_sim = (OptionValue *)malloc(sizeof(OptionValue)*n);
     
     float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
     double *price = (double*)malloc(sizeof(double)*n);
@@ -183,7 +183,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    GPU_sim = dev_cvaEquityOption(&option, credit, n, numBlocks, numThreads);
+    dev_cvaEquityOption(GPU_sim, option, credit, n, numBlocks, numThreads);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));

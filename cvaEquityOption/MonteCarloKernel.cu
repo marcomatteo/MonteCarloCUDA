@@ -260,11 +260,9 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return callValue;
 }
 
-extern "C" OptionValue* dev_cvaEquityOption(OptionData *opt, CreditData credit, int n, int numBlocks, int numThreads){
+extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, CreditData credit, int n, int numBlocks, int numThreads){
     int i;
-    double dt = opt->t / (double)n;
-    // Alloco dinamicamente il vettore di prezzi EE simulati con Monte Carlo
-    OptionValue *callValue = (OptionValue *)malloc(sizeof(OptionValue)*n);
+    double dt = opt.t / (double)n;
     /*----------------- HOST MEMORY -------------------*/
     OptionValue *h_CallValue;
     //Allocation pinned host memory for prices
@@ -275,11 +273,11 @@ extern "C" OptionValue* dev_cvaEquityOption(OptionData *opt, CreditData credit, 
     option.w[0] = 1;
     option.d[0] = 0;
     option.p[0][0] = 1;
-    option.s[0] = opt->s;
-    option.v[0] = opt->v;
-    option.k = opt->k;
-    option.r = opt->r;
-    option.t = opt->t;
+    option.s[0] = opt.s;
+    option.v[0] = opt.v;
+    option.k = opt.k;
+    option.r = opt.r;
+    option.t = opt.t;
     CudaCheck(cudaMemcpyToSymbol(OPTION,&option,sizeof(MultiOptionData)));
 
     /*----------------- DEVICE MEMORY -------------------*/
@@ -343,6 +341,4 @@ extern "C" OptionValue* dev_cvaEquityOption(OptionData *opt, CreditData credit, 
     CudaCheck(cudaFree(RNG));
     CudaCheck(cudaFreeHost(h_CallValue));
     CudaCheck(cudaFree(d_CallValue));
-
-    return callValue;
 }
