@@ -271,6 +271,38 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
     return callValue;
 }
+// da completare
+void dev_EE(OptionValue *callValue, cudaStream_t stream){
+	CudaCheck( cudaEventRecord( start, 0 ));
+	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue),0);
+	CudaCheck( cudaEventRecord( stop, 0));
+    CudaCheck( cudaEventSynchronize( stop ));
+    CudaCheck( cudaEventElapsedTime( &time, start, stop ));
+    printf( "Monte Carlo simulations done in %f milliseconds\n", time);
+    CudaCheck( cudaEventDestroy( start ));
+    CudaCheck( cudaEventDestroy( stop ));
+
+    //MEMORY CPY: prices per block
+    CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
+
+	// Closing Monte Carlo
+    long double sum=0, sum2=0, price, empstd;
+    long int nSim = numBlocks * PATH;
+    for ( i = 0; i < numBlocks; i++ ){
+    	sum += h_CallValue[i].Expected;
+	    sum2 += h_CallValue[i].Confidence;
+    }
+    price = exp(-(option.r*option.t)) * (sum/(double)nSim);
+    empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
+    callValue.Expected = price;
+
+    //Free memory space
+    CudaCheck(cudaFree(RNG));
+    CudaCheck(cudaFreeHost(h_CallValue));
+    CudaCheck(cudaFree(d_CallValue));
+
+}
 
 extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, CreditData credit, int n, int numBlocks, int numThreads){
     int i;
@@ -346,7 +378,7 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     	cuda_error_check("Secondo kernel","");
     	//MEMORY CPY: prices per block
     	CudaCheck(cudaMemcpyAsync(h_CallValue0, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
-    	CudaCheck(cudaMemcpyAsync(h_CallValue1, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream1));
+    	CudaCheck(cudaMemcpyAsync(h_CallValue1, d_CallValue1, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream1));
     	// Closing Monte Carlo
     	long double sum1=0, sum2=0, sum3=0, sum4=0, price, empstd;
         int nSim = numBlocks * PATH;
