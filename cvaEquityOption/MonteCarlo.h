@@ -35,7 +35,7 @@
 /*
  * Error handling from Cuda programming - shane cook
  */
-__host__ void cuda_error_check(const char * prefix, const char * postfix){
+void cuda_error_check(const char * prefix, const char * postfix){
 	if (cudaPeekAtLastError() != cudaSuccess){
 		printf("\n%s%s%s", prefix, cudaGetErrorString(cudaGetLastError()), postfix);
 		cudaDeviceReset();
