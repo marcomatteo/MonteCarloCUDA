@@ -140,13 +140,14 @@ int main(int argc, const char * argv[]) {
 	double dt = option.t/(double)n;
 
     /*---------------- CORE COMPUTATIONS ----------------*/
-	// Puntatore al vettore di prezzi simulati
-    OptionValue *GPU_sim = (OptionValue *)malloc(sizeof(OptionValue)*n);
+	// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
+    OptionValue *GPU_sim = (OptionValue *)malloc(sizeof(OptionValue)*(n+1));
     
     float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
     double *price = (double*)malloc(sizeof(double)*n);
     double *bs_price = (double*)malloc(sizeof(double)*n);
     double difference;
+    double originalBSprice;
 
     clock_t h_start, h_stop;
     cudaEvent_t d_start, d_stop;
@@ -154,16 +155,17 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_stop ));
 
     //	Black & Scholes price
+    originalBSprice = host_bsCall(option);
     for(i=0;i<n;i++){
-    	bs_price[i] = host_bsCall(option);
     	option.t -= dt;
+    	bs_price[i] = host_bsCall(option);
     }
 
     //	Ripristino valore originale del Time to mat
     option.t= 1.f;
 
    	printf("\nPrezzi Black & Scholes:\n");
-   	printf("|\ti\t|\tPrezzo\t|\n");
+   	printf("|\tOriginale\t|\%f\t|\n",originalBSprice);
    	for(i=0;i<n;i++)
    		printf("|\t%d\t|\t%f\t|\n",i,bs_price[i]);
 
@@ -190,7 +192,7 @@ int main(int argc, const char * argv[]) {
     GPU_timeSpent /= 1000;
     
     printf("\nPrezzi Simulati:\n");
-   	printf("|\ti\t|\Differenza di prezzo\t|\n");
+   	printf("|\ti\t|\tPrezzi\t|\n");
    	for(i=0;i<n;i++)
    		printf("|\t%d\t|\t%f\t|\n",i,GPU_sim[i].Expected);
 
@@ -199,7 +201,7 @@ int main(int argc, const char * argv[]) {
     // Comparing time spent with the two methods
     printf( "-\tComparing results:\t-\n");
     printf("\nDifferenza Prezzi:\n");
-  	printf("|\ti\t|\tPrezzo\t|");
+  	printf("|\ti\t|\tPrezzo\t|\n");
   	for(i=0;i<n;i++){
   		difference = abs(GPU_sim[i].Expected - bs_price[i]);
    		printf("|\t%d\t|\t%f\t|\n",i,difference);

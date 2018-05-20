@@ -320,7 +320,7 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     CudaCheck( cudaEventDestroy( stop ));
 	*/
 
-	for( i=0; i<n; i++){
+	for( i=0; i<n+1; i++){
     	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue),((double)i*dt));
     	//MEMORY CPY: prices per block
     	CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
@@ -333,7 +333,7 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
    	    }
    	    price = exp(-(option.r*option.t)) * (sum/(double)nSim);
         empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
-    	callValue[i].Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
+        callValue[i].Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
     	callValue[i].Expected = price;
 	}
 
