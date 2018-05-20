@@ -329,13 +329,15 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
 
 	for( i=0; i<(n+1); i+=2){
     	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream0>>>(RNG,(OptionValue *)(d_CallValue0),((double)i*dt));
+    	getLastCudaError("MultiMCBasketOptKernel - 1 execution failed\n");
     	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream1>>>(RNG,(OptionValue *)(d_CallValue1),((double)(i+1)*dt));
+    	getLastCudaError("MultiMCBasketOptKernel - 2 execution failed\n");
     	//MEMORY CPY: prices per block
     	CudaCheck(cudaMemcpyAsync(h_CallValue0, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
     	CudaCheck(cudaMemcpyAsync(h_CallValue1, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
     	// Closing Monte Carlo
     	long double sum1=0, sum2=0, sum3=0, sum4=0, price, empstd;
-        long int nSim = numBlocks * PATH;
+        int nSim = numBlocks * PATH;
    	    for ( i = 0; i < numBlocks; i++ ){
    	        sum1 += h_CallValue0[i].Expected;
    	        sum2 += h_CallValue0[i].Confidence;
