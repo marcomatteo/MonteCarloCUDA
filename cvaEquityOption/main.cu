@@ -159,10 +159,13 @@ int main(int argc, const char * argv[]) {
     	option.t -= dt;
     }
 
+    //	Ripristino valore originale del Time to mat
+    option.t= 1.f;
+
    	printf("\nPrezzi Black & Scholes:\n");
-   	printf("|\ti\t|\tPrezzo\t|");
+   	printf("|\ti\t|\tPrezzo\t|\n");
    	for(i=0;i<n;i++)
-   		printf("|\t%d\t|\t%.2d\t|\n",i,bs_price[i]);
+   		printf("|\t%d\t|\t%f\t|\n",i,bs_price[i]);
 
     // CPU Monte Carlo
     /*
@@ -187,9 +190,9 @@ int main(int argc, const char * argv[]) {
     GPU_timeSpent /= 1000;
     
     printf("\nPrezzi Simulati:\n");
-   	printf("|\ti\t|\tPrezzo\t|");
+   	printf("|\ti\t|\Differenza di prezzo\t|\n");
    	for(i=0;i<n;i++)
-   		printf("|\t%d\t|\t%.2d\t|\n",i,GPU_sim[i].Expected);
+   		printf("|\t%d\t|\t%f\t|\n",i,GPU_sim[i].Expected);
 
     printf("Total execution time: %f s\n\n", GPU_timeSpent);
     
@@ -199,7 +202,7 @@ int main(int argc, const char * argv[]) {
   	printf("|\ti\t|\tPrezzo\t|");
   	for(i=0;i<n;i++){
   		difference = abs(GPU_sim[i].Expected - bs_price[i]);
-   		printf("|\t%d\t|\t%.2d\t|\n",i,difference);
+   		printf("|\t%d\t|\t%f\t|\n",i,difference);
   	}
 
     return 0;

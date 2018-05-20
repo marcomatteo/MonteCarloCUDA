@@ -12,13 +12,16 @@
 
 __device__ __constant__ MultiOptionData OPTION;
 
-__global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
+__global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue, double z){
     int i,j;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
     // Parameter for reduction
     int blockIndex = blockIdx.x;
+
+    //	Parametro opzionale z, che se >1 riduce il valore del Time to maturity dell'opzione
+    double t = OPTION.t - z;
 
     /*------------------ SHARED MEMORY DICH ----------------*/
     extern __shared__ double s_Sum[];
@@ -61,7 +64,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
         //	Second step: Price simulation
         for(j=0;j<N;j++){
-                s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
+                s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*t+OPTION.v[j] * bt[j] * sqrt(t));
         }
 
         // Third step: Mean price
@@ -259,7 +262,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
 extern "C" OptionValue* dev_cvaEquityOption(OptionData *opt, CreditData credit, int n, int numBlocks, int numThreads){
     int i;
-    double dt = opt->t / n;
+    double dt = opt->t / (double)n;
     // Alloco dinamicamente il vettore di prezzi EE simulati con Monte Carlo
     OptionValue *callValue = (OptionValue *)malloc(sizeof(OptionValue)*n);
     /*----------------- HOST MEMORY -------------------*/
@@ -319,8 +322,8 @@ extern "C" OptionValue* dev_cvaEquityOption(OptionData *opt, CreditData credit, 
     CudaCheck( cudaEventDestroy( stop ));
 	*/
 
-	for( i=0; i<opt->t; i+=dt){
-    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue));
+	for( i=0; i<n; i++){
+    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue),((double)i*dt));
     	//MEMORY CPY: prices per block
     	CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
     	// Closing Monte Carlo
