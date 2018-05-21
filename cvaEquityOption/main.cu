@@ -169,7 +169,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(cva, numBlocks, numThreads);
+    dev_cvaEquityOption(&cva, numBlocks, numThreads);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
@@ -178,7 +178,7 @@ int main(int argc, const char * argv[]) {
     printf("\nTotal execution time: %f s\n\n", GPU_timeSpent);
 
     printf("\nPrezzi Simulati:\n");
-   	printf("|\ti\t|\tPrezzi BS\t\t|\tDifferenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
+   	printf("|\ti\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
    	for(i=0;i<cva.n+1;i++){
    		difference = abs(cva.ee[i].Expected - bs_price[i]);
    		printf("|\t%d\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
@@ -194,5 +194,9 @@ int main(int argc, const char * argv[]) {
    		printf("|\t%d\t|\t%f\t|\n",i,difference);
   	}
 */
+   	free(cva.dp);
+   	free(cva.ee);
+   	free(price);
+   	free(bs_price);
     return 0;
 }

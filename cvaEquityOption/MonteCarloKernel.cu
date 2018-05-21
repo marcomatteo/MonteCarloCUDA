@@ -291,53 +291,50 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-extern "C" void dev_cvaEquityOption(CVA cva, int numBlocks, int numThreads){
+extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
     int i;
-    double dt = cva.opt.t / (double)cva.n;
+    double dt = cva->opt.t / (double)cva->n;
 
-    /*--------------- CONSTANT MEMORY ----------------*/
-    MultiOptionData option;
-    option.w[0] = 1;
-    option.d[0] = 0;
-    option.p[0][0] = 1;
-    option.s[0] = cva.opt.s;
-    option.v[0] = cva.opt.v;
-    option.k = cva.opt.k;
-    option.r = cva.opt.r;
-    option.t = cva.opt.t;
-
+    // Preparazione per Monte Carlo
+    // Parametri constant memory
+    MonteCarloData data;
+    data.option.w[0] = 1;
+    data.option.d[0] = 0;
+    data.option.p[0][0] = 1;
+    data.option.s[0] = cva.opt.s;
+    data.option.v[0] = cva.opt.v;
+    data.option.k = cva.opt.k;
+    data.option.r = cva.opt.r;
+    data.option.t = cva.opt.t;
+    // Parametri simulazione
+    data.numBlocks = numBlocks;
+    data.numThreads = numThreads;
 
 /*	//-------------	STREAMS -----------------
     cudaStream_t stream0, stream1;
     CudaCheck(cudaStreamCreate(&stream0));
     CudaCheck(cudaStreamCreate(&stream1));
 */
-    // Preparazione per Monte Carlo
-    MonteCarloData data;
-    data.option = option;
-    data.numBlocks = numBlocks;
-    data.numThreads = numThreads;
-
     MonteCarlo_init(&data);
     // Calcolo prezzo originale
     MonteCarlo(&data);
     // Salvo nel vettore dei prezzi
-    cva.ee[0] = data.callValue;
+    cva->ee[0] = data.callValue;
     // Calcolo per ogni epoca le EE, Def Prob e il loro prodotto
     double sommaProdotto=0;
-	for( i=1; i<(cva.n+1); i++){
+	for( i=1; i<(cva->n+1); i++){
 		if((data.option.t -= dt)<0){
-			cva.ee[i].Confidence = 0;
-			cva.ee[i].Expected = 0;
+			cva->ee[i].Confidence = 0;
+			cva->ee[i].Expected = 0;
 		}
 		else{
 			MonteCarlo(&data);
-			cva.ee[i] = data.callValue;
+			cva->ee[i] = data.callValue;
 		}
-		cva.dp[i] = exp(-(i-1) *cva.credit.creditspread / 10000 / cva.credit.lgd)
-				- exp(-i * cva.credit.creditspread / 10000 / cva.credit.lgd );
-		sommaProdotto += cva.ee[i].Expected * cva.dp[i];
+		cva->dp[i] = exp(-(i-1) *cva->credit.creditspread / 10000 / cva->credit.lgd)
+				- exp(-i * cva->credit.creditspread / 10000 / cva->credit.lgd );
+		sommaProdotto += cva->ee[i].Expected * cva->dp[i];
 	}
-	cva.cva = sommaProdotto*cva.credit.lgd;
+	cva->cva = sommaProdotto*cva->credit.lgd;
 	MonteCarlo_free(&data);
 }
