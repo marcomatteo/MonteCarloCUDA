@@ -323,7 +323,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
     // Calcolo per ogni epoca le EE, Def Prob e il loro prodotto
     double sommaProdotto=0;
 	for( i=1; i<(cva->n+1); i++){
-		if((data.option.t -= (dt*i))<0){
+		if((data.option.t -= (dt))<0){
 			cva->ee[i].Confidence = 0;
 			cva->ee[i].Expected = 0;
 		}
