@@ -301,11 +301,11 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
     data.option.w[0] = 1;
     data.option.d[0] = 0;
     data.option.p[0][0] = 1;
-    data.option.s[0] = cva.opt.s;
-    data.option.v[0] = cva.opt.v;
-    data.option.k = cva.opt.k;
-    data.option.r = cva.opt.r;
-    data.option.t = cva.opt.t;
+    data.option.s[0] = cva->opt.s;
+    data.option.v[0] = cva->opt.v;
+    data.option.k = cva->opt.k;
+    data.option.r = cva->opt.r;
+    data.option.t = cva->opt.t;
     // Parametri simulazione
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
