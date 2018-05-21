@@ -95,7 +95,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         for(j=0;j<N;j++)
         	g[j]=curand_normal(&threadState);
         */
-    	randomGen(&g,&threadState);
+    	randomGen(g,&threadState);
 
         /* A*G
         double somma;
@@ -109,13 +109,13 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
             bt[j] = somma;
         }
         */
-    	brownianVect(&bt,&g);
+    	brownianVect(bt,g);
 
         /* X=m+A*G
         for(j=0;j<N;j++)
             bt[j] += OPTION.d[j];
         */
-        brownianDrift(&bt);
+        brownianDrift(bt);
 
         /*
          * Second step: Price simulation
@@ -129,7 +129,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         if(price<0)
             price = 0.0f;
         */
-        blackScholes(&price,&bt);
+        blackScholes(&price,bt);
 
         //	Fifth step:	Monte Carlo price sum
         sum.Expected += price;
@@ -299,7 +299,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     	OptionValue callValue, *h_CallValue=NULL, *d_CallValue=NULL;
 
         /*------------ RNGs and TIME VARIABLES --------------*/
-        curandState *RNG;
+        curandState *RNG=NULL;
 
         MonteCarlo_init(h_CallValue, d_CallValue, RNG, numBlocks, numThreads);
 
