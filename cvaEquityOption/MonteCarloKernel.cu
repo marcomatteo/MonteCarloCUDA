@@ -215,7 +215,7 @@ OptionValue MonteCarlo(MultiOptionData option, OptionValue **h_CallValue, Option
 	cuda_error_check("\nLancio Kernel Monte Carlo "," fallito \n");
 
 	//MEMORY CPY: prices per block
-	CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
+	CudaCheck(cudaMemcpy(*h_CallValue, *d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
 
 	// Closing Monte Carlo
 	long double sum=0, sum2=0, price, empstd;
