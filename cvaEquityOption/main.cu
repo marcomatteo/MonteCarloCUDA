@@ -155,10 +155,12 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_stop ));
 
     //	Black & Scholes price
-    for(i=0;i<n+1;i++){
-    	bs_price[i] = host_bsCall(option);
+    bs_price[0] = host_bsCall(option);
+    for(i=1;i<n+1;i++){
     	if((option.t -= dt)<0)
-    		option.t = 0;
+    		bs_price[i] = 0;
+    	else
+    		bs_price[i] = host_bsCall(option);
     }
 
     //	Ripristino valore originale del Time to mat

@@ -323,9 +323,12 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     callValue[0] = data.callValue;
 
 	for( i=1; i<(n+1); i++){
-		data.option.t -= dt;
-		MonteCarlo(&data);
-		callValue[i] = data.callValue;
+		if((data.option.t -= dt)<0)
+			callValue[i] = 0;
+		else{
+			MonteCarlo(&data);
+			callValue[i] = data.callValue;
+		}
 	}
 
 	MonteCarlo_free(&data);
