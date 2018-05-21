@@ -22,6 +22,14 @@ void cuda_error_check(const char * prefix, const char * postfix){
 	}
 }
 
+typedef struct{
+	OptionValue *h_CallValue, *d_CallValue;
+	OptionValue callValue;
+    curandState *RNG;
+    int numBlocks, numThreads;
+    MultiOptionData option;
+} MonteCarloData;
+
 // Inizializzazione per Monte Carlo da fare una volta sola
 void MonteCarlo_init(OptionValue *h_CallValue, OptionValue *d_CallValue, curandState *RNG, int numBlocks, int numThreads);
 // Liberazione della memoria da fare una volta sola
