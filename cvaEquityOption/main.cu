@@ -166,11 +166,6 @@ int main(int argc, const char * argv[]) {
     //	Ripristino valore originale del Time to mat
     option.t= 1.f;
 
-   	printf("\nPrezzi Black & Scholes:\n");
-   	printf("|\ti\t|\tPrezzi\t\t|\n");
-   	for(i=0;i<cva.n+1;i++)
-   		printf("|\t%d\t|\t%f\t|\n",i,bs_price[i]);
-
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
@@ -180,12 +175,16 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     GPU_timeSpent /= 1000;
 
+    printf("\nTotal execution time: %f s\n\n", GPU_timeSpent);
+
     printf("\nPrezzi Simulati:\n");
-   	printf("|\ti\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
-   	for(i=0;i<cva.n+1;i++)
-   		printf("|\t%d\t|\t%f\t|\t%f\t|\n",i,cva.ee[i].Expected,cva.dp[i]);
-
-
+   	printf("|\ti\t|\tPrezzi BS\t\t|\tDifferenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
+   	for(i=0;i<cva.n+1;i++){
+   		difference = abs(cva.ee[i].Expected - bs_price[i]);
+   		printf("|\t%d\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
+   	}
+   	printf("\nCVA: %f\n",cva.cva);
+/*
     // Comparing time spent with the two methods
     printf( "\n-\tComparing results:\t-\n");
     printf("\nDifferenza Prezzi:\n");
@@ -194,6 +193,6 @@ int main(int argc, const char * argv[]) {
   		difference = abs(cva.ee[i].Expected - bs_price[i]);
    		printf("|\t%d\t|\t%f\t|\n",i,difference);
   	}
-
+*/
     return 0;
 }
