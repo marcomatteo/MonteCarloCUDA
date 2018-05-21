@@ -86,13 +86,13 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
-    	double price=0.0f;
+    	double price=0.0f, g[N], bt[N], s[N], st_sum=0.0f;
 
-        /* RNGs
+        // RNGs
         for(j=0;j<N_OPTION;j++)
         	g[j]=curand_normal(&threadState);
-        */
-        /* A*G
+
+        // A*G
         double somma;
         int j,k;
         for(j=0;j<N_OPTION;j++){
@@ -103,25 +103,24 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
          	//result->data[i][j] = somma;
             bt[j] = somma;
         }
-        X=m+A*G
+        //X=m+A*G
         for(j=0;j<N_OPTION;j++)
             bt[j] += OPTION.d[j];
-        */
-    	brownianVect(bt,threadState);
 
-        /*
-         * Second step: Price simulation
+    	//brownianVect(bt,threadState);
+
+        // Second step: Price simulation
         for(j=0;j<N_OPTION;j++)
                 s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
-         * Third step: Mean price
+        // Third step: Mean price
         for(j=0;j<N_OPTION;j++)
             st_sum += s[j] * OPTION.w[j];
-         * Fourth step: Option payoff
+        // Fourth step: Option payoff
         price = st_sum - OPTION.k;
         if(price<0)
             price = 0.0f;
-        */
-        blackScholes(&price,bt);
+
+        //blackScholes(&price,bt);
 
         //	Fifth step:	Monte Carlo price sum
         sum.Expected += price;
