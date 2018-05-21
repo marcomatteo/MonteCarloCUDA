@@ -168,7 +168,7 @@ int main(int argc, const char * argv[]) {
 
    	printf("\nPrezzi Black & Scholes:\n");
    	printf("|\ti\t|\tPrezzi\t\t|\n");
-   	for(i=0;i<n+1;i++)
+   	for(i=0;i<cva.n+1;i++)
    		printf("|\t%d\t|\t%f\t|\n",i,bs_price[i]);
 
     // GPU Monte Carlo
@@ -182,7 +182,7 @@ int main(int argc, const char * argv[]) {
 
     printf("\nPrezzi Simulati:\n");
    	printf("|\ti\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
-   	for(i=0;i<n+1;i++)
+   	for(i=0;i<cva.n+1;i++)
    		printf("|\t%d\t|\t%f\t|\t%f\t|\n",i,cva.ee[i].Expected,cva.dp[i]);
 
 
@@ -190,7 +190,7 @@ int main(int argc, const char * argv[]) {
     printf( "\n-\tComparing results:\t-\n");
     printf("\nDifferenza Prezzi:\n");
   	printf("|\ti\t|\tPrezzi\t\t|\n");
-  	for(i=0;i<n+1;i++){
+  	for(i=0;i<cva.n+1;i++){
   		difference = abs(cva.ee[i].Expected - bs_price[i]);
    		printf("|\t%d\t|\t%f\t|\n",i,difference);
   	}
