@@ -90,11 +90,11 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     curandState threadState = randseed[tid];
 
     OptionValue sum = {0, 0};
-    double *bt=(double*)malloc(N_OPTION*sizeof(double));
+    //double *bt=(double*)malloc(N_OPTION*sizeof(double));
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
-    	double price=0.0f, g[N], s[N], st_sum=0.0f;
+    	double price=0.0f, g[N], s[N], bt[N], st_sum=0.0f;
     	int j,k;
 
         // RNGs
