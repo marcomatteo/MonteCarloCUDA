@@ -196,10 +196,10 @@ int main(int argc, const char * argv[]) {
    	for(i=0;i<n+1;i++)
    		printf("|\t%d\t|\t%f\t|\n",i,GPU_sim[i].Expected);
 
-
+/*
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", gpuPrice.Expected, gpuPrice.Expected-gpuPrice.Confidence, gpuPrice.Expected+gpuPrice.Confidence);
     printf("Total execution time: %f s\n\n", GPU_timeSpent);
-    
+*/
     // Comparing time spent with the two methods
     printf( "-\tComparing results:\t-\n");
     printf("\nDifferenza Prezzi:\n");
