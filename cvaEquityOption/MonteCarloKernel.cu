@@ -60,7 +60,7 @@ __device__ void brownianVect(double *bt, curandState threadState){
 
 __device__ double blackScholes(double *bt){
 	int j;
-	double s[N], st_sum, price;
+	double s[N], st_sum=0, price;
 	for(j=0;j<N_OPTION;j++)
 	     s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
 	// Third step: Mean price
