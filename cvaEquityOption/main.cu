@@ -178,10 +178,10 @@ int main(int argc, const char * argv[]) {
     printf("\nTotal execution time: %f s\n\n", GPU_timeSpent);
 
     printf("\nPrezzi Simulati:\n");
-   	printf("|\ti\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
+   	printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
    	for(i=0;i<cva.n+1;i++){
    		difference = abs(cva.ee[i].Expected - bs_price[i]);
-   		printf("|\t%d\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
+   		printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
    	}
    	printf("\nCVA: %f\n",cva.cva);
 /*
