@@ -165,7 +165,7 @@ __global__ void randomSetup( curandState *randSeed ){
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
 
-void MonteCarlo_init(OptionValue *h_CallValue, OptionValue *d_CallValue, curandState *RNG, int numBlocks, int numThreads){
+void MonteCarlo_init(OptionValue **h_CallValue, OptionValue **d_CallValue, curandState *RNG, int numBlocks, int numThreads){
 	cudaEvent_t start, stop;
 	CudaCheck( cudaEventCreate( &start ));
     CudaCheck( cudaEventCreate( &stop ));
@@ -188,9 +188,9 @@ void MonteCarlo_init(OptionValue *h_CallValue, OptionValue *d_CallValue, curandS
     printf( "RNG done in %f milliseconds\n", time);
 
     //	Host Memory Allocation
-    CudaCheck(cudaMallocHost(&h_CallValue, sizeof(OptionValue)*(numBlocks)));
+    CudaCheck(cudaMallocHost(h_CallValue, sizeof(OptionValue)*(numBlocks)));
     //	Device Memory Allocation
-    CudaCheck(cudaMalloc((void**)&d_CallValue, sizeof(OptionValue)*(numBlocks)));
+    CudaCheck(cudaMalloc(d_CallValue, sizeof(OptionValue)*(numBlocks)));
 
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
@@ -309,7 +309,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
         /*------------ RNGs and TIME VARIABLES --------------*/
         curandState *RNG=NULL;
 
-        MonteCarlo_init(h_CallValue, d_CallValue, RNG, numBlocks, numThreads);
+        MonteCarlo_init(&h_CallValue, &d_CallValue, RNG, numBlocks, numThreads);
 
         /*--------------- CONSTANT MEMORY ----------------*/
         MultiOptionData option;
