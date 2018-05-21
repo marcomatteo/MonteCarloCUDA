@@ -149,7 +149,6 @@ int main(int argc, const char * argv[]) {
     double *bs_price = (double*)malloc(sizeof(double)*(n+1));
     double difference;
 
-    clock_t h_start, h_stop;
     cudaEvent_t d_start, d_stop;
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));

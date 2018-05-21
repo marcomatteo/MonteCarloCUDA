@@ -94,8 +94,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
-    	double price=0.0f, g[N], s[N], bt[N], st_sum=0.0f;
-    	int j,k;
+    	double price=0.0f bt[N];
 
     	brownianVect(bt,threadState);
         price=blackScholes(bt);
@@ -323,8 +322,10 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     callValue[0] = data.callValue;
 
 	for( i=1; i<(n+1); i++){
-		if((data.option.t -= dt)<0)
-			callValue[i] = 0;
+		if((data.option.t -= dt)<0){
+			callValue[i].Confidence = 0;
+			callValue[i].Expected = 0;
+		}
 		else{
 			MonteCarlo(&data);
 			callValue[i] = data.callValue;
