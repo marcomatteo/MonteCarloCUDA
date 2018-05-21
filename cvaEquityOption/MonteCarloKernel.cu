@@ -58,16 +58,19 @@ __device__ void brownianVect(double *bt, curandState threadState){
 		bt[i] += OPTION.d[i];
 }
 
-__device__ void blackScholes(double *price, double *bt){
-	int i;
-	double s[N], mean;
-	for(i=0;i<N_OPTION;i++)
-        s[i] = OPTION.s[i] * exp((OPTION.r - 0.5 * OPTION.v[i] * OPTION.v[i])*OPTION.t+OPTION.v[i] * bt[i] * sqrt(OPTION.t));
-	for(i=0;i<N_OPTION;i++)
-		mean += s[i] * OPTION.w[i];
-	*price = mean - OPTION.k;
-	if(*price<0)
-		*price = 0.0f;
+__device__ double blackScholes(double *bt){
+	int j;
+	double s[N], st_sum, price;
+	for(j=0;j<N_OPTION;j++)
+	     s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
+	// Third step: Mean price
+	for(j=0;j<N_OPTION;j++)
+		st_sum += s[j] * OPTION.w[j];
+	// Fourth step: Option payoff
+	price = st_sum - OPTION.k;
+	if(price<0)
+		price = 0.0f;
+	return price;
 }
 
 
@@ -125,7 +128,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         if(price<0)
             price = 0.0f;
 */
-        blackScholes(&price,bt);
+        price=blackScholes(bt);
 
         //	Fifth step:	Monte Carlo price sum
         sum.Expected += price;
