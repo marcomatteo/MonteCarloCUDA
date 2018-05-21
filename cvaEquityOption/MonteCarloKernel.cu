@@ -134,7 +134,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         sum.Expected += price;
         sum.Confidence += price*price;
     }
-    free(bt);
+    //free(bt);
     //Copy to the shared memory
     s_Sum[sumIndex] = sum.Expected;
     s_Sum[sum2Index] = sum.Confidence;
