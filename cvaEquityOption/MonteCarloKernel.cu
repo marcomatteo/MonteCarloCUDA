@@ -43,7 +43,7 @@ __device__ __constant__ int N_OPTION;
 
 __device__ void brownianVect(double *bt, curandState threadState){
 	int i,j;
-	double *g=(double*)malloc(N_OPTION*sizeof(double));
+	double g[N];
 	for(i=0;i<N_OPTION;i++)
 		g[i]=curand_normal(&threadState);
 	for(i=0;i<N_OPTION;i++){
@@ -56,12 +56,11 @@ __device__ void brownianVect(double *bt, curandState threadState){
 	}
 	for(i=0;i<N_OPTION;i++)
 		bt[i] += OPTION.d[i];
-	free(g);
 }
 
 __device__ void blackScholes(double *price, double *bt){
 	int i;
-	double *s=(double*)malloc(N_OPTION*sizeof(double)), mean;
+	double s[N], mean;
 	for(i=0;i<N_OPTION;i++)
         s[i] = OPTION.s[i] * exp((OPTION.r - 0.5 * OPTION.v[i] * OPTION.v[i])*OPTION.t+OPTION.v[i] * bt[i] * sqrt(OPTION.t));
 	for(i=0;i<N_OPTION;i++)
@@ -69,7 +68,6 @@ __device__ void blackScholes(double *price, double *bt){
 	*price = mean - OPTION.k;
 	if(*price<0)
 		*price = 0.0f;
-	free(s);
 }
 
 
@@ -90,13 +88,12 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     curandState threadState = randseed[tid];
 
     OptionValue sum = {0, 0};
-    //double *bt=(double*)malloc(N_OPTION*sizeof(double));
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
     	double price=0.0f, g[N], s[N], bt[N], st_sum=0.0f;
     	int j,k;
-
+/*
         // RNGs
         for(j=0;j<N_OPTION;j++)
         	g[j]=curand_normal(&threadState);
@@ -114,8 +111,8 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         //X=m+A*G
         for(j=0;j<N_OPTION;j++)
             bt[j] += OPTION.d[j];
-
-        //brownianVect(bt,threadState);
+*/
+        brownianVect(bt,threadState);
 
         // Second step: Price simulation
         for(j=0;j<N_OPTION;j++)
@@ -134,7 +131,6 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         sum.Expected += price;
         sum.Confidence += price*price;
     }
-    //free(bt);
     //Copy to the shared memory
     s_Sum[sumIndex] = sum.Expected;
     s_Sum[sum2Index] = sum.Confidence;
