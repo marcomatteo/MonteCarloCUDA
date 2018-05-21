@@ -24,7 +24,7 @@ extern "C" OptionValue host_vanillaOpt(OptionData, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
 
 //	CVA: per ora è in test la simulazione delle Expected Exposures
-extern "C" void dev_cvaEquityOption(OptionValue*, OptionData, CreditData, int, int, int);
+extern "C" void dev_cvaEquityOption(CVA cva, int numBlocks, int numThreads);
 
 
 ///////////////////////////////////
@@ -135,7 +135,9 @@ int main(int argc, const char * argv[]) {
 
 	CVA cva;
 	cva.n = 40;
-	cva.credit = {150,75,60};
+	cva.credit.creditspread=150;
+	cva.credit.fundingspread=75;
+	cva.credit.lgd=60;
 	cva.opt = option;
 	cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
 	// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
@@ -143,8 +145,8 @@ int main(int argc, const char * argv[]) {
 
     //float CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0;
-    double *price = (double*)malloc(sizeof(double)*(n+1));
-    double *bs_price = (double*)malloc(sizeof(double)*(n+1));
+    double *price = (double*)malloc(sizeof(double)*(cva.n+1));
+    double *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
     double difference;
 
     cudaEvent_t d_start, d_stop;
@@ -168,19 +170,6 @@ int main(int argc, const char * argv[]) {
    	printf("|\ti\t|\tPrezzi\t\t|\n");
    	for(i=0;i<n+1;i++)
    		printf("|\t%d\t|\t%f\t|\n",i,bs_price[i]);
-
-    // CPU Monte Carlo
-    /*
-    printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
-    h_start = clock();
-    CPU_sim=host_vanillaOpt(option, SIMS);
-    h_stop = clock();
-    CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
-    
-    price = CPU_sim.Expected;
-    printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
-    printf("Total execution time: %f s\n\n", CPU_timeSpent);
-     */
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
