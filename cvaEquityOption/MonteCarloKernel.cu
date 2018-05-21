@@ -35,7 +35,7 @@ __device__ __constant__ int N_OPTION;
 
 __device__ void brownianVect(double *bt, curandState threadState){
 	int i,j;
-	double *g=(int)malloc(N_OPTION*sizeof(int));
+	double *g=(double*)malloc(N_OPTION*sizeof(double));
 	for(i=0;i<N_OPTION;i++)
 		g[i]=curand_normal(&threadState);
 	for(i=0;i<N_OPTION;i++){
@@ -53,7 +53,7 @@ __device__ void brownianVect(double *bt, curandState threadState){
 
 __device__ void blackScholes(double *price, double *bt){
 	int i;
-	double *s=(double)malloc(N_OPTION*sizeof(double)), mean;
+	double *s=(double*)malloc(N_OPTION*sizeof(double)), mean;
 	for(i=0;i<N_OPTION;i++)
         s[i] = OPTION.s[i] * exp((OPTION.r - 0.5 * OPTION.v[i] * OPTION.v[i])*OPTION.t+OPTION.v[i] * bt[i] * sqrt(OPTION.t));
 	for(i=0;i<N_OPTION;i++)
@@ -85,7 +85,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
-    	double *bt=(double)malloc(N_OPTION*sizeof(double)), price=0.0f;
+    	double *bt=(double*)malloc(N_OPTION*sizeof(double)), price=0.0f;
 
         /* RNGs
         for(j=0;j<N_OPTION;j++)
