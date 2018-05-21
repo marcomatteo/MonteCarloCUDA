@@ -59,7 +59,7 @@ __device__ void brownianDrift(double *bt){
 
 __device__ void blackScholes(double *price, double *bt){
 	int i;
-	double s[N_OPTION], mean;
+	double s[N], mean;
 	for(i=0;i<N_OPTION;i++)
         s[i] = OPTION.s[i] * exp((OPTION.r - 0.5 * OPTION.v[i] * OPTION.v[i])*OPTION.t+OPTION.v[i] * bt[i] * sqrt(OPTION.t));
 	for(i=0;i<N_OPTION;i++)
@@ -90,7 +90,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
-    	double bt[N_OPTION], g[N_OPTION], price=0.0f;
+    	double bt[N], g[N], price=0.0f;
 
         /* RNGs
         for(j=0;j<N_OPTION;j++)
@@ -171,7 +171,7 @@ void MonteCarlo_init(OptionValue *h_CallValue, OptionValue *d_CallValue, curandS
     CudaCheck( cudaEventCreate( &stop ));
     float time;
 
-    int *n_option = N;
+    int n_option = N;
 
     /*--------------- CONSTANT MEMORY ----------------*/
     CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
