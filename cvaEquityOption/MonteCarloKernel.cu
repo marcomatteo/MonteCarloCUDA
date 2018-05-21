@@ -212,6 +212,7 @@ OptionValue MonteCarlo(MultiOptionData option, OptionValue *h_CallValue, OptionV
 	int i, numShared = sizeof(double) * numThreads * 2;
 
 	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue));
+	cuda_error_check("\nLancio Kernel Monte Carlo "," fallito \n");
 
 	//MEMORY CPY: prices per block
 	CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
