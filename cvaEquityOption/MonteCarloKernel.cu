@@ -322,7 +322,7 @@ extern "C" void dev_cvaEquityOption(CVA cva, int numBlocks, int numThreads){
     cva.ee[0] = data.callValue;
 
     double sommaProdotto=0;
-	for( i=1; i<(n+1); i++){
+	for( i=1; i<(cva.n+1); i++){
 		if((data.option.t -= dt)<0){
 			cva.ee[i].Confidence = 0;
 			cva.ee[i].Expected = 0;
@@ -335,6 +335,6 @@ extern "C" void dev_cvaEquityOption(CVA cva, int numBlocks, int numThreads){
 				- exp(-i * cva.credit.creditspread / 10000 / cva.credit.lgd );
 		sommaProdotto += cva.ee[i].Expected * cva.dp[i];
 	}
-	cva.cva = sommaProdotto*cva.credit.lgd
+	cva.cva = sommaProdotto*cva.credit.lgd;
 	MonteCarlo_free(&data);
 }
