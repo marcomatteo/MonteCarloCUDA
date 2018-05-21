@@ -221,8 +221,8 @@ OptionValue MonteCarlo(MultiOptionData option, OptionValue **h_CallValue, Option
 	long double sum=0, sum2=0, price, empstd;
     long int nSim = numBlocks * PATH;
     for ( i = 0; i < numBlocks; i++ ){
-    	sum += h_CallValue[i].Expected;
-	    sum2 += h_CallValue[i].Confidence;
+    	sum += *h_CallValue[i].Expected;
+	    sum2 += *h_CallValue[i].Confidence;
 	}
 	price = exp(-(option.r*option.t)) * (sum/(double)nSim);
     empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
