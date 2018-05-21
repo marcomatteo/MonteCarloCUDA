@@ -142,7 +142,6 @@ int main(int argc, const char * argv[]) {
     /*---------------- CORE COMPUTATIONS ----------------*/
 	// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
     OptionValue *GPU_sim = (OptionValue *)malloc(sizeof(OptionValue)*(n+1));
-    OptionValue gpuPrice;
     
     //float CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0;
@@ -186,18 +185,17 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    //dev_cvaEquityOption(GPU_sim, option, credit, n, numBlocks, numThreads);
-    gpuPrice=dev_vanillaOpt(&option, numBlocks, numThreads);
+    dev_cvaEquityOption(GPU_sim, option, credit, n, numBlocks, numThreads);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     GPU_timeSpent /= 1000;
-    /*
+
     printf("\nPrezzi Simulati:\n");
    	printf("|\ti\t|\tPrezzi\t\t|\n");
    	for(i=0;i<n+1;i++)
    		printf("|\t%d\t|\t%f\t|\n",i,GPU_sim[i].Expected);
-     */
+
 
     printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", gpuPrice.Expected, gpuPrice.Expected-gpuPrice.Confidence, gpuPrice.Expected+gpuPrice.Confidence);
     printf("Total execution time: %f s\n\n", GPU_timeSpent);

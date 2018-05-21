@@ -96,41 +96,11 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     	//vectors of brownian and ST
     	double price=0.0f, g[N], s[N], bt[N], st_sum=0.0f;
     	int j,k;
-/*
-        // RNGs
-        for(j=0;j<N_OPTION;j++)
-        	g[j]=curand_normal(&threadState);
 
-        // A*G
-        double somma;
-        for(j=0;j<N_OPTION;j++){
-        	somma = 0;
-         	for(k=0;k<N_OPTION;k++)
-         		//somma += first->data[i][k]*second->data[k][j];
-                somma += OPTION.p[j][k] * g[k];
-         	//result->data[i][j] = somma;
-            bt[j] = somma;
-        }
-        //X=m+A*G
-        for(j=0;j<N_OPTION;j++)
-            bt[j] += OPTION.d[j];
-*/
-        brownianVect(bt,threadState);
-/*
-        // Second step: Price simulation
-        for(j=0;j<N_OPTION;j++)
-                s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
-        // Third step: Mean price
-        for(j=0;j<N_OPTION;j++)
-            st_sum += s[j] * OPTION.w[j];
-        // Fourth step: Option payoff
-        price = st_sum - OPTION.k;
-        if(price<0)
-            price = 0.0f;
-*/
+    	brownianVect(bt,threadState);
         price=blackScholes(bt);
 
-        //	Fifth step:	Monte Carlo price sum
+
         sum.Expected += price;
         sum.Confidence += price*price;
     }
@@ -162,74 +132,7 @@ __global__ void randomSetup( curandState *randSeed ){
     // Each threadblock gets different seed, threads within a threadblock get different sequence numbers
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
-/*
-void MonteCarlo_init(OptionValue **h_CallValue, OptionValue **d_CallValue, curandState *RNG, int numBlocks, int numThreads){
-	cudaEvent_t start, stop;
-	CudaCheck( cudaEventCreate( &start ));
-    CudaCheck( cudaEventCreate( &stop ));
-    float time;
 
-    int n_option = N;
-
-    //--------------- CONSTANT MEMORY ----------------
-    CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
-
-	// RANDOM NUMBER GENERATION KERNEL
-	//Allocate states for pseudo random number generators
-	CudaCheck(cudaMalloc((void **) &RNG, numBlocks * numThreads * sizeof(curandState)));
-	//Setup for the random number sequence
-    CudaCheck( cudaEventRecord( start, 0 ));
-    randomSetup<<<numBlocks, numThreads>>>(RNG);
-    CudaCheck( cudaEventRecord( stop, 0));
-    CudaCheck( cudaEventSynchronize( stop ));
-    CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "RNG done in %f milliseconds\n", time);
-
-    //	Host Memory Allocation
-    CudaCheck(cudaMallocHost(h_CallValue, sizeof(OptionValue)*(numBlocks)));
-    //	Device Memory Allocation
-    CudaCheck(cudaMalloc(d_CallValue, sizeof(OptionValue)*(numBlocks)));
-
-    CudaCheck( cudaEventDestroy( start ));
-    CudaCheck( cudaEventDestroy( stop ));
-}
-
-void MonteCarlo_free(OptionValue *h_CallValue, OptionValue *d_CallValue, curandState *RNG){
-	//Free memory space
-	CudaCheck(cudaFree(RNG));
-    CudaCheck(cudaFreeHost(h_CallValue));
-    CudaCheck(cudaFree(d_CallValue));
-}
-
-OptionValue MonteCarlo(MultiOptionData option, OptionValue *h_CallValue, OptionValue *d_CallValue, curandState *RNG, int numBlocks, int numThreads){
-	OptionValue callValue;
-	//--------------- CONSTANT MEMORY ----------------
-	CudaCheck(cudaMemcpyToSymbol(OPTION,&option,sizeof(MultiOptionData)));
-
-	//----------------- SHARED MEMORY -------------------
-	int i, numShared = sizeof(double) * numThreads * 2;
-
-	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared>>>(RNG,(OptionValue *)(d_CallValue));
-	cuda_error_check("\nLancio Kernel Monte Carlo "," fallito \n");
-
-	//MEMORY CPY: prices per block
-	CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
-
-	// Closing Monte Carlo
-	long double sum=0, sum2=0, price, empstd;
-    long int nSim = numBlocks * PATH;
-    for ( i = 0; i < numBlocks; i++ ){
-    	sum += h_CallValue[i].Expected;
-	    sum2 += h_CallValue[i].Confidence;
-	}
-	price = exp(-(option.r*option.t)) * (sum/(double)nSim);
-    empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
-    callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
-    callValue.Expected = price;
-
-    return callValue;
-}
-*/
 void MonteCarlo_init(MonteCarloData *data){
 	cudaEvent_t start, stop;
 	CudaCheck( cudaEventCreate( &start ));
@@ -392,11 +295,6 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, CreditData credit, int n, int numBlocks, int numThreads){
     int i;
     double dt = opt.t / (double)n;
-    /*----------------- HOST MEMORY -------------------*/
-    OptionValue *h_CallValue0, *h_CallValue1;
-    //Allocation pinned host memory for prices
-    CudaCheck(cudaHostAlloc(&h_CallValue0, sizeof(OptionValue)*(numBlocks),cudaHostAllocDefault));
-    CudaCheck(cudaHostAlloc(&h_CallValue1, sizeof(OptionValue)*(numBlocks),cudaHostAllocDefault));
 
     /*--------------- CONSTANT MEMORY ----------------*/
     MultiOptionData option;
@@ -408,89 +306,28 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
     option.k = opt.k;
     option.r = opt.r;
     option.t = opt.t;
-    CudaCheck(cudaMemcpyToSymbol(OPTION,&option,sizeof(MultiOptionData)));
 
-    /*-------------	STREAMS -----------------*/
+
+/*	//-------------	STREAMS -----------------
     cudaStream_t stream0, stream1;
     CudaCheck(cudaStreamCreate(&stream0));
     CudaCheck(cudaStreamCreate(&stream1));
+*/
+    MonteCarloData data;
+    data.option = option;
+    data.numBlocks = numBlocks;
+    data.numThreads = numThreads;
 
-    /*----------------- DEVICE MEMORY -------------------*/
-    OptionValue *d_CallValue0,*d_CallValue1;
-    CudaCheck(cudaMalloc(&d_CallValue0, sizeof(OptionValue)*(numBlocks)));
-    CudaCheck(cudaMalloc(&d_CallValue1, sizeof(OptionValue)*(numBlocks)));
+    MonteCarlo_init(&data);
+    MonteCarlo(&data);
+    callValue[0] = data.callValue;
 
-    /*----------------- SHARED MEMORY -------------------*/
-    int numShared = sizeof(double) * numThreads * 2;
-
-    /*------------ RNGs and TIME VARIABLES --------------*/
-    curandState *RNG;
-    cudaEvent_t start, stop;
-    CudaCheck( cudaEventCreate( &start ));
-    CudaCheck( cudaEventCreate( &stop ));
-    float time;
-
-    // RANDOM NUMBER GENERATION KERNEL
-    //Allocate states for pseudo random number generators
-    CudaCheck(cudaMalloc((void **) &RNG, numBlocks * numThreads * sizeof(curandState)));
-    //Setup for the random number sequence
-    CudaCheck( cudaEventRecord( start, 0 ));
-    randomSetup<<<numBlocks, numThreads>>>(RNG);
-    CudaCheck( cudaEventRecord( stop, 0));
-    CudaCheck( cudaEventSynchronize( stop ));
-    CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "RNG done in %f milliseconds\n", time);
-
-
-    //MONTE CARLO KERNEL
-    /*
-    CudaCheck( cudaEventRecord( start, 0 ));
-
-    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream0>>>(RNG,(OptionValue *)(d_CallValue0),((double)i*dt));
-
-    CudaCheck( cudaEventRecord( stop, 0));
-    CudaCheck( cudaEventSynchronize( stop ));
-    CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "Monte Carlo simulations done in %f milliseconds\n", time);
-    CudaCheck( cudaEventDestroy( start ));
-    CudaCheck( cudaEventDestroy( stop ));
-	*/
-
-	for( i=0; i<(n+1); i+=2){
-    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream0>>>(RNG,(OptionValue *)(d_CallValue0));
-    	cuda_error_check("Primo kernel","");
-    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream1>>>(RNG,(OptionValue *)(d_CallValue1));
-    	cuda_error_check("Secondo kernel","");
-    	//MEMORY CPY: prices per block
-    	CudaCheck(cudaMemcpyAsync(h_CallValue0, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
-    	CudaCheck(cudaMemcpyAsync(h_CallValue1, d_CallValue1, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream1));
-    	// Closing Monte Carlo
-    	long double sum1=0, sum2=0, sum3=0, sum4=0, price, empstd;
-        int nSim = numBlocks * PATH;
-   	    for ( i = 0; i < numBlocks; i++ ){
-   	        sum1 += h_CallValue0[i].Expected;
-   	        sum2 += h_CallValue0[i].Confidence;
-   	        sum3 += h_CallValue1[i].Expected;
-   	       	sum4 += h_CallValue1[i].Confidence;
-   	    }
-   	    price = exp(-(option.r*option.t)) * (sum1/(double)nSim);
-        empstd = sqrt((double)((double)nSim * sum2 - sum1 * sum1)/((double)nSim * (double)(nSim - 1)));
-        callValue[i].Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
-    	callValue[i].Expected = price;
-    	price = exp(-(option.r*option.t)) * (sum3/(double)nSim);
-    	empstd = sqrt((double)((double)nSim * sum4 - sum3 * sum3)/((double)nSim * (double)(nSim - 1)));
-        callValue[i+1].Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
-        callValue[i+1].Expected = price;
-        CudaCheck(cudaStreamSynchronize(stream0));
-        CudaCheck(cudaStreamSynchronize(stream1));
+	for( i=1; i<(n+1); i++){
+		data.option.t -= dt;
+		MonteCarlo(&data);
+		callValue[i] = data.callValue;
 	}
 
-    //Free memory space
-    CudaCheck(cudaFree(RNG));
-    CudaCheck(cudaFreeHost(h_CallValue0));
-    CudaCheck(cudaFree(d_CallValue0));
-    CudaCheck(cudaFreeHost(h_CallValue1));
-    CudaCheck(cudaFree(d_CallValue1));
-    CudaCheck(cudaStreamDestroy(stream0));
-    CudaCheck(cudaStreamDestroy(stream1));
+	MonteCarlo_free(&data);
+
 }
