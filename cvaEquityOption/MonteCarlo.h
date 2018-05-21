@@ -75,12 +75,4 @@ typedef struct {
     double Confidence;    // confidence intervall
 } OptionValue;
 
-typedef struct{
-	OptionValue *h_CallValue, *d_CallValue;
-	OptionValue callValue;
-    curandState *RNG;
-    int numBlocks, numThreads;
-    MultiOptionData option;
-} MonteCarloData;
-
 #endif /* MONTECARLO_H_ */
