@@ -156,7 +156,7 @@ int main(int argc, const char * argv[]) {
     //	Black & Scholes price
     double dt = option.t/(double)cva.n;
     bs_price[0] = host_bsCall(option);
-    for(i=1;i<n+1;i++){
+    for(i=1;i<cva.n+1;i++){
     	if((option.t -= dt)<0)
     		bs_price[i] = 0;
     	else
