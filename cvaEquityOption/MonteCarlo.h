@@ -75,4 +75,19 @@ typedef struct {
     double Confidence;    // confidence intervall
 } OptionValue;
 
+typedef struct{
+	// Expected Exposures
+	OptionValue *ee;
+	// Default probabilities
+	double *dp;
+	// Credit spreads
+	CreditData credit;
+	// Option data
+	OptionData opt;
+	// CVA, FVA
+	double cva, fva;
+	// Num of simulations
+	int n;
+}CVA;
+
 #endif /* MONTECARLO_H_ */

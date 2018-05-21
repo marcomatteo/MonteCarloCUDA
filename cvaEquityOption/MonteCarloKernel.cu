@@ -291,20 +291,20 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, CreditData credit, int n, int numBlocks, int numThreads){
+extern "C" void dev_cvaEquityOption(CVA cva, int numBlocks, int numThreads){
     int i;
-    double dt = opt.t / (double)n;
+    double dt = cva.opt.t / (double)cva.n;
 
     /*--------------- CONSTANT MEMORY ----------------*/
     MultiOptionData option;
     option.w[0] = 1;
     option.d[0] = 0;
     option.p[0][0] = 1;
-    option.s[0] = opt.s;
-    option.v[0] = opt.v;
-    option.k = opt.k;
-    option.r = opt.r;
-    option.t = opt.t;
+    option.s[0] = cva.opt.s;
+    option.v[0] = cva.opt.v;
+    option.k = cva.opt.k;
+    option.r = cva.opt.r;
+    option.t = cva.opt.t;
 
 
 /*	//-------------	STREAMS -----------------
@@ -319,19 +319,22 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
-    callValue[0] = data.callValue;
+    cva.ee[0] = data.callValue;
 
+    double sommaProdotto=0;
 	for( i=1; i<(n+1); i++){
 		if((data.option.t -= dt)<0){
-			callValue[i].Confidence = 0;
-			callValue[i].Expected = 0;
+			cva.ee[i].Confidence = 0;
+			cva.ee[i].Expected = 0;
 		}
 		else{
 			MonteCarlo(&data);
-			callValue[i] = data.callValue;
+			cva.ee[i] = data.callValue;
 		}
+		cva.dp[i] = exp(-(i-1) *cva.credit.creditspread / 10000 / cva.credit.lgd)
+				- exp(-i * cva.credit.creditspread / 10000 / cva.credit.lgd );
+		sommaProdotto += cva.ee[i].Expected * cva.dp[i];
 	}
-
+	cva.cva = sommaProdotto*cva.credit.lgd
 	MonteCarlo_free(&data);
-
 }

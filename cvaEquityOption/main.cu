@@ -119,8 +119,7 @@ int main(int argc, const char * argv[]) {
 	option.k= 100.f;
 	option.r= 0.05;
 	option.t= 1.f;
-
-	CreditData credit = {0,0,0};
+	int i;
 
 	printf("Expected Exposures of an Equity Option\n");
 
@@ -134,15 +133,14 @@ int main(int argc, const char * argv[]) {
 	//	Print Option details
 	printOption(option);
 
-	// PARAMETRI PER LA SIMULAZIONE EE
-	// Scelta da tastiera del numero di simulazioni: di default 40
-	int n = 40, i;
-	double dt = option.t/(double)n;
-
-    /*---------------- CORE COMPUTATIONS ----------------*/
+	CVA cva;
+	cva.n = 40;
+	cva.credit = {150,75,60};
+	cva.opt = option;
+	cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
 	// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
-    OptionValue *GPU_sim = (OptionValue *)malloc(sizeof(OptionValue)*(n+1));
-    
+	cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
+
     //float CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0;
     double *price = (double*)malloc(sizeof(double)*(n+1));
@@ -154,6 +152,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_stop ));
 
     //	Black & Scholes price
+    double dt = option.t/(double)n;
     bs_price[0] = host_bsCall(option);
     for(i=1;i<n+1;i++){
     	if((option.t -= dt)<0)
@@ -186,27 +185,24 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(GPU_sim, option, credit, n, numBlocks, numThreads);
+    dev_cvaEquityOption(cva, numBlocks, numThreads);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     GPU_timeSpent /= 1000;
 
     printf("\nPrezzi Simulati:\n");
-   	printf("|\ti\t|\tPrezzi\t\t|\n");
+   	printf("|\ti\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
    	for(i=0;i<n+1;i++)
-   		printf("|\t%d\t|\t%f\t|\n",i,GPU_sim[i].Expected);
+   		printf("|\t%d\t|\t%f\t|\t%f\t|\n",i,cva.ee[i].Expected,cva.dp[i]);
 
-/*
-    printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", gpuPrice.Expected, gpuPrice.Expected-gpuPrice.Confidence, gpuPrice.Expected+gpuPrice.Confidence);
-    printf("Total execution time: %f s\n\n", GPU_timeSpent);
-*/
+
     // Comparing time spent with the two methods
-    printf( "-\tComparing results:\t-\n");
+    printf( "\n-\tComparing results:\t-\n");
     printf("\nDifferenza Prezzi:\n");
   	printf("|\ti\t|\tPrezzi\t\t|\n");
   	for(i=0;i<n+1;i++){
-  		difference = abs(GPU_sim[i].Expected - bs_price[i]);
+  		difference = abs(cva.ee[i].Expected - bs_price[i]);
    		printf("|\t%d\t|\t%f\t|\n",i,difference);
   	}
 
