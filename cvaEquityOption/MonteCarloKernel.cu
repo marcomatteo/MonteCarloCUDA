@@ -196,14 +196,14 @@ void MonteCarlo_init(OptionValue **h_CallValue, OptionValue **d_CallValue, curan
     CudaCheck( cudaEventDestroy( stop ));
 }
 
-void MonteCarlo_free(OptionValue *h_CallValue, OptionValue *d_CallValue, curandState *RNG){
+void MonteCarlo_free(OptionValue **h_CallValue, OptionValue **d_CallValue, curandState *RNG){
 	//Free memory space
 	CudaCheck(cudaFree(RNG));
     CudaCheck(cudaFreeHost(h_CallValue));
     CudaCheck(cudaFree(d_CallValue));
 }
 
-OptionValue MonteCarlo(MultiOptionData option, OptionValue *h_CallValue, OptionValue *d_CallValue, curandState *RNG, int numBlocks, int numThreads){
+OptionValue MonteCarlo(MultiOptionData option, OptionValue **h_CallValue, OptionValue **d_CallValue, curandState *RNG, int numBlocks, int numThreads){
 	OptionValue callValue;
 	/*--------------- CONSTANT MEMORY ----------------*/
 	CudaCheck(cudaMemcpyToSymbol(OPTION,&option,sizeof(MultiOptionData)));
