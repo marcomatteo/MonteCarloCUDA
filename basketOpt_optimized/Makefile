@@ -237,7 +237,7 @@ endif
 # Target rules
 all: build
 
-build: BasketOption
+build: cvaOption
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -255,17 +255,17 @@ MonteCarloKernel.o:MonteCarloKernel.cu
 main.o:main.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-BasketOption: main.o MonteCarloHost.o MonteCarloKernel.o
+cvaOption: main.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 	$(EXEC) mkdir -p $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 	$(EXEC) cp $@ $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 
 run: build
-	$(EXEC) ./BasketOption
+	$(EXEC) ./cvaOption
 
 clean:
-	rm -f BasketOption main.o MonteCarloHost.o MonteCarloKernel.o
-	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/BasketOption
+	rm -f cvaOption main.o MonteCarloHost.o MonteCarloKernel.o
+	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/cvaOption
 	rmdir $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 	rmdir $(TARGET_ARCH)/$(TARGET_OS)
 	rmdir $(TARGET_ARCH)
