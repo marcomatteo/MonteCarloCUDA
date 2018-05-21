@@ -70,7 +70,7 @@ __device__ void blackScholes(double *price, double *bt){
 
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
-    int i,j;
+    int i;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
@@ -281,7 +281,7 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
 	        sum += h_CallValue[i].Expected;
 	        sum2 += h_CallValue[i].Confidence;
 	    }
-	    price = exp(-(option.r*option.t)) * (sum/(double)nSim);
+	    price = exp(-(option->r*option->t)) * (sum/(double)nSim);
 	    empstd = sqrt((double)((double)nSim * sum2 - sum * sum)
 	                         /((double)nSim * (double)(nSim - 1)));
 	    callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
@@ -296,7 +296,7 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
 }
 
 extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThreads){
-    	OptionValue callValue, *h_CallValue, *d_CallValue;
+    	OptionValue callValue, *h_CallValue=NULL, *d_CallValue=NULL;
 
         /*------------ RNGs and TIME VARIABLES --------------*/
         curandState *RNG;
@@ -315,7 +315,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
                 option.t = opt->t;
 
         //MONTE CARLO KERNEL
-       callValue = MonteCarlo(*option, h_CallValue, d_CallValue, RNG, numBlocks, numThreads);
+       callValue = MonteCarlo(option, h_CallValue, d_CallValue, RNG, numBlocks, numThreads);
 
        //Free memory space
        MonteCarlo_free(h_CallValue, d_CallValue, RNG);
@@ -390,9 +390,9 @@ extern "C" void dev_cvaEquityOption(OptionValue *callValue, OptionData opt, Cred
 	*/
 
 	for( i=0; i<(n+1); i+=2){
-    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream0>>>(RNG,(OptionValue *)(d_CallValue0),((double)i*dt));
+    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream0>>>(RNG,(OptionValue *)(d_CallValue0));
     	cuda_error_check("Primo kernel","");
-    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream1>>>(RNG,(OptionValue *)(d_CallValue1),((double)(i+1)*dt));
+    	MultiMCBasketOptKernel<<<numBlocks, numThreads, numShared, stream1>>>(RNG,(OptionValue *)(d_CallValue1));
     	cuda_error_check("Secondo kernel","");
     	//MEMORY CPY: prices per block
     	CudaCheck(cudaMemcpyAsync(h_CallValue0, d_CallValue0, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost,stream0));
