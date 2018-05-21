@@ -140,6 +140,7 @@ int main(int argc, const char * argv[]) {
 	cva.credit.lgd=60;
 	cva.opt = option;
 	cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
+	cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
 	// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
 	cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
 
@@ -183,18 +184,10 @@ int main(int argc, const char * argv[]) {
    		difference = abs(cva.ee[i].Expected - bs_price[i]);
    		printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
    	}
-   	printf("\nCVA: %f\n",cva.cva);
-/*
-    // Comparing time spent with the two methods
-    printf( "\n-\tComparing results:\t-\n");
-    printf("\nDifferenza Prezzi:\n");
-  	printf("|\ti\t|\tPrezzi\t\t|\n");
-  	for(i=0;i<cva.n+1;i++){
-  		difference = abs(cva.ee[i].Expected - bs_price[i]);
-   		printf("|\t%d\t|\t%f\t|\n",i,difference);
-  	}
-*/
+   	printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
+
    	free(cva.dp);
+   	free(cva.fp);
    	free(cva.ee);
    	free(price);
    	free(bs_price);

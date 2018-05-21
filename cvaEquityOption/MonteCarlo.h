@@ -79,7 +79,7 @@ typedef struct{
 	// Expected Exposures
 	OptionValue *ee;
 	// Default probabilities
-	double *dp;
+	double *dp,*fp;
 	// Credit spreads
 	CreditData credit;
 	// Option data
