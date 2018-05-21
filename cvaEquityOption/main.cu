@@ -158,10 +158,8 @@ int main(int argc, const char * argv[]) {
     //	Black & Scholes price
     for(i=0;i<n+1;i++){
     	bs_price[i] = host_bsCall(option);
-    	printf("Il time to maturity dell'opzione e': %.2f\n",option.t);
     	if((option.t -= dt)<0)
     		option.t = 0;
-    	printf("Il time to maturity dell'opzione e': %.2f\n", option.t);
     }
 
     //	Ripristino valore originale del Time to mat

@@ -96,7 +96,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     	//vectors of brownian and ST
     	double price=0.0f, g[N], s[N], st_sum=0.0f;
     	int j,k;
-/*
+
         // RNGs
         for(j=0;j<N_OPTION;j++)
         	g[j]=curand_normal(&threadState);
@@ -114,8 +114,8 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         //X=m+A*G
         for(j=0;j<N_OPTION;j++)
             bt[j] += OPTION.d[j];
-*/
-    	brownianVect(bt,threadState);
+
+        //brownianVect(bt,threadState);
 
         // Second step: Price simulation
         for(j=0;j<N_OPTION;j++)
