@@ -31,18 +31,19 @@ OptionValue MonteCarlo(MultiOptionData option, OptionValue *h_CallValue, OptionV
 
 
 __device__ __constant__ MultiOptionData OPTION;
+__device__ __constant__ int N_OPTION;
 
 __device__ void randomGen(double *vet, curandState *threadState){
 	int i;
-	for(i=0;i<N;i++)
+	for(i=0;i<N_OPTION;i++)
 		vet[i]=curand_normal(threadState);
 }
 
 __device__ void brownianVect(double *bt, double *g){
 	int i,j;
-	for(i=0;i<N;i++){
+	for(i=0;i<N_OPTION;i++){
 		double somma = 0;
-		for(j=0;j<N;j++)
+		for(j=0;j<N_OPTION;j++)
 	 		//somma += first->data[i][k]*second->data[k][j];
 			somma += OPTION.p[i][j] * g[j];
 	     	//result->data[i][j] = somma;
@@ -52,16 +53,16 @@ __device__ void brownianVect(double *bt, double *g){
 
 __device__ void brownianDrift(double *bt){
 	int i;
-	for(i=0;i<N;i++)
+	for(i=0;i<N_OPTION;i++)
 		bt[i] += OPTION.d[i];
 }
 
 __device__ void blackScholes(double *price, double *bt){
 	int i;
-	double s[N], mean;
-	for(i=0;i<N;i++)
+	double s[N_OPTION], mean;
+	for(i=0;i<N_OPTION;i++)
         s[i] = OPTION.s[i] * exp((OPTION.r - 0.5 * OPTION.v[i] * OPTION.v[i])*OPTION.t+OPTION.v[i] * bt[i] * sqrt(OPTION.t));
-	for(i=0;i<N;i++)
+	for(i=0;i<N_OPTION;i++)
 		mean += s[i] * OPTION.w[i];
 	*price = mean - OPTION.k;
 	if(*price<0)
@@ -89,20 +90,20 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
-    	double bt[N], g[N], price=0.0f;
+    	double bt[N_OPTION], g[N_OPTION], price=0.0f;
 
         /* RNGs
-        for(j=0;j<N;j++)
+        for(j=0;j<N_OPTION;j++)
         	g[j]=curand_normal(&threadState);
         */
-    	randomGen(g,&threadState);
+    	randomGen(g, &threadState);
 
         /* A*G
         double somma;
         int j,k;
-        for(j=0;j<N;j++){
+        for(j=0;j<N_OPTION;j++){
         	somma = 0;
-         	for(k=0;k<N;k++)
+         	for(k=0;k<N_OPTION;k++)
          		//somma += first->data[i][k]*second->data[k][j];
                 somma += OPTION.p[j][k] * g[k];
          	//result->data[i][j] = somma;
@@ -112,17 +113,17 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     	brownianVect(bt,g);
 
         /* X=m+A*G
-        for(j=0;j<N;j++)
+        for(j=0;j<N_OPTION;j++)
             bt[j] += OPTION.d[j];
         */
         brownianDrift(bt);
 
         /*
          * Second step: Price simulation
-        for(j=0;j<N;j++)
+        for(j=0;j<N_OPTION;j++)
                 s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
          * Third step: Mean price
-        for(j=0;j<N;j++)
+        for(j=0;j<N_OPTION;j++)
             st_sum += s[j] * OPTION.w[j];
          * Fourth step: Option payoff
         price = st_sum - OPTION.k;
@@ -169,6 +170,11 @@ void MonteCarlo_init(OptionValue *h_CallValue, OptionValue *d_CallValue, curandS
 	CudaCheck( cudaEventCreate( &start ));
     CudaCheck( cudaEventCreate( &stop ));
     float time;
+
+    int *n_option = N;
+
+    /*--------------- CONSTANT MEMORY ----------------*/
+    CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
 
 	// RANDOM NUMBER GENERATION KERNEL
 	//Allocate states for pseudo random number generators
