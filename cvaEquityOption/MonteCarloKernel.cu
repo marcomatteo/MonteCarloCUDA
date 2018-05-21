@@ -331,8 +331,8 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
 			MonteCarlo(&data);
 			cva->ee[i] = data.callValue;
 		}
-		cva->dp[i] = exp(-(dt)*(i-1) * cva->credit.creditspread / 10000 / cva->credit.lgd)
-				- exp(-(dt*i) * cva->credit.creditspread / 10000 / cva->credit.lgd );
+		cva->dp[i] = exp(-(dt)*(i-1) * cva->credit.creditspread / 100 / cva->credit.lgd)
+				- exp(-(dt*i) * cva->credit.creditspread / 100 / cva->credit.lgd );
 		sommaProdotto += cva->ee[i].Expected * cva->dp[i];
 	}
 	cva->cva = sommaProdotto*cva->credit.lgd;
