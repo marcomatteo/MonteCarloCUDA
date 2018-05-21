@@ -273,8 +273,8 @@ void MonteCarlo(MonteCarloData *data){
 
 	// Closing Monte Carlo
 	long double sum=0, sum2=0, price, empstd;
-    long int nSim = numBlocks * PATH;
-    for ( i = 0; i < numBlocks; i++ ){
+    long int nSim = data->numBlocks * PATH;
+    for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
 	}
@@ -370,9 +370,9 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     MonteCarloData data;
     data.option = option;
 
-    MonteCarlo_init(&prova);
-    MonteCarlo(&prova);
-    MonteCarlo_free(&prova);
+    MonteCarlo_init(&data);
+    MonteCarlo(&data);
+    MonteCarlo_free(&data);
 
     return data.callValue;
 }
