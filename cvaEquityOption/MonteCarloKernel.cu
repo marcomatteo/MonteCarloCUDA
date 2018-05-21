@@ -35,7 +35,7 @@ __device__ __constant__ MultiOptionData OPTION;
 __device__ void randomGen(double *vet, curandState *threadState){
 	int i;
 	for(i=0;i<N;i++)
-		vet[i]=curand_normal(&threadState);
+		vet[i]=curand_normal(threadState);
 }
 
 __device__ void brownianVect(double *bt, double *g){
