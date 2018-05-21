@@ -113,7 +113,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
             bt[j] += OPTION.d[j];
 */
         brownianVect(bt,threadState);
-
+/*
         // Second step: Price simulation
         for(j=0;j<N_OPTION;j++)
                 s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
@@ -124,8 +124,8 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         price = st_sum - OPTION.k;
         if(price<0)
             price = 0.0f;
-
-        //blackScholes(&price,bt);
+*/
+        blackScholes(&price,bt);
 
         //	Fifth step:	Monte Carlo price sum
         sum.Expected += price;
