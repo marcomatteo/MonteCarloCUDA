@@ -94,7 +94,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
-    	double price=0.0f bt[N];
+    	double price=0.0f, bt[N];
 
     	brownianVect(bt,threadState);
         price=blackScholes(bt);
