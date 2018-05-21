@@ -190,7 +190,7 @@ void MonteCarlo_init(OptionValue *h_CallValue, OptionValue *d_CallValue, curandS
     //	Host Memory Allocation
     CudaCheck(cudaHostAlloc(&h_CallValue, sizeof(OptionValue)*(numBlocks),cudaHostAllocDefault));
     //	Device Memory Allocation
-    CudaCheck(cudaMalloc(&d_CallValue, sizeof(OptionValue)*(numBlocks)));
+    CudaCheck(cudaMalloc((void**)&d_CallValue, sizeof(OptionValue)*(numBlocks)));
 
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
@@ -216,6 +216,7 @@ OptionValue MonteCarlo(MultiOptionData option, OptionValue *h_CallValue, OptionV
 
 	//MEMORY CPY: prices per block
 	CudaCheck(cudaMemcpy(h_CallValue, d_CallValue, numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
+
 	// Closing Monte Carlo
 	long double sum=0, sum2=0, price, empstd;
     long int nSim = numBlocks * PATH;
