@@ -369,6 +369,8 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
     MonteCarloData data;
     data.option = option;
+    data.numBlocks = numBlocks;
+    data.numThreads = numThreads;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
