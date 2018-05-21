@@ -323,7 +323,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
     // Calcolo per ogni epoca le EE, Def Prob e il loro prodotto
     double sommaProdotto=0;
 	for( i=1; i<(cva->n+1); i++){
-		if((data.option.t -= dt)<0){
+		if((data.option.t -= (dt*i))<0){
 			cva->ee[i].Confidence = 0;
 			cva->ee[i].Expected = 0;
 		}
@@ -331,8 +331,8 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
 			MonteCarlo(&data);
 			cva->ee[i] = data.callValue;
 		}
-		cva->dp[i] = exp(-(i-1) *cva->credit.creditspread / 10000 / cva->credit.lgd)
-				- exp(-i * cva->credit.creditspread / 10000 / cva->credit.lgd );
+		cva->dp[i] = exp(-(dt)*(i-1) * cva->credit.creditspread / 10000 / cva->credit.lgd)
+				- exp(-(dt*i) * cva->credit.creditspread / 10000 / cva->credit.lgd );
 		sommaProdotto += cva->ee[i].Expected * cva->dp[i];
 	}
 	cva->cva = sommaProdotto*cva->credit.lgd;
