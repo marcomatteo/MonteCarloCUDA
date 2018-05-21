@@ -154,7 +154,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_stop ));
 
     //	Black & Scholes price
-    double dt = option.t/(double)n;
+    double dt = option.t/(double)cva.n;
     bs_price[0] = host_bsCall(option);
     for(i=1;i<n+1;i++){
     	if((option.t -= dt)<0)
