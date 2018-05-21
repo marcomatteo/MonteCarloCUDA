@@ -82,10 +82,11 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     curandState threadState = randseed[tid];
 
     OptionValue sum = {0, 0};
+    double *bt=(double*)malloc(N_OPTION*sizeof(double));
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
-    	double *bt=(double*)malloc(N_OPTION*sizeof(double)), price=0.0f;
+    	double price=0.0f;
 
         /* RNGs
         for(j=0;j<N_OPTION;j++)
@@ -125,8 +126,8 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         //	Fifth step:	Monte Carlo price sum
         sum.Expected += price;
         sum.Confidence += price*price;
-        free(bt);
     }
+    free(bt);
     //Copy to the shared memory
     s_Sum[sumIndex] = sum.Expected;
     s_Sum[sum2Index] = sum.Confidence;
