@@ -188,7 +188,7 @@ void MonteCarlo_init(OptionValue *h_CallValue, OptionValue *d_CallValue, curandS
     printf( "RNG done in %f milliseconds\n", time);
 
     //	Host Memory Allocation
-    CudaCheck(cudaHostAlloc(&h_CallValue, sizeof(OptionValue)*(numBlocks),cudaHostAllocDefault));
+    CudaCheck(cudaMallocHost(&h_CallValue, sizeof(OptionValue)*(numBlocks)));
     //	Device Memory Allocation
     CudaCheck(cudaMalloc((void**)&d_CallValue, sizeof(OptionValue)*(numBlocks)));
 
