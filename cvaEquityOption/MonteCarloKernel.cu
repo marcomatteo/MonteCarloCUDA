@@ -35,7 +35,7 @@ __device__ __constant__ int N_OPTION;
 
 __device__ void brownianVect(double *bt, curandState threadState){
 	int i,j;
-	double g[N];
+	double *g=(int)malloc(N_OPTION*sizeof(int));
 	for(i=0;i<N_OPTION;i++)
 		g[i]=curand_normal(&threadState);
 	for(i=0;i<N_OPTION;i++){
@@ -48,11 +48,12 @@ __device__ void brownianVect(double *bt, curandState threadState){
 	}
 	for(i=0;i<N_OPTION;i++)
 		bt[i] += OPTION.d[i];
+	free(g);
 }
 
 __device__ void blackScholes(double *price, double *bt){
 	int i;
-	double s[N], mean;
+	double *s=(double)malloc(N_OPTION*sizeof(double)), mean;
 	for(i=0;i<N_OPTION;i++)
         s[i] = OPTION.s[i] * exp((OPTION.r - 0.5 * OPTION.v[i] * OPTION.v[i])*OPTION.t+OPTION.v[i] * bt[i] * sqrt(OPTION.t));
 	for(i=0;i<N_OPTION;i++)
@@ -60,6 +61,7 @@ __device__ void blackScholes(double *price, double *bt){
 	*price = mean - OPTION.k;
 	if(*price<0)
 		*price = 0.0f;
+	free(s);
 }
 
 
@@ -83,7 +85,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     for( i=sumIndex; i<PATH; i+=blockDim.x){
     	//vectors of brownian and ST
-    	double bt[N], price=0.0f;
+    	double *bt=(double)malloc(N_OPTION*sizeof(double)), price=0.0f;
 
         /* RNGs
         for(j=0;j<N_OPTION;j++)
@@ -123,6 +125,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         //	Fifth step:	Monte Carlo price sum
         sum.Expected += price;
         sum.Confidence += price*price;
+        free(bt);
     }
     //Copy to the shared memory
     s_Sum[sumIndex] = sum.Expected;
@@ -266,7 +269,7 @@ void MonteCarlo(MonteCarloData *data){
 	int i, numShared = sizeof(double) * data->numThreads * 2;
 
 	MultiMCBasketOptKernel<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
-	cuda_error_check("\nLancio Kernel Monte Carlo "," fallito \n");
+	cuda_error_check("\Errore nel lancio MultiMCBasketOptKernel: ","\n");
 
 	//MEMORY CPY: prices per block
 	CudaCheck(cudaMemcpy(data->h_CallValue, data->d_CallValue, data->numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
