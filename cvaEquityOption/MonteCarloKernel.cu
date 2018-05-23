@@ -198,7 +198,7 @@ void MonteCarlo(MonteCarloData *data){
 
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads){
 	MonteCarloData data;
-	    data.option = option;
+	    data.option = *option;
 	    data.numBlocks = numBlocks;
 	    data.numThreads = numThreads;
 
