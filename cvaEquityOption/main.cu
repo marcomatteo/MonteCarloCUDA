@@ -23,7 +23,7 @@ extern "C" OptionValue host_vanillaOpt(OptionData, int);
 //	Device MonteCarlo
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
 
-//	CVA: per ora è in test la simulazione delle Expected Exposures
+// CVA on vanilla call option
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 
 
@@ -119,12 +119,11 @@ int main(int argc, const char * argv[]) {
 	option.k= 100.f;
 	option.r= 0.05;
 	option.t= 1.f;
-	int i;
-
+	/*--------------------------------------------------------------*/
 	printf("Expected Exposures of an Equity Option\n");
 
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-	int numBlocks, numThreads;
+	int numBlocks, numThreads, i;
 	choseParameters(&numBlocks, &numThreads);
 
 	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
@@ -168,7 +167,7 @@ int main(int argc, const char * argv[]) {
     option.t= 1.f;
 
     // GPU Monte Carlo
-    printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
+    printf("\nCVA execution on GPU:\nN^ simulations per time interval: %d * %d\n",SIMS,cva.n);
     CudaCheck( cudaEventRecord( d_start, 0 ));
     dev_cvaEquityOption(&cva, numBlocks, numThreads);
     CudaCheck( cudaEventRecord( d_stop, 0));

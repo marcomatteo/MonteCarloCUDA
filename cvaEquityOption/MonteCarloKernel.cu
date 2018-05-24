@@ -5,10 +5,18 @@
  *  Author: marco
  */
 
-//#include <helper_cuda.h>
 #include <curand.h>
 #include <curand_kernel.h>
 #include "MonteCarlo.h"
+
+// Struct for Monte Carlo methods
+typedef struct{
+	OptionValue *h_CallValue, *d_CallValue;
+	OptionValue callValue;
+	MultiOptionData option;
+    curandState *RNG;
+    int numBlocks, numThreads;
+} MonteCarloData;
 
 /*
  * Error handling from Cuda programming - shane cook
@@ -21,25 +29,16 @@ void cuda_error_check(const char * prefix, const char * postfix){
 		exit(1);
 	}
 }
-// Struct for Monte Carlo methods
-typedef struct{
-	OptionValue *h_CallValue, *d_CallValue;
-	OptionValue callValue;
-    curandState *RNG;
-    int numBlocks, numThreads;
-    MultiOptionData option;
-} MonteCarloData;
 
-// Inizializzazione per Monte Carlo da fare una volta sola
-void MonteCarlo_init(OptionValue *h_CallValue, OptionValue *d_CallValue, curandState *RNG, int numBlocks, int numThreads);
-// Liberazione della memoria da fare una volta sola
-void MonteCarlo_free(OptionValue *h_CallValue, OptionValue *d_CallValue, curandState *RNG);
-// Metodo Monte Carlo che si può richiamare quante volte si vuole
-void MonteCarlo(MultiOptionData option, OptionValue *h_CallValue, OptionValue *d_CallValue, curandState *RNG, int numBlocks, int numThreads);
-
+// Inizializzazione per Monte Carlo da svolgere una volta sola
+void MonteCarlo_init(MonteCarloData *data);
+// Liberazione della memoria da svolgere una volta sola
+void MonteCarlo_free(MonteCarloData *data);
+// Metodo Monte Carlo
+void MonteCarlo(MonteCarloData *data);
 
 __device__ __constant__ MultiOptionData OPTION;
-__device__ __constant__ int N_OPTION;
+__device__ __constant__ int N_OPTION, N_PATH;
 
 __device__ void brownianVect(double *bt, curandState threadState){
 	int i,j;
@@ -92,7 +91,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     OptionValue sum = {0, 0};
 
-    for( i=sumIndex; i<PATH; i+=blockDim.x){
+    for( i=sumIndex; i<N_PATH; i+=blockDim.x){
     	double price=0.0f, bt[N];
     	// Random Number Generation
    		brownianVect(bt,threadState);
@@ -138,9 +137,11 @@ void MonteCarlo_init(MonteCarloData *data){
     float time;
 
     int n_option = N;
+    int n_path = PATH;
 
     /*--------------- CONSTANT MEMORY ----------------*/
     CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
+    CudaCheck(cudaMemcpyToSymbol(N_PATH,&n_path,sizeof(int)));
 
 	// RANDOM NUMBER GENERATION KERNEL
 	//Allocate states for pseudo random number generators

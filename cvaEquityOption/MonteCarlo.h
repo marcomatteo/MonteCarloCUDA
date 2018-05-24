@@ -14,8 +14,6 @@
 #include <time.h>
 
 #define N 1
-#define MAX_BLOCKS 1000
-#define MAX_THREADS 256
 #define PATH 200000
 
 /**
