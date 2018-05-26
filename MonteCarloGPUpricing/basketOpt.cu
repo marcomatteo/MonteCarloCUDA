@@ -103,7 +103,7 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
 			printf("A double variable size is: %d\n",sizeDouble);
 			printf("In a MultiOptionData struct there's a consumption of %zu constant memory\n",sizeof(MultiOptionData));
 			printf("In this Basket Option there's %d stocks\n",N);
-			int maxDim = (int)maxConstant/(sizeDouble*8);
+			int maxDim = (int)maxConstant/(sizeDouble*5);
 			printf("The optimal number of dims should be: %d stocks\n",maxDim);
 		}
 		if(numShared > maxShared){
@@ -119,7 +119,7 @@ void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
 	int multiProcessors = deviceProp->multiProcessorCount;
 	int cudaCoresPM = _ConvertSMVer2Cores(deviceProp->major, deviceProp->minor);
 	*numBlocks = multiProcessors * 40;
-	*numThreads = pow(2,(int)(log(cudaCoresPM)/log(2)));
+	*numThreads = pow(2,(int)(log(cudaCoresPM)/log(2)))*2;
 	sizeAdjust(deviceProp,numBlocks, numThreads);
 }
 
@@ -134,7 +134,7 @@ void choseParameters(int *numBlocks, int *numThreads){
 		scanf("%d",numThreads);
 		printf("Vuoi ottimizzare i parametri inseriti? (Y/N) ");
 		scanf("%s",&risp);
-		if(risp=='Y')
+		if((risp=='Y')||(risp=='y'))
 			optimalAdjust(&deviceProp,numBlocks, numThreads);
 		else
 			sizeAdjust(&deviceProp,numBlocks, numThreads);
