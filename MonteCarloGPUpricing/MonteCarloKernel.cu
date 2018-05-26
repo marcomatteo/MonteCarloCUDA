@@ -203,7 +203,7 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
 	    data.numBlocks = numBlocks;
 	    data.numThreads = numThreads;
 	    data.numOpt = N;
-	    data.path = PATH * numBlocks;
+	    data.path = PATH;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
@@ -228,7 +228,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
     	data.numOpt = N;
-    	data.path = PATH * numBlocks;
+    	data.path = PATH;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
@@ -255,7 +255,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
     	data.numOpt = N;
-    	data.path = PATH * numBlocks;
+    	data.path = PATH;
 
     MonteCarlo_init(&data);
 
