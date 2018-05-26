@@ -36,6 +36,8 @@
 # Location of the CUDA Toolkit
 CUDA_PATH?=/usr/local/cuda-7.5
 
+LOCATION:=files
+
 ##############################
 # start deprecated interface #
 ##############################
@@ -263,40 +265,38 @@ vanillaOpt.o:vanillaOpt.cu
 
 cvaOpt: cvaOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
-	$(EXEC) cp $@ $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
+	$(EXEC) mkdir -p 
+	$(EXEC) mv $@ $(LOCATION)
 
 basketOpt: basketOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
-	$(EXEC) cp $@ $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
+	$(EXEC) mkdir -p 
+	$(EXEC) mv $@ $(LOCATION)
 
 vanillaOpt: vanillaOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
-	$(EXEC) cp $@ $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
+	$(EXEC) mkdir -p 
+	$(EXEC) mv $@ $(LOCATION)
 
 run: cvaOption basketOption vanillaOption
 
-cvaOption :
-	$(EXEC) ./cvaOpt
+cvaOption : cvaOpt
+	$(EXEC) $(LOCATION)/cvaOpt
 
-basketOption :
-	$(EXEC) ./basketOpt
+basketOption : basketOpt
+	$(EXEC) $(LOCATION)/basketOpt
 
-vanillaOption :
-	$(EXEC) ./vanillaOpt
+vanillaOption : vanillaOpt
+	$(EXEC) $(LOCATION)/vanillaOpt
 
 clean:
 	rm -f MonteCarloHost.o MonteCarloKernel.o
 	rm -f cvaOpt cvaOpt.o
 	rm -f basketOpt basketOpt.o 
 	rm -f vanillaOpt vanillaOpt.o
-	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/cvaOpt
-	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/basketOpt
-	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/vanillaOpt
-	rmdir $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
-	rmdir $(TARGET_ARCH)/$(TARGET_OS)
-	rmdir $(TARGET_ARCH)
+	rm -rf $(LOCATION)/cvaOpt
+	rm -rf $(LOCATION)/basketOpt
+	rm -rf $(LOCATION)/vanillaOpt
+	rmdir $(LOCATION)/
 
 clobber: clean
