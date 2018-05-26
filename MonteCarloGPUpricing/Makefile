@@ -289,9 +289,9 @@ vanillaOption :
 
 clean:
 	rm -f MonteCarloHost.o MonteCarloKernel.o
-	rm -f cvaOption cvaOption.o
-	rm -f basketOption basketOption.o 
-	rm -f vanillaOption vanillaOption.o
+	rm -f cvaOpt cvaOpt.o
+	rm -f basketOpt basketOpt.o 
+	rm -f vanillaOpt vanillaOpt.o
 	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/cvaOpt
 	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/basketOpt
 	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/vanillaOpt
