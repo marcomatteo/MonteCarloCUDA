@@ -147,7 +147,7 @@ void choseParameters(int *numBlocks, int *numThreads){
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
-	double dw = (double)1/(double)N;
+	double dw = (double)1 / N;
 	MultiOptionData option;
 	//	Volatility
 	option.v[0] = 0.2;
@@ -198,7 +198,8 @@ int main(int argc, const char * argv[]) {
     for(i=0;i<N;i++)
     	for(j=0;j<N;j++)
            	option.p[i][j]=cholRho[i][j];
-    OptionValue CPU_sim, GPU_sim;
+    //OptionValue CPU_sim;
+    OptionValue GPU_sim;
     
     float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
     double price;

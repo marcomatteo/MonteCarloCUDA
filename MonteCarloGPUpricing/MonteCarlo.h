@@ -13,7 +13,7 @@
 #include <math.h>
 #include <time.h>
 
-#define N 1
+#define N 3
 #define PATH 200000
 
 /**

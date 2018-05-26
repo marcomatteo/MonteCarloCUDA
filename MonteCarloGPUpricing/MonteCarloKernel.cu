@@ -15,7 +15,7 @@ typedef struct{
 	OptionValue callValue;
 	MultiOptionData option;
     curandState *RNG;
-    int numBlocks, numThreads;
+    int numBlocks, numThreads, numOpt, path;
 } MonteCarloData;
 
 /*
@@ -136,8 +136,8 @@ void MonteCarlo_init(MonteCarloData *data){
     CudaCheck( cudaEventCreate( &stop ));
     float time;
 
-    int n_option = N;
-    int n_path = PATH;
+    int n_option = data->numOpt;
+    int n_path = data->path;
 
     /*--------------- CONSTANT MEMORY ----------------*/
     CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
@@ -202,6 +202,8 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
 	    data.option = *option;
 	    data.numBlocks = numBlocks;
 	    data.numThreads = numThreads;
+	    data.numOpt = N;
+	    data.path = PATH * numBlocks;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
@@ -225,6 +227,8 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     	data.option = option;
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
+    	data.numOpt = N;
+    	data.path = PATH * numBlocks;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
@@ -250,6 +254,8 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
     // Kernel parameters
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
+    	data.numOpt = N;
+    	data.path = PATH * numBlocks;
 
     MonteCarlo_init(&data);
 
