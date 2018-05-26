@@ -279,22 +279,22 @@ vanillaOpt: vanillaOpt.o MonteCarloHost.o MonteCarloKernel.o
 run: cvaOption basketOption vanillaOption
 
 cvaOption :
-	$(EXEC) ./cvaOption
+	$(EXEC) ./cvaOpt
 
 basketOption :
-	$(EXEC) ./basketOption
+	$(EXEC) ./basketOpt
 
 vanillaOption :
-	$(EXEC) ./vanillaOption
+	$(EXEC) ./vanillaOpt
 
 clean:
 	rm -f MonteCarloHost.o MonteCarloKernel.o
 	rm -f cvaOption cvaOption.o
 	rm -f basketOption basketOption.o 
 	rm -f vanillaOption vanillaOption.o
-	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/cvaOption
-	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/basketOption
-	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/vanillaOption
+	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/cvaOpt
+	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/basketOpt
+	rm -rf $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/vanillaOpt
 	rmdir $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 	rmdir $(TARGET_ARCH)/$(TARGET_OS)
 	rmdir $(TARGET_ARCH)
