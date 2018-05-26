@@ -265,17 +265,17 @@ vanillaOpt.o:vanillaOpt.cu
 
 cvaOpt: cvaOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p 
+	$(EXEC) mkdir -p $(LOCATION)
 	$(EXEC) mv $@ $(LOCATION)
 
 basketOpt: basketOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p 
+	$(EXEC) mkdir -p $(LOCATION)
 	$(EXEC) mv $@ $(LOCATION)
 
 vanillaOpt: vanillaOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p 
+	$(EXEC) mkdir -p $(LOCATION)
 	$(EXEC) mv $@ $(LOCATION)
 
 run: cvaOption basketOption vanillaOption
