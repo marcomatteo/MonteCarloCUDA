@@ -276,13 +276,15 @@ vanillaOpt: vanillaOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) mkdir -p $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 	$(EXEC) cp $@ $(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 
-run: cvaOpt
+run: cvaOption basketOption vanillaOption
+
+cvaOption :
 	$(EXEC) ./cvaOption
 
-run: basketOpt
+basketOption :
 	$(EXEC) ./basketOption
 
-run: vanillaOpt
+vanillaOption :
 	$(EXEC) ./vanillaOption
 
 clean:
