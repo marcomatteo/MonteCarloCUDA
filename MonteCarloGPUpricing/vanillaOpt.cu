@@ -109,7 +109,7 @@ void Parameters(int *numBlocks, int *numThreads){
 		cudaDeviceProp deviceProp;
 		CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
 		char risp;
-		*numTreads = {
+		*numThreads = {
 					128,
 					192,
 					256,
@@ -135,7 +135,7 @@ int main(int argc, const char * argv[]) {
 	option.t= 1.f;
 
 	int numBlocks, numThreads[RISULTATI], i;
-	int SIMS = numBlocks*PATH;
+	int SIMS;
 
 	OptionValue CPU_sim, GPU_sim[RISULTATI];
 
@@ -149,7 +149,8 @@ int main(int argc, const char * argv[]) {
 	printf("Vanilla Option Pricing\n");
 
 	//	Definizione e stampa dei parametri CUDA per l'esecuzione in parallelo
-	Parameters(&numBlocks, &numThreads);
+	Parameters(&numBlocks, numThreads);
+	SIMS = numBlocks*PATH;
 
 	//	Print Option details
 	printOption(option);
@@ -185,8 +186,7 @@ int main(int argc, const char * argv[]) {
    	    CudaCheck( cudaEventSynchronize( d_stop ));
    	    CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
    	    GPU_timeSpent[i] /= 1000;
-   	    price = GPU_sim[i].Expected;
-   	    difference[i] = abs(price - bs_price);
+   	    difference[i] = abs(GPU_sim[i].Expected - bs_price);
    	    speedup[i] = abs(d_CPU_timeSpent / GPU_timeSpent);
     }
 
@@ -195,8 +195,8 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the option with CPU: € %f with I.C. %f\n", price, CPU_sim.Confidence);
     printf("Total execution time CPU: %f s with host function\t %f s with device function\n\n", h_CPU_timeSpent, d_CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
-    printf("|\tThreads\t|"); printf("|\Price\t|"); printf("|\Confidence\t|"); printf("|\Difference\t|"); printf("|\Time\t|");printf("|\Speedup\t|");
-    printf("\n";
+    printf("|\tThreads\t|\t\Price\t|\tConfidence\t|\tDifference\t|\tTime\t|\tSpeedup\t|");
+    printf("\n");
     for(i=0; i<RISULTATI; i++){
     	printf("|\t"); printf("%d",numThreads[i]); printf("\t|");
     	printf("|\t"); printf("%f",GPU_sim[i].Expected); printf("\t|");
