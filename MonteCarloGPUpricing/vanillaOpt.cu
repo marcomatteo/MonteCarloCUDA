@@ -190,15 +190,15 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the option with CPU: € %f with I.C. %f\n", price, CPU_sim.Confidence);
     printf("Total execution time CPU: %f s with host function\t %f s with device function\n\n", h_CPU_timeSpent, d_CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
-    printf("|\tThreads\t|\t\Price\t|\tConfidence\t|\tDifference\t|\tTime\t|\tSpeedup\t|");
+    printf("|\t Threads\t |\t Price\t |\t Confidence\t |\t Difference\t |\t Time\t |\t Speedup\t |");
     printf("\n");
     for(i=0; i<RISULTATI; i++){
-    	printf("|\t%d\t",numThreads[i]);
-    	printf("|\t%f\t",GPU_sim[i].Expected);
-    	printf("|\t%f\t",GPU_sim[i].Confidence);
-    	printf("|\t%f\t",difference[i]);
-    	printf("|\t%f\t",GPU_timeSpent[i]);
-    	printf("|\t%f\t",speedup[i]);
+    	printf("| \t%d\t",numThreads[i]);
+    	printf("| \t%f\t",GPU_sim[i].Expected);
+    	printf("| \t%f\t",GPU_sim[i].Confidence);
+    	printf("| \t%f\t",difference[i]);
+    	printf("| \t%f\t",GPU_timeSpent[i]);
+    	printf("| \t%f\t",speedup[i]);
     	printf("|\n");
     }
     
