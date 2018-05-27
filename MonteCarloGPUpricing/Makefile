@@ -250,22 +250,32 @@ else
 endif
 
 MonteCarloHost.o:MonteCarloHost.c
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) mkdir -p $(OGGETTI)
+	$(EXEC) mv $@ $(OGGETTI)
 
 MonteCarloKernel.o:MonteCarloKernel.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) mkdir -p $(OGGETTI)
+	$(EXEC) mv $@ $(OGGETTI)
 
 cvaOpt.o:cvaOpt.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) mkdir -p $(OGGETTI)
+	$(EXEC) mv $@ $(OGGETTI)
 
 basketOpt.o:basketOpt.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) mkdir -p $(OGGETTI)
+	$(EXEC) mv $@ $(OGGETTI)
 
 vanillaOpt.o:vanillaOpt.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) mkdir -p $(OGGETTI)
+	$(EXEC) mv $@ $(OGGETTI)
 
 cvaOpt: cvaOpt.o MonteCarloHost.o MonteCarloKernel.o
-	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $(OGGETTI)/$+ $(LIBRARIES)
 	$(EXEC) mkdir -p $(ESEGUIBILI)
 	$(EXEC) mv $@ $(ESEGUIBILI)
 
