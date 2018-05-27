@@ -108,14 +108,11 @@ void choseParameters(int *numBlocks, int *numThreads){
 void Parameters(int *numBlocks, int *numThreads){
 		cudaDeviceProp deviceProp;
 		CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-		char risp;
-		*numThreads = {
-					128,
-					192,
-					256,
-					512,
-					1024
-		};
+		numThreads[0] = 128;
+		numThreads[1] = 192;
+		numThreads[2] = 256;
+		numThreads[3] = 512;
+		numThreads[4] = 1024;
 		printf("\nParametri CUDA:\n");
 		printf("Scegli il numero di Blocchi: ");
 		scanf("%d",numBlocks);
@@ -187,7 +184,7 @@ int main(int argc, const char * argv[]) {
    	    CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
    	    GPU_timeSpent[i] /= 1000;
    	    difference[i] = abs(GPU_sim[i].Expected - bs_price);
-   	    speedup[i] = abs(d_CPU_timeSpent / GPU_timeSpent);
+   	    speedup[i] = abs(d_CPU_timeSpent / GPU_timeSpent[i]);
     }
 
     // Comparing time spent with the two methods
@@ -198,12 +195,12 @@ int main(int argc, const char * argv[]) {
     printf("|\tThreads\t|\t\Price\t|\tConfidence\t|\tDifference\t|\tTime\t|\tSpeedup\t|");
     printf("\n");
     for(i=0; i<RISULTATI; i++){
-    	printf("|\t"); printf("%d",numThreads[i]); printf("\t|");
-    	printf("|\t"); printf("%f",GPU_sim[i].Expected); printf("\t|");
-    	printf("|\t"); printf("%f",GPU_sim[i].Confidence); printf("\t|");
-    	printf("|\t"); printf("%f",difference[i]); printf("\t|");
-    	printf("|\t"); printf("%f",GPU_timeSpent[i]); printf("\t|");
-    	printf("|\t"); printf("%f",speedup[i]); printf("\t|");
+    	printf("|\t%d\t",numThreads[i]);
+    	printf("|\t%f\t",GPU_sim[i].Expected);
+    	printf("|\t%f\t",GPU_sim[i].Confidence);
+    	printf("|\t%f\t",difference[i]);
+    	printf("|\t%f\t",GPU_timeSpent[i]);
+    	printf("|\t%f\t",speedup[i]);
     	printf("\n");
     }
     
