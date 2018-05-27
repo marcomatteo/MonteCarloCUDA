@@ -194,11 +194,11 @@ int main(int argc, const char * argv[]) {
     printf("\n");
     for(i=0; i<RISULTATI; i++){
     	printf("| \t %d \t",numThreads[i]);
-    	printf("| \t %f ",GPU_sim[i].Expected);
-    	printf("|  %f  ",GPU_sim[i].Confidence);
-    	printf("|  %f ",difference[i]);
-    	printf("|  %f ",GPU_timeSpent[i]);
-    	printf("|  %.2f \t",speedup[i]);
+    	printf(" \t %f ",GPU_sim[i].Expected);
+    	printf(" \t %f  ",GPU_sim[i].Confidence);
+    	printf(" \t %f ",difference[i]);
+    	printf(" \t %f ",GPU_timeSpent[i]);
+    	printf(" \t %.2f \t",speedup[i]);
     	printf("|\n");
     }
     
