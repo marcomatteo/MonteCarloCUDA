@@ -135,7 +135,7 @@ int main(int argc, const char * argv[]) {
 
 	OptionValue CPU_sim, GPU_sim[RISULTATI];
 
-	float h_CPU_timeSpent=0, d_CPU_timeSpent=0, GPU_timeSpent[RISULTATI], speedup[RISULTATI];
+	float d_CPU_timeSpent=0, GPU_timeSpent[RISULTATI], speedup[RISULTATI];
 	double price, bs_price, difference[RISULTATI];
 	cudaEvent_t d_start, d_stop;
 	clock_t h_start, h_stop;
@@ -160,12 +160,9 @@ int main(int argc, const char * argv[]) {
     printf("\nPrezzo Black & Scholes: %f\n",bs_price);
 
     // CPU Monte Carlo
-    printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
-    h_start = clock();
+    printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_vanillaOpt(option, SIMS);
-    h_stop = clock();
-    h_CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &d_CPU_timeSpent, d_start, d_stop ));
@@ -186,20 +183,20 @@ int main(int argc, const char * argv[]) {
     }
 
     // Comparing time spent with the two methods
-    printf( "-\tResults:\t-\n");
+    printf( "\n-\tResults:\t-\n");
     printf("Simulated price for the option with CPU: € %f with I.C. %f\n", price, CPU_sim.Confidence);
-    printf("Total execution time CPU: %f s with host function\t %f s with device function\n\n", h_CPU_timeSpent, d_CPU_timeSpent);
+    printf("Total execution time CPU: %f s with device function\n\n", d_CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
-    printf("\t : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
+    printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
     for(i=0; i<RISULTATI; i++){
-    	printf("| \t %d \t",numThreads[i]);
+    	printf(": \t %d ",numThreads[i]);
     	printf(" \t %f ",GPU_sim[i].Expected);
     	printf(" \t %f  ",GPU_sim[i].Confidence);
-    	printf(" \t %f ",difference[i]);
+    	printf(" \t %f \t",difference[i]);
     	printf(" \t %f ",GPU_timeSpent[i]);
     	printf(" \t %.2f \t",speedup[i]);
-    	printf("|\n");
+    	printf(":\n");
     }
     
     CudaCheck( cudaEventDestroy( d_start ));
