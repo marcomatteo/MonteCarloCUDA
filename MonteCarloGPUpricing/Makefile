@@ -251,41 +251,34 @@ endif
 
 MonteCarloHost.o:MonteCarloHost.c
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-	$(EXEC) mkdir -p $(OGGETTI)
-	$(EXEC) mv $@ $(OGGETTI)
-
+	
 MonteCarloKernel.o:MonteCarloKernel.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-	$(EXEC) mkdir -p $(OGGETTI)
-	$(EXEC) mv $@ $(OGGETTI)
 
 cvaOpt.o:cvaOpt.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-	$(EXEC) mkdir -p $(OGGETTI)
-	$(EXEC) mv $@ $(OGGETTI)
 
 basketOpt.o:basketOpt.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-	$(EXEC) mkdir -p $(OGGETTI)
-	$(EXEC) mv $@ $(OGGETTI)
 
 vanillaOpt.o:vanillaOpt.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-	$(EXEC) mkdir -p $(OGGETTI)
-	$(EXEC) mv $@ $(OGGETTI)
 
 cvaOpt: cvaOpt.o MonteCarloHost.o MonteCarloKernel.o
-	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $(OGGETTI)/$+ $(LIBRARIES)
+	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
 	$(EXEC) mkdir -p $(ESEGUIBILI)
 	$(EXEC) mv $@ $(ESEGUIBILI)
 
 basketOpt: basketOpt.o MonteCarloHost.o MonteCarloKernel.o
-	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $(OGGETTI)/$+ $(LIBRARIES)
+	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
 	$(EXEC) mkdir -p $(ESEGUIBILI)
 	$(EXEC) mv $@ $(ESEGUIBILI)
 
 vanillaOpt: vanillaOpt.o MonteCarloHost.o MonteCarloKernel.o
-	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $(OGGETTI)/$+ $(LIBRARIES)
+	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
 	$(EXEC) mkdir -p $(ESEGUIBILI)
 	$(EXEC) mv $@ $(ESEGUIBILI)
 
@@ -301,11 +294,8 @@ vanillaOption : vanillaOpt
 	$(EXEC) $(ESEGUIBILI)/vanillaOpt
 
 clean:
-	rm -f $(OGGETTI)/MonteCarloHost.o $(OGGETTI)/MonteCarloKernel.o
-	rm -f cvaOpt $(OGGETTI)/cvaOpt.o
-	rm -f basketOpt $(OGGETTI)/basketOpt.o 
-	rm -f vanillaOpt $(OGGETTI)/vanillaOpt.o
-	rmdir $(OGGETTI)/
+	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
+	rm -f cvaOpt basketOpt vanillaOpt 
 	rm -rf $(ESEGUIBILI)/cvaOpt
 	rm -rf $(ESEGUIBILI)/basketOpt
 	rm -rf $(ESEGUIBILI)/vanillaOpt
