@@ -14,7 +14,7 @@
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 #include <multithreading.h>
 
-#define RISULTATI 5
+#define RISULTATI 4
 
 //	Host Black & Scholes
 extern "C" double host_bsCall ( OptionData );
@@ -109,10 +109,9 @@ void Parameters(int *numBlocks, int *numThreads){
 		cudaDeviceProp deviceProp;
 		CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
 		numThreads[0] = 128;
-		numThreads[1] = 192;
-		numThreads[2] = 256;
-		numThreads[3] = 512;
-		numThreads[4] = 1024;
+		numThreads[1] = 256;
+		numThreads[2] = 512;
+		numThreads[3] = 1024;
 		printf("\nParametri CUDA:\n");
 		printf("Scegli il numero di Blocchi: ");
 		scanf("%d",numBlocks);
@@ -170,7 +169,6 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &d_CPU_timeSpent, d_start, d_stop ));
-    d_CPU_timeSpent /= CLOCKS_PER_SEC;
     
     price = CPU_sim.Expected;
 
@@ -201,7 +199,7 @@ int main(int argc, const char * argv[]) {
     	printf("|\t%f\t",difference[i]);
     	printf("|\t%f\t",GPU_timeSpent[i]);
     	printf("|\t%f\t",speedup[i]);
-    	printf("\n");
+    	printf("|\n");
     }
     
     CudaCheck( cudaEventDestroy( d_start ));
