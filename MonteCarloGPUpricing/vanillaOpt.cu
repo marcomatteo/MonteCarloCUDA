@@ -169,7 +169,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &d_CPU_timeSpent, d_start, d_stop ));
-    d_CPU_timeSpent[i] /= 1000;
+    d_CPU_timeSpent /= 1000;
     price = CPU_sim.Expected;
 
     // GPU Monte Carlo
