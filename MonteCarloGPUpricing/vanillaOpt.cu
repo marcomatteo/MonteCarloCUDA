@@ -168,7 +168,7 @@ int main(int argc, const char * argv[]) {
     GPU_timeSpent /= 1000;
     
     price = GPU_sim.Expected;
-    printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price-GPU_sim.Confidence, price + GPU_sim.Confidence);
+    printf("Simulated price for the basket option: € %f with I.C %f\n", price, GPU_sim.Confidence);
     printf("Total execution time: %f s\n\n", GPU_timeSpent);
     
     // Comparing time spent with the two methods
