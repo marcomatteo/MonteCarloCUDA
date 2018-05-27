@@ -193,12 +193,12 @@ int main(int argc, const char * argv[]) {
     printf("\t : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
     for(i=0; i<RISULTATI; i++){
-    	printf("| \t %d ",numThreads[i]);
+    	printf("| \t %d \t",numThreads[i]);
     	printf("| \t %f ",GPU_sim[i].Expected);
     	printf("|  %f  ",GPU_sim[i].Confidence);
-    	printf("|  %f \t",difference[i]);
-    	printf("|  %f \t",GPU_timeSpent[i]);
-    	printf("|  %.2f ",speedup[i]);
+    	printf("|  %f ",difference[i]);
+    	printf("|  %f ",GPU_timeSpent[i]);
+    	printf("|  %.2f \t",speedup[i]);
     	printf("|\n");
     }
     
