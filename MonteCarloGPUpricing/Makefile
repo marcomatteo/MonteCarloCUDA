@@ -266,31 +266,31 @@ vanillaOpt.o:vanillaOpt.cu
 
 cvaOpt: cvaOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
 	$(EXEC) mkdir -p $(ESEGUIBILI)
 	$(EXEC) mv $@ $(ESEGUIBILI)
 
 basketOpt: basketOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
 	$(EXEC) mkdir -p $(ESEGUIBILI)
 	$(EXEC) mv $@ $(ESEGUIBILI)
 
 vanillaOpt: vanillaOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
 	$(EXEC) mkdir -p $(ESEGUIBILI)
 	$(EXEC) mv $@ $(ESEGUIBILI)
 
 run: cvaOption basketOption vanillaOption
 
 cvaOption : cvaOpt
+	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
 	$(EXEC) $(ESEGUIBILI)/cvaOpt
 
 basketOption : basketOpt
+	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
 	$(EXEC) $(ESEGUIBILI)/basketOpt
 
 vanillaOption : vanillaOpt
+	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
 	$(EXEC) $(ESEGUIBILI)/vanillaOpt
 
 clean:
