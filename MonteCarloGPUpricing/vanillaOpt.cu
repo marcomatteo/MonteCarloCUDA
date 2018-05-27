@@ -14,6 +14,8 @@
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 #include <multithreading.h>
 
+#define RISULTATI 5
+
 //	Host Black & Scholes
 extern "C" double host_bsCall ( OptionData );
 
@@ -103,38 +105,56 @@ void choseParameters(int *numBlocks, int *numThreads){
 		memAdjust(&deviceProp,numThreads);
 }
 
+void Parameters(int *numBlocks, int *numThreads){
+		cudaDeviceProp deviceProp;
+		CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
+		char risp;
+		*numTreads = {
+					128,
+					192,
+					256,
+					512,
+					1024
+		};
+		printf("\nParametri CUDA:\n");
+		printf("Scegli il numero di Blocchi: ");
+		scanf("%d",numBlocks);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                      MAIN
 ////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, const char * argv[]) {
-    /*--------------------------- DATA INSTRUCTION -----------------------------------*/
+    /*--------------------------- Variabili -----------------------------------*/
 	OptionData option;
 	option.v = 0.2;
 	option.s = 100;
 	option.k= 100.f;
 	option.r= 0.048790164;
 	option.t= 1.f;
+
+	int numBlocks, numThreads[RISULTATI], i;
+	int SIMS = numBlocks*PATH;
+
+	OptionValue CPU_sim, GPU_sim[RISULTATI];
+
+	float h_CPU_timeSpent=0, d_CPU_timeSpent=0, GPU_timeSpent[RISULTATI], speedup[RISULTATI];
+	double price, bs_price, difference[RISULTATI];
+	cudaEvent_t d_start, d_stop;
+	clock_t h_start, h_stop;
+
+    /*--------------------------- Programma -----------------------------------*/
+
 	printf("Vanilla Option Pricing\n");
 
-	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-	int numBlocks, numThreads;
-	choseParameters(&numBlocks, &numThreads);
-
-	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
-	int SIMS = numBlocks*PATH;
+	//	Definizione e stampa dei parametri CUDA per l'esecuzione in parallelo
+	Parameters(&numBlocks, &numThreads);
 
 	//	Print Option details
 	printOption(option);
-
-    /*---------------- CORE COMPUTATIONS ----------------*/
-
-    OptionValue CPU_sim = {0,0}, GPU_sim = {0,0};
     
-    float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
-    double price, bs_price, difference;
-    clock_t h_start, h_stop;
-    cudaEvent_t d_start, d_stop;
+	// Time instructions
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
 
@@ -145,36 +165,49 @@ int main(int argc, const char * argv[]) {
     // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
     h_start = clock();
-    //CudaCheck( cudaEventRecord( d_start, 0 ));
+    CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_vanillaOpt(option, SIMS);
     h_stop = clock();
-    CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
-    //CudaCheck( cudaEventRecord( d_stop, 0));
-    //CudaCheck( cudaEventSynchronize( d_stop ));
-    //CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
-    //CPU_timeSpent /= CLOCKS_PER_SEC;
+    h_CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
+    CudaCheck( cudaEventRecord( d_stop, 0));
+    CudaCheck( cudaEventSynchronize( d_stop ));
+    CudaCheck( cudaEventElapsedTime( &d_CPU_timeSpent, d_start, d_stop ));
+    d_CPU_timeSpent /= CLOCKS_PER_SEC;
     
     price = CPU_sim.Expected;
-    printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
-    printf("Total execution time: %f s\n\n", CPU_timeSpent);
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
-    CudaCheck( cudaEventRecord( d_start, 0 ));
-    GPU_sim = dev_vanillaOpt(&option, numBlocks, numThreads);
-    CudaCheck( cudaEventRecord( d_stop, 0));
-    CudaCheck( cudaEventSynchronize( d_stop ));
-    CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
-    GPU_timeSpent /= 1000;
-    
-    price = GPU_sim.Expected;
-    printf("Simulated price for the basket option: € %f with I.C %f\n", price, GPU_sim.Confidence);
-    printf("Total execution time: %f s\n\n", GPU_timeSpent);
-    
+    for(i=0; i<RISULTATI; i++){
+    	CudaCheck( cudaEventRecord( d_start, 0 ));
+    	GPU_sim[i] = dev_vanillaOpt(&option, numBlocks, numThreads[i]);
+        CudaCheck( cudaEventRecord( d_stop, 0));
+   	    CudaCheck( cudaEventSynchronize( d_stop ));
+   	    CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
+   	    GPU_timeSpent[i] /= 1000;
+   	    price = GPU_sim[i].Expected;
+   	    difference[i] = abs(price - bs_price);
+   	    speedup[i] = abs(d_CPU_timeSpent / GPU_timeSpent);
+    }
+
     // Comparing time spent with the two methods
-    printf( "-\tComparing results:\t-\n");
-    difference = abs(price - bs_price);
-    speedup = abs(CPU_timeSpent / GPU_timeSpent);
-    printf( "The GPU's speedup: %.2f \nDifference from Black & Schole price: %.2f\n", speedup, difference);
+    printf( "-\tResults:\t-\n");
+    printf("Simulated price for the option with CPU: € %f with I.C. %f\n", price, CPU_sim.Confidence);
+    printf("Total execution time CPU: %f s with host function\t %f s with device function\n\n", h_CPU_timeSpent, d_CPU_timeSpent);
+    printf("Simulated price for the option with GPU:\n");
+    printf("|\tThreads\t|"); printf("|\Price\t|"); printf("|\Confidence\t|"); printf("|\Difference\t|"); printf("|\Time\t|");printf("|\Speedup\t|");
+    printf("\n";
+    for(i=0; i<RISULTATI; i++){
+    	printf("|\t"); printf("%d",numThreads[i]); printf("\t|");
+    	printf("|\t"); printf("%f",GPU_sim[i].Expected); printf("\t|");
+    	printf("|\t"); printf("%f",GPU_sim[i].Confidence); printf("\t|");
+    	printf("|\t"); printf("%f",difference[i]); printf("\t|");
+    	printf("|\t"); printf("%f",GPU_timeSpent[i]); printf("\t|");
+    	printf("|\t"); printf("%f",speedup[i]); printf("\t|");
+    	printf("\n");
+    }
+    
+    CudaCheck( cudaEventDestroy( d_start ));
+    CudaCheck( cudaEventDestroy( d_stop ));
     return 0;
 }
