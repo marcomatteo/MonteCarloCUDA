@@ -282,15 +282,15 @@ vanillaOpt: vanillaOpt.o MonteCarloHost.o MonteCarloKernel.o
 run: cvaOption basketOption vanillaOption
 
 cvaOption : cvaOpt
-	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
+	rm -f cvaOpt.o 
 	$(EXEC) $(ESEGUIBILI)/cvaOpt
 
 basketOption : basketOpt
-	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
+	rm -f basketOpt.o
 	$(EXEC) $(ESEGUIBILI)/basketOpt
 
 vanillaOption : vanillaOpt
-	rm -f MonteCarloHost.o MonteCarloKernel.o cvaOpt.o basketOpt.o vanillaOpt.o
+	rm -f vanillaOpt.o
 	$(EXEC) $(ESEGUIBILI)/vanillaOpt
 
 clean:
