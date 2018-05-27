@@ -169,7 +169,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &d_CPU_timeSpent, d_start, d_stop ));
-    
+    d_CPU_timeSpent[i] /= 1000;
     price = CPU_sim.Expected;
 
     // GPU Monte Carlo
@@ -190,15 +190,15 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the option with CPU: € %f with I.C. %f\n", price, CPU_sim.Confidence);
     printf("Total execution time CPU: %f s with host function\t %f s with device function\n\n", h_CPU_timeSpent, d_CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
-    printf("| Threads\t |\t Price\t |\t Confidence\t |\t Difference\t |\t Time\t |\t Speedup\t |");
+    printf("\t : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
     for(i=0; i<RISULTATI; i++){
-    	printf("| \t %d \t\t",numThreads[i]);
-    	printf("| \t %f \t",GPU_sim[i].Expected);
-    	printf("| \t %f \t",GPU_sim[i].Confidence);
-    	printf("| \t %f \t",difference[i]);
-    	printf("| \t %f \t",GPU_timeSpent[i]);
-    	printf("| \t %f.2 \t",speedup[i]);
+    	printf("|  %d ",numThreads[i]);
+    	printf("|  %f ",GPU_sim[i].Expected);
+    	printf("|  %f ",GPU_sim[i].Confidence);
+    	printf("|  %f ",difference[i]);
+    	printf("|  %f ",GPU_timeSpent[i]);
+    	printf("|  %.2f ",speedup[i]);
     	printf("|\n");
     }
     

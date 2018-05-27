@@ -36,7 +36,8 @@
 # Location of the CUDA Toolkit
 CUDA_PATH?=/usr/local/cuda-7.5
 
-LOCATION:=files
+ESEGUIBILI:=files
+OGGETTI:=obj
 
 ##############################
 # start deprecated interface #
@@ -249,54 +250,55 @@ else
 endif
 
 MonteCarloHost.o:MonteCarloHost.c
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
 
 MonteCarloKernel.o:MonteCarloKernel.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
 
 cvaOpt.o:cvaOpt.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
 
 basketOpt.o:basketOpt.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
 
 vanillaOpt.o:vanillaOpt.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $(OGGETTI)/$@ -c $<
 
 cvaOpt: cvaOpt.o MonteCarloHost.o MonteCarloKernel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p $(LOCATION)
-	$(EXEC) mv $@ $(LOCATION)
+	$(EXEC) mkdir -p $(ESEGUIBILI)
+	$(EXEC) mv $@ $(ESEGUIBILI)
 
 basketOpt: basketOpt.o MonteCarloHost.o MonteCarloKernel.o
-	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p $(LOCATION)
-	$(EXEC) mv $@ $(LOCATION)
+	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $(OGGETTI)/$+ $(LIBRARIES)
+	$(EXEC) mkdir -p $(ESEGUIBILI)
+	$(EXEC) mv $@ $(ESEGUIBILI)
 
 vanillaOpt: vanillaOpt.o MonteCarloHost.o MonteCarloKernel.o
-	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p $(LOCATION)
-	$(EXEC) mv $@ $(LOCATION)
+	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $(OGGETTI)/$+ $(LIBRARIES)
+	$(EXEC) mkdir -p $(ESEGUIBILI)
+	$(EXEC) mv $@ $(ESEGUIBILI)
 
 run: cvaOption basketOption vanillaOption
 
 cvaOption : cvaOpt
-	$(EXEC) $(LOCATION)/cvaOpt
+	$(EXEC) $(ESEGUIBILI)/cvaOpt
 
 basketOption : basketOpt
-	$(EXEC) $(LOCATION)/basketOpt
+	$(EXEC) $(ESEGUIBILI)/basketOpt
 
 vanillaOption : vanillaOpt
-	$(EXEC) $(LOCATION)/vanillaOpt
+	$(EXEC) $(ESEGUIBILI)/vanillaOpt
 
 clean:
-	rm -f MonteCarloHost.o MonteCarloKernel.o
-	rm -f cvaOpt cvaOpt.o
-	rm -f basketOpt basketOpt.o 
-	rm -f vanillaOpt vanillaOpt.o
-	rm -rf $(LOCATION)/cvaOpt
-	rm -rf $(LOCATION)/basketOpt
-	rm -rf $(LOCATION)/vanillaOpt
-	rmdir $(LOCATION)/
+	rm -f $(OGGETTI)/MonteCarloHost.o $(OGGETTI)/MonteCarloKernel.o
+	rm -f cvaOpt $(OGGETTI)/cvaOpt.o
+	rm -f basketOpt $(OGGETTI)/basketOpt.o 
+	rm -f vanillaOpt $(OGGETTI)/vanillaOpt.o
+	rmdir $(OGGETTI)/
+	rm -rf $(ESEGUIBILI)/cvaOpt
+	rm -rf $(ESEGUIBILI)/basketOpt
+	rm -rf $(ESEGUIBILI)/vanillaOpt
+	rmdir $(ESEGUIBILI)/
 
 clobber: clean
