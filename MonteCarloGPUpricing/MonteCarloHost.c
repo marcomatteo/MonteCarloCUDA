@@ -147,7 +147,7 @@ void MonteCarlo(MonteCarloData *data){
                      ((double)data->path * (double)(data->path - 1))
                      );
 
-    data->callValue.Confidence = 1.96 * emp_stdev/sqrt(path);
+    data->callValue.Confidence = 1.96 * emp_stdev/sqrt(data->path);
     data->callValue.Expected = price;
 }
 
@@ -168,7 +168,7 @@ OptionValue host_vanillaOpt( OptionData option, int path){
 
 OptionValue host_basketOpt(MultiOptionData *option, int sim){
     MonteCarloData data;
-    data.option = option;
+    data.option = *option;
     data.numOpt = N;
     data.path = sim;
 
