@@ -188,11 +188,10 @@ int main(int argc, const char * argv[]) {
 	option.t= 1.f;
 
 	// Simulation variables
-	int numBlocks, numThreads, SIMS, i, j;
-	double cholRho[N][N], price;
-	OptionValue CPU_sim;
-	OptionValue GPU_sim;
-	float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
+	int numBlocks, numThreads[THREADS], SIMS, i, j;
+	OptionValue CPU_sim, GPU_sim[THREADS];
+	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
+	double cholRho[N][N], d_price, h_price, difference[THREADS];
 	// Timer
 	// clock_t h_start, h_stop;
 	cudaEvent_t d_start, d_stop;
@@ -200,7 +199,7 @@ int main(int argc, const char * argv[]) {
 	/*--------------------------- START PROGRAM -----------------------------------*/
 	printf("Basket Option Pricing\n");
 	//	CUDA parameters for parallel execution
-	choseParameters(&numBlocks, &numThreads);
+	Parameters(&numBlocks, numThreads);
 	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
 	SIMS = numBlocks*PATH;
 	//	Print Option details
@@ -224,28 +223,38 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     CPU_timeSpent /= CLOCKS_PER_SEC;
-    // Printing the price
-    price = CPU_sim.Expected;
-    printf("Simulated price for the basket option: € %f with I.C [ %f ]\n", price, CPU_sim.Confidence);
-    printf("Total execution time: %f s\n\n", CPU_timeSpent);
+    h_price = CPU_sim.Expected;
 
-    /* GPU Monte Carlo */
+    // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
-    CudaCheck( cudaEventRecord( d_start, 0 ));
-    GPU_sim = dev_basketOpt(&option, numBlocks, numThreads);
-    CudaCheck( cudaEventRecord( d_stop, 0));
-    CudaCheck( cudaEventSynchronize( d_stop ));
-    CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
-    GPU_timeSpent /= 1000;
-    
-    price = GPU_sim.Expected;
-    printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price-GPU_sim.Confidence, price + GPU_sim.Confidence);
-    printf("Total execution time: %f s\n\n", GPU_timeSpent);
-    
+    for(i=0; i<THREADS; i++){
+    	CudaCheck( cudaEventRecord( d_start, 0 ));
+       	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i])
+        CudaCheck( cudaEventRecord( d_stop, 0));
+        CudaCheck( cudaEventSynchronize( d_stop ));
+        CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
+        GPU_timeSpent[i] /= 1000;
+        difference[i] = abs(GPU_sim[i].Expected - h_price);
+        speedup[i] = abs(CPU_timeSpent / GPU_timeSpent[i]);
+    }
     // Comparing time spent with the two methods
-    printf( "-\tComparing results:\t-\n");
-    speedup = abs(CPU_timeSpent / GPU_timeSpent);
-    printf( "The GPU's speedup: %.2f \n", speedup);
+    printf( "\n-\tResults:\t-\n");
+    printf("Simulated price for the option with CPU: € %f with I.C. %f\n", h_price, CPU_sim.Confidence);
+    printf("Total execution time CPU: %f s with device function\n\n", CPU_timeSpent);
+    printf("Simulated price for the option with GPU:\n");
+    printf("  : NumThreads : Price : Confidence Interval : Difference from CPU price :  Time : Speedup :");
+    printf("\n");
+    for(i=0; i<THREADS; i++){
+        	printf(": \t %d ",numThreads[i]);
+        	printf(" \t %f ",GPU_sim[i].Expected);
+        	printf(" \t %f  ",GPU_sim[i].Confidence);
+        	printf(" \t %f \t",difference[i]);
+        	printf(" \t %f ",GPU_timeSpent[i]);
+        	printf(" \t %.2f \t",speedup[i]);
+        	printf(":\n");
+    }
+    CudaCheck( cudaEventDestroy( d_start ));
+    CudaCheck( cudaEventDestroy( d_stop ));
     return 0;
 }
 

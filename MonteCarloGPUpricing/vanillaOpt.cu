@@ -14,8 +14,6 @@
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 #include <multithreading.h>
 
-#define THREADS 4
-
 extern "C" double host_bsCall ( OptionData );
 extern "C" OptionValue host_vanillaOpt(OptionData, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
