@@ -15,6 +15,7 @@
 #include <multithreading.h>
 
 extern "C" double host_bsCall ( OptionData );
+extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 
 ///////////////////////////////////
