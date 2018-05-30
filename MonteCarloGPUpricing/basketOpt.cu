@@ -191,7 +191,7 @@ int main(int argc, const char * argv[]) {
 	int numBlocks, numThreads[THREADS], SIMS, i, j;
 	OptionValue CPU_sim, GPU_sim[THREADS];
 	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
-	double cholRho[N][N], d_price, h_price, difference[THREADS];
+	double cholRho[N][N], h_price, difference[THREADS];
 	// Timer
 	// clock_t h_start, h_stop;
 	cudaEvent_t d_start, d_stop;
@@ -229,7 +229,7 @@ int main(int argc, const char * argv[]) {
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
-       	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i])
+       	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i]);
         CudaCheck( cudaEventRecord( d_stop, 0));
         CudaCheck( cudaEventSynchronize( d_stop ));
         CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
