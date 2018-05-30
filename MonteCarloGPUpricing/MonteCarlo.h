@@ -102,10 +102,10 @@ double host_bsCall ( OptionData );
 OptionValue host_vanillaOpt(OptionData, int);
 OptionValue host_basketOpt(MultiOptionData*, int);
 void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
-
+/*
 //	Device functions declarations
 extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
-
+*/
 #endif /* MONTECARLO_H_ */
