@@ -14,18 +14,6 @@
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 #include <multithreading.h>
 
-//	Host Black & Scholes
-extern "C" double host_bsCall ( OptionData );
-
-//	Host MonteCarlo
-extern "C" OptionValue host_vanillaOpt(OptionData, int);
-
-//	Device MonteCarlo
-extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
-
-// CVA on vanilla call option
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
-
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS

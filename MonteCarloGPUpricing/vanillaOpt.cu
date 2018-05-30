@@ -14,16 +14,7 @@
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 #include <multithreading.h>
 
-#define RISULTATI 4
-
-//	Host Black & Scholes
-extern "C" double host_bsCall ( OptionData );
-
-//	Host MonteCarlo
-extern "C" OptionValue host_vanillaOpt(OptionData, int);
-
-//	Device MonteCarlo
-extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
+#define THREADS 4
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS
@@ -122,39 +113,32 @@ void Parameters(int *numBlocks, int *numThreads){
 ////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, const char * argv[]) {
-    /*--------------------------- Variabili -----------------------------------*/
+    /*--------------------------- VARIABLES -----------------------------------*/
+	// Option Data
 	OptionData option;
 	option.v = 0.2;
 	option.s = 100;
 	option.k= 100.f;
 	option.r= 0.048790164;
 	option.t= 1.f;
-
-	int numBlocks, numThreads[RISULTATI], i;
+	// Simulation
+	int numBlocks, numThreads[THREADS], i;
 	int SIMS;
-
-	OptionValue CPU_sim, GPU_sim[RISULTATI];
-
-	float d_CPU_timeSpent=0, GPU_timeSpent[RISULTATI], speedup[RISULTATI];
-	double price, bs_price, difference[RISULTATI];
+	OptionValue CPU_sim, GPU_sim[THREADS];
+	float d_CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
+	double price, bs_price, difference[THREADS];
 	cudaEvent_t d_start, d_stop;
-	clock_t h_start, h_stop;
 
-    /*--------------------------- Programma -----------------------------------*/
-
+    /*--------------------------- START PROGRAM -----------------------------------*/
 	printf("Vanilla Option Pricing\n");
-
-	//	Definizione e stampa dei parametri CUDA per l'esecuzione in parallelo
+	// CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
 	SIMS = numBlocks*PATH;
-
 	//	Print Option details
 	printOption(option);
-    
 	// Time instructions
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
-
     //	Black & Scholes price
     bs_price = host_bsCall(option);
     printf("\nPrezzo Black & Scholes: %f\n",bs_price);
@@ -171,7 +155,7 @@ int main(int argc, const char * argv[]) {
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
-    for(i=0; i<RISULTATI; i++){
+    for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
     	GPU_sim[i] = dev_vanillaOpt(&option, numBlocks, numThreads[i]);
         CudaCheck( cudaEventRecord( d_stop, 0));
@@ -189,7 +173,7 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the option with GPU:\n");
     printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
-    for(i=0; i<RISULTATI; i++){
+    for(i=0; i<THREADS; i++){
     	printf(": \t %d ",numThreads[i]);
     	printf(" \t %f ",GPU_sim[i].Expected);
     	printf(" \t %f  ",GPU_sim[i].Confidence);

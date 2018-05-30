@@ -16,7 +16,7 @@ typedef struct{
 	MultiOptionData option;
     curandState *RNG;
     int numBlocks, numThreads, numOpt, path;
-} MonteCarloData;
+} dev_MonteCarloData;
 
 /*
  * Error handling from Cuda programming - shane cook
@@ -31,11 +31,11 @@ void cuda_error_check(const char * prefix, const char * postfix){
 }
 
 // Inizializzazione per Monte Carlo da svolgere una volta sola
-void MonteCarlo_init(MonteCarloData *data);
+void MonteCarlo_init(dev_MonteCarloData *data);
 // Liberazione della memoria da svolgere una volta sola
-void MonteCarlo_free(MonteCarloData *data);
+void MonteCarlo_free(dev_MonteCarloData *data);
 // Metodo Monte Carlo
-void MonteCarlo(MonteCarloData *data);
+void MonteCarlo(dev_MonteCarloData *data);
 
 __device__ __constant__ MultiOptionData OPTION;
 __device__ __constant__ int N_OPTION, N_PATH;
@@ -130,7 +130,7 @@ __global__ void randomSetup( curandState *randSeed ){
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
 
-void MonteCarlo_init(MonteCarloData *data){
+void MonteCarlo_init(dev_MonteCarloData *data){
 	cudaEvent_t start, stop;
 	CudaCheck( cudaEventCreate( &start ));
     CudaCheck( cudaEventCreate( &stop ));
@@ -164,14 +164,14 @@ void MonteCarlo_init(MonteCarloData *data){
     CudaCheck( cudaEventDestroy( stop ));
 }
 
-void MonteCarlo_free(MonteCarloData *data){
+void MonteCarlo_free(dev_MonteCarloData *data){
 	//Free memory space
 	CudaCheck(cudaFree(data->RNG));
     CudaCheck(cudaFreeHost(data->h_CallValue));
     CudaCheck(cudaFree(data->d_CallValue));
 }
 
-void MonteCarlo(MonteCarloData *data){
+void MonteCarlo(dev_MonteCarloData *data){
 	/*--------------- CONSTANT MEMORY ----------------*/
 	CudaCheck(cudaMemcpyToSymbol(OPTION,&data->option,sizeof(MultiOptionData)));
 
@@ -198,7 +198,7 @@ void MonteCarlo(MonteCarloData *data){
 }
 
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads){
-	MonteCarloData data;
+	dev_MonteCarloData data;
 	    data.option = *option;
 	    data.numBlocks = numBlocks;
 	    data.numThreads = numThreads;
@@ -223,7 +223,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 		option.r = opt->r;
 		option.t = opt->t;
 
-    MonteCarloData data;
+    dev_MonteCarloData data;
     	data.option = option;
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
@@ -241,7 +241,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
     int i;
     double dt = cva->opt.t / (double)cva->n;
 
-    MonteCarloData data;
+    dev_MonteCarloData data;
     // Option
     	data.option.w[0] = 1;
     	data.option.d[0] = 0;

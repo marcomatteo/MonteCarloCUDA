@@ -14,15 +14,6 @@
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 #include <multithreading.h>
 
-//	Host utility functions declarations
-void Chol( double c[N][N], double a[N][N] );
-
-//	Host MonteCarlo
-extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
-
-//	Device MonteCarlo
-extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
-
 ///////////////////////////////////
 //	PRINT FUNCTIONS
 ///////////////////////////////////
@@ -141,13 +132,27 @@ void choseParameters(int *numBlocks, int *numThreads){
 		memAdjust(&deviceProp,numThreads);
 }
 
+void Parameters(int *numBlocks, int *numThreads){
+		cudaDeviceProp deviceProp;
+		CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
+		numThreads[0] = 128;
+		numThreads[1] = 256;
+		numThreads[2] = 512;
+		numThreads[3] = 1024;
+		printf("\nParametri CUDA:\n");
+		printf("Scegli il numero di Blocchi: ");
+		scanf("%d",numBlocks);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                      MAIN
 ////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, const char * argv[]) {
-    /*--------------------------- DATA INSTRUCTION -----------------------------------*/
+    /*--------------------------- VARIABLES -----------------------------------*/
 	double dw = (double)1 / N;
+
+	// Option Data
 	MultiOptionData option;
 	//	Volatility
 	option.v[0] = 0.2;
@@ -178,53 +183,50 @@ int main(int argc, const char * argv[]) {
 	option.k= 100.f;
 	option.r= 0.048790164;
 	option.t= 1.f;
+
+	// Simulation variables
+	int numBlocks, numThreads, SIMS, i, j;
+	double cholRho[N][N], price;
+	OptionValue CPU_sim;
+	OptionValue GPU_sim;
+	float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
+	// Timer
+	// clock_t h_start, h_stop;
+	cudaEvent_t d_start, d_stop;
+
+	/*--------------------------- START PROGRAM -----------------------------------*/
 	printf("Basket Option Pricing\n");
-
-	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-	int numBlocks, numThreads;
+	//	CUDA parameters for parallel execution
 	choseParameters(&numBlocks, &numThreads);
-
 	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
-	int SIMS = numBlocks*PATH;
-
+	SIMS = numBlocks*PATH;
 	//	Print Option details
 	printMultiOpt(&option);
-
-    /*---------------- CORE COMPUTATIONS ----------------*/
     //	Cholevski factorization
-    double cholRho[N][N];
-    int i,j;
     Chol(option.p, cholRho);
     for(i=0;i<N;i++)
     	for(j=0;j<N;j++)
            	option.p[i][j]=cholRho[i][j];
-    //OptionValue CPU_sim;
-    OptionValue GPU_sim;
-    
-    float CPU_timeSpent=0, GPU_timeSpent=0, speedup;
-    double price;
-    //clock_t h_start, h_stop;
-    cudaEvent_t d_start, d_stop;
+    // Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
-
-    /* CPU Monte Carlo
+    /* CPU Monte Carlo */
     printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
-    h_start = clock();
-    //CudaCheck( cudaEventRecord( d_start, 0 ));
+    //h_start = clock();
+    CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_basketOpt(&option, SIMS);
-    h_stop = clock();
-    CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
-    //CudaCheck( cudaEventRecord( d_stop, 0));
-    //CudaCheck( cudaEventSynchronize( d_stop ));
-    //CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
-    //CPU_timeSpent /= CLOCKS_PER_SEC;
-    
+    //h_stop = clock();
+    //CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
+    CudaCheck( cudaEventRecord( d_stop, 0));
+    CudaCheck( cudaEventSynchronize( d_stop ));
+    CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
+    CPU_timeSpent /= CLOCKS_PER_SEC;
+    // Printing the price
     price = CPU_sim.Expected;
-    printf("Simulated price for the basket option: € %f with I.C [ %f;%f ]\n", price, price - CPU_sim.Confidence, price + CPU_sim.Confidence);
+    printf("Simulated price for the basket option: € %f with I.C [ %f ]\n", price, CPU_sim.Confidence);
     printf("Total execution time: %f s\n\n", CPU_timeSpent);
-    */
-    // GPU Monte Carlo
+
+    /* GPU Monte Carlo */
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
     GPU_sim = dev_basketOpt(&option, numBlocks, numThreads);

@@ -44,7 +44,7 @@ typedef struct {
     double lgd;    			// loss given default
 } CreditData;
 
-/*
+/*	Dinamic MultiOptionData
 typedef struct{
     double *s;  //Stock vector
     double *v;  //Volatility vector
@@ -57,6 +57,7 @@ typedef struct{
     int n;
 } MultiOptionData;
 */
+// Static MultiOptionData
 typedef struct{
     double s[N];  	//Stock vector
     double v[N];  	//Volatility vector
@@ -87,5 +88,24 @@ typedef struct{
 	// Num of simulations
 	int n;
 }CVA;
+
+// Struct for Monte Carlo methods
+typedef struct{
+	OptionValue callValue;
+	MultiOptionData option;
+    int numOpt, path;
+} MonteCarloData;
+
+//	Host functions declarations
+extern "C" void Chol( double c[N][N], double a[N][N] );
+extern "C" double host_bsCall ( OptionData );
+extern "C" OptionValue host_vanillaOpt(OptionData, int);
+extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
+extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
+
+//	Device functions declarations
+extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
+extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
+extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 
 #endif /* MONTECARLO_H_ */
