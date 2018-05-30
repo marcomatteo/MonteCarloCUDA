@@ -105,47 +105,44 @@ void choseParameters(int *numBlocks, int *numThreads){
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
 	OptionData option;
-	option.v = 0.25;
-	option.s = 100;
-	option.k= 100.f;
-	option.r= 0.05;
-	option.t= 1.f;
-	/*--------------------------------------------------------------*/
-	printf("Expected Exposures of an Equity Option\n");
+		option.v = 0.25;
+		option.s = 100;
+		option.k= 100.f;
+		option.r= 0.05;
+		option.t= 1.f;
+	int numBlocks, numThreads, i, SIMS;
+	CVA cva;
+	cva.n = 40;
+		cva.credit.creditspread=150;
+		cva.credit.fundingspread=75;
+		cva.credit.lgd=60;
+		cva.opt = option;
+		cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
+		cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
+		// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
+		cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
+	//float CPU_timeSpent=0, speedup;
+    float GPU_timeSpent=0;
+    double difference, dt,
+    *price = (double*)malloc(sizeof(double)*(cva.n+1)),
+    *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
+    cudaEvent_t d_start, d_stop;
 
+    printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-	int numBlocks, numThreads, i;
 	choseParameters(&numBlocks, &numThreads);
-
 	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
-	int SIMS = numBlocks*PATH;
+	SIMS = numBlocks*PATH;
 
 	//	Print Option details
 	printOption(option);
 
-	CVA cva;
-	cva.n = 40;
-	cva.credit.creditspread=150;
-	cva.credit.fundingspread=75;
-	cva.credit.lgd=60;
-	cva.opt = option;
-	cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
-	cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
-	// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
-	cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
-
-    //float CPU_timeSpent=0, speedup;
-    float GPU_timeSpent=0;
-    double *price = (double*)malloc(sizeof(double)*(cva.n+1));
-    double *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
-    double difference;
-
-    cudaEvent_t d_start, d_stop;
+	// Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
 
     //	Black & Scholes price
-    double dt = option.t/(double)cva.n;
+    dt = option.t/(double)cva.n;
     bs_price[0] = host_bsCall(option);
     for(i=1;i<cva.n+1;i++){
     	if((option.t -= dt)<0)

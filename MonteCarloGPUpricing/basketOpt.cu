@@ -241,7 +241,7 @@ int main(int argc, const char * argv[]) {
     printf( "CPU:\n");
     printf("\tSimulated price: € %f with I.C. %f\n", CPU_sim.Expected, CPU_sim.Confidence);
     printf("\tExecution time: %f s (with device function)\n\n", CPU_timeSpent);
-    printf("Simulated price for the option with GPU:\n");
+    printf("GPU:\n");
     printf("  : NumThreads : Price : Confidence Interval : Difference from CPU price :  Time : Speedup :");
     printf("\n");
     for(i=0; i<THREADS; i++){
