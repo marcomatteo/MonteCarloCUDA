@@ -194,7 +194,6 @@ void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
 	data.numOpt = N;
 	data.path = PATH;
 
-    MonteCarlo_init(&data);
     // Original option price
     MonteCarlo(&data);
     cva->ee[0] = data.callValue;
@@ -220,7 +219,4 @@ void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
 	// CVA and FVA
 	cva->cva = -sommaProdotto1*cva->credit.lgd/100;
 	cva->fva = -sommaProdotto2*cva->credit.lgd/100;
-
-	// Closing
-	MonteCarlo_free(&data);
 }

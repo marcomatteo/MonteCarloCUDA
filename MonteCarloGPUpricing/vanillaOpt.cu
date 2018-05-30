@@ -16,6 +16,7 @@
 
 #define THREADS 4
 
+extern "C" double host_bsCall ( OptionData );
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
 
 ///////////////////////////////////
