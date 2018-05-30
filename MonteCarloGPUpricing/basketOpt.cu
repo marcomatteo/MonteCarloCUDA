@@ -200,8 +200,8 @@ int main(int argc, const char * argv[]) {
 	printf("Basket Option Pricing\n");
 	//	CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
-	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
 	SIMS = numBlocks*PATH;
+	printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printMultiOpt(&option);
     //	Cholevski factorization

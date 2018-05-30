@@ -136,6 +136,7 @@ int main(int argc, const char * argv[]) {
 	// CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
 	SIMS = numBlocks*PATH;
+	printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printOption(option);
 	// Time instructions
