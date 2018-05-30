@@ -191,7 +191,7 @@ int main(int argc, const char * argv[]) {
 	int numBlocks, numThreads[THREADS], SIMS, i, j;
 	OptionValue CPU_sim, GPU_sim[THREADS];
 	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
-	double cholRho[N][N], h_price, difference[THREADS];
+	double cholRho[N][N], difference[THREADS];
 	// Timer
 	// clock_t h_start, h_stop;
 	cudaEvent_t d_start, d_stop;
@@ -213,7 +213,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
     /* CPU Monte Carlo */
-    printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n\n",SIMS);
+    printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n",SIMS);
     //h_start = clock();
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_basketOpt(&option, SIMS);
@@ -223,7 +223,6 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     CPU_timeSpent /= CLOCKS_PER_SEC;
-    h_price = CPU_sim.Expected;
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
@@ -234,13 +233,14 @@ int main(int argc, const char * argv[]) {
         CudaCheck( cudaEventSynchronize( d_stop ));
         CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
         GPU_timeSpent[i] /= 1000;
-        difference[i] = abs(GPU_sim[i].Expected - h_price);
+        difference[i] = abs(GPU_sim[i].Expected - CPU_sim.Expected);
         speedup[i] = abs(CPU_timeSpent / GPU_timeSpent[i]);
     }
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
-    printf("Simulated price for the option with CPU: € %f with I.C. %f\n", h_price, CPU_sim.Confidence);
-    printf("Total execution time CPU: %f s with device function\n\n", CPU_timeSpent);
+    printf( "CPU:\n");
+    printf("\tSimulated price: € %f with I.C. %f\n", CPU_sim.Expected, CPU_sim.Confidence);
+    printf("\tExecution time: %f s (with device function)\n\n", CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
     printf("  : NumThreads : Price : Confidence Interval : Difference from CPU price :  Time : Speedup :");
     printf("\n");
