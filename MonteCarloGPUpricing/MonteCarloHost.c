@@ -72,15 +72,15 @@ double host_bsCall ( OptionData option ){
 //Step 1: Compute the square root of the matrix ∑, generate lower triangular matrix A
 //Step 2: Simulate n indipendent standard random variables G ~ N(0,1)
 //Step 3: Return m + A*G
-static void simGaussVect(double *drift, double *volatility, int n, double *result){
+static void simGaussVect(double *drift, double *volatility, double *result){
     int i;
     double g[N];
     //RNGs
-    for(i=0;i<n;i++)
+    for(i=0;i<N;i++)
         g[i]=gaussian(0, 1);
-    prodMat(volatility, g[0], result, n, n, 1);
+    prodMat(volatility, g, result, N, N, 1);
     //X=m+A*G
-    for(i=0;i<n;i++){
+    for(i=0;i<N;i++){
         result[i] += drift[i];
     }
 }
@@ -103,7 +103,7 @@ static void multiStockValue(double *s, double *v, double *g, double t, double r,
 }
 
 void MonteCarlo(MonteCarloData *data){
-    long double sum, var_sum, price, emp_stdev;
+    double sum, var_sum, emp_stdev, price;
     int i;
     sum = var_sum = 0.0f;
     srand((unsigned)time(NULL));
@@ -123,14 +123,16 @@ void MonteCarlo(MonteCarloData *data){
     else{
     	//vectors of brownian and ST
     	double bt[N], s[N];
+    	float st_sum;
+    	int j;
     	for(i=0; i<data->path; i++){
     	        st_sum = 0;
     	        //Simulation of stock prices
-    	        simGaussVect(data->option.d, &data->option.p[0][0], data->n, bt);
+    	        simGaussVect(data->option.d, &data->option.p[0][0], bt);
     	        multiStockValue(data->option.s, data->option.v, bt, data->option.t, data->option.r, N, s);
     	        for(j=0;j<N;j++)
     	            st_sum += s[j]*data->option.w[j];
-    	        price = st_sum - data->option.k;
+    	        price = (double)st_sum - data->option.k;
     	        if(price<0)
     	            price = 0.0f;
     	        sum += price;
@@ -138,11 +140,11 @@ void MonteCarlo(MonteCarloData *data){
     	}
     }
 
-    price = exp(-option.r*option.t) * (sum/(double)path);
+    price = exp(-data->option.r*data->option.t) * (sum/(double)data->path);
     emp_stdev = sqrt(
-                     ((double)path * var_sum - sum * sum)
+                     ((double)data->path * var_sum - sum * sum)
                      /
-                     ((double)path * (double)(path - 1))
+                     ((double)data->path * (double)(data->path - 1))
                      );
 
     data->callValue.Confidence = 1.96 * emp_stdev/sqrt(path);

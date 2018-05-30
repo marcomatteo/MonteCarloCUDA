@@ -95,7 +95,7 @@ typedef struct{
 	MultiOptionData option;
     int numOpt, path;
 } MonteCarloData;
-
+/*
 //	Host functions declarations
 extern "C" void Chol( double c[N][N], double a[N][N] );
 extern "C" double host_bsCall ( OptionData );
@@ -107,5 +107,17 @@ extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
+*/
+//	Host functions declarations
+void Chol( double c[N][N], double a[N][N] );
+double host_bsCall ( OptionData );
+OptionValue host_vanillaOpt(OptionData, int);
+OptionValue host_basketOpt(MultiOptionData*, int);
+void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
+
+//	Device functions declarations
+OptionValue dev_basketOpt(MultiOptionData *, int, int);
+OptionValue dev_vanillaOpt(OptionData *, int, int);
+void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 
 #endif /* MONTECARLO_H_ */
