@@ -98,7 +98,6 @@ typedef struct{
 
 //	Host functions declarations
 void Chol( double c[N][N], double a[N][N] );
-double host_bsCall ( OptionData );
 OptionValue host_vanillaOpt(OptionData, int);
 OptionValue host_basketOpt(MultiOptionData*, int);
 void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
