@@ -14,6 +14,8 @@
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 #include <multithreading.h>
 
+extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
+
 ///////////////////////////////////
 //	PRINT FUNCTIONS
 ///////////////////////////////////

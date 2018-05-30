@@ -14,6 +14,7 @@
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 #include <multithreading.h>
 
+extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 
 ///////////////////////////////////
 //	PRINT FUNCTIONS

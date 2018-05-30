@@ -16,6 +16,8 @@
 
 #define THREADS 4
 
+extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
+
 ///////////////////////////////////
 //	PRINT FUNCTIONS
 ///////////////////////////////////
