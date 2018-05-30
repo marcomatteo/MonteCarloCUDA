@@ -222,7 +222,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
-    CPU_timeSpent /= CLOCKS_PER_SEC;
+    CPU_timeSpent /= 1000;
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
