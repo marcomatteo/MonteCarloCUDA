@@ -187,6 +187,14 @@ int main(int argc, const char * argv[]) {
 	option.r= 0.048790164;
 	option.t= 1.f;
 
+	if(N!=3){
+		getRandomSigma(option.v);
+		getRandomRho(&option.p[0][0]);
+		pushVett(option.s,100);
+		pushVett(option.w,dw);
+		pushVett(option.d,0);
+	}
+
 	// Simulation variables
 	int numBlocks, numThreads[THREADS], SIMS, i, j;
 	OptionValue CPU_sim, GPU_sim[THREADS];
@@ -281,4 +289,42 @@ void Chol( double c[N][N], double a[N][N] ){
             	a[j][i] = 0.0f;
         }
     }
+}
+
+double randMinMax(double min, double max){
+    double x=(double)rand()/(double)(RAND_MAX);
+    return max*x+(1.0f-x)*min;
+}
+
+//Simulation std, rho and covariance matrix
+void getRandomSigma( double* std ){
+    int i;
+    for(i=0;i<N;i++)
+        std[i] = randMinMax(0, 1);
+    //printf("Stampo per debug vettore sigma:\n");
+    //mat_print(&std);
+}
+void getRandomRho( double* rho ){
+    int i,j;
+    //creating the vectors of rhos
+    for(i=0;i<N;i++){
+        for(j=i;j<N;j++){
+            double r;
+            if(i==j)
+                r=1;
+            else
+                r=randMinMax(-1, 1);
+            rho[j+i*n] = r;
+            rho[i+j*n] = r;
+        }
+    }
+    //printf("Stampo per debug matrice rho:\n");
+    //mat_print(&rho);
+}
+void pushVett( double* vet, double x ){
+    int i;
+    for(i=0;i<N;i++)
+        vet[i] = x;
+    //printf("Stampo per debug vettore sigma:\n");
+    //mat_print(&std);
 }
