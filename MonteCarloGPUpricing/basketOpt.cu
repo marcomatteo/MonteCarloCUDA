@@ -92,7 +92,10 @@ int main(int argc, const char * argv[]) {
 	SIMS = numBlocks*PATH;
 	printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
-	printMultiOpt(&option);
+	if(N>7)
+		printMultiOpt(&option);
+	else
+		printf("\nBasket Option con %d sottostanti\n",N);
     //	Cholevski factorization
     Chol(option.p, cholRho);
     for(i=0;i<N;i++)

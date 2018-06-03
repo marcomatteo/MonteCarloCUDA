@@ -13,7 +13,7 @@
 #include <math.h>
 #include <time.h>
 
-#define N 10
+#define N 50
 #define PATH 200000
 #define THREADS 4
 
