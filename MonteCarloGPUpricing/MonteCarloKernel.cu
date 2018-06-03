@@ -203,7 +203,7 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
 	    data.numBlocks = numBlocks;
 	    data.numThreads = numThreads;
 	    data.numOpt = N;
-	    data.path = PATH*3;
+	    data.path = 2*PATH;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
