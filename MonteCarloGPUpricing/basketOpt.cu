@@ -92,7 +92,7 @@ int main(int argc, const char * argv[]) {
 	SIMS = numBlocks*PATH;
 	printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
-	if(N>7)
+	if(N<7)
 		printMultiOpt(&option);
 	else
 		printf("\nBasket Option con %d sottostanti\n",N);
