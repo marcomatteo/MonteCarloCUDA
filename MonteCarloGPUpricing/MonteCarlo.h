@@ -14,7 +14,7 @@
 #include <time.h>
 
 #define N 20
-#define PATH 200000
+#define PATH 200000 * 2
 #define THREADS 4
 
 /**
