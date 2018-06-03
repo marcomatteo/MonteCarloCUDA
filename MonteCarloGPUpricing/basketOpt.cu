@@ -68,6 +68,7 @@ int main(int argc, const char * argv[]) {
 	option.t= 1.f;
 
 	if(N!=3){
+		srand((unsigned)time(NULL));
 		getRandomSigma(option.v);
 		getRandomRho(&option.p[0][0]);
 		pushVett(option.s,100);
