@@ -26,6 +26,10 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
 void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 void choseParameters(int *numBlocks, int *numThreads);
 void Parameters(int *numBlocks, int *numThreads);
+void printVect( double *mat, int c );
+void printOption( OptionData o);
+void printMat( double *mat, int r, int c );
+void printMultiOpt( MultiOptionData *o);
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- VARIABLES -----------------------------------*/
