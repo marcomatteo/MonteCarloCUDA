@@ -38,7 +38,6 @@ void MonteCarlo_free(dev_MonteCarloData *data);
 // Metodo Monte Carlo
 void MonteCarlo(dev_MonteCarloData *data);
 
-void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
 
@@ -334,18 +333,9 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
     printf("\n");
 }
 
-void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
-    int multiProcessors = deviceProp->multiProcessorCount;
-    int cudaCoresPM = _ConvertSMVer2Cores(deviceProp->major, deviceProp->minor);
-    *numBlocks = multiProcessors * 40;
-    *numThreads = pow(2,(int)(log(cudaCoresPM)/log(2)))*2;
-    sizeAdjust(deviceProp,numBlocks, numThreads);
-}
-
 extern "C" void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
-    char risp;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
     numThreads[0] = 128;
     numThreads[1] = 256;
@@ -354,12 +344,6 @@ extern "C" void Parameters(int *numBlocks, int *numThreads){
     printf("\nParametri CUDA:\n");
     printf("Scegli il numero di Blocchi: ");
     scanf("%d",numBlocks);
-    printf("Ottimizzazione parametri? (Y/N) ");
-    scanf("%s",&risp);
-    if((risp=='Y')||(risp=='y')){
-        optimalAdjust(&deviceProp,numBlocks, &numThreads[0]);
-        return;
-    }
     for (i=0; i<THREADS; i++) {
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);
