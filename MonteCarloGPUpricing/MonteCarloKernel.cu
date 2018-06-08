@@ -8,10 +8,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 #include <cuda_runtime.h>
-
-// includes, project
-//#include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
-
+#include <helper_cuda.h>
 
 // Struct for Monte Carlo methods
 typedef struct{
