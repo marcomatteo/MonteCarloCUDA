@@ -36,9 +36,6 @@ void MonteCarlo_free(dev_MonteCarloData *data);
 // Metodo Monte Carlo
 void MonteCarlo(dev_MonteCarloData *data);
 
-void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
-void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
-
 __device__ __constant__ MultiOptionData OPTION;
 __device__ __constant__ int N_OPTION, N_PATH;
 
