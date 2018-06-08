@@ -154,27 +154,20 @@ int main(int argc, const char * argv[]) {
 //                                      FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////////
 
+// Algoritmo Golub e Van Loan
 void Chol( double c[N][N], double a[N][N] ){
-    int i,j,k;
+    int i = 0, j = 0, k = 0;
     double v[N];
-    for( i=0; i<N; i++){
-        for( j=0; j<N; j++ ){
-            if( j>=i ){
-                //Triangolare inferiore
-            	//v[j]=c[j][i]
-            	v[j]=c[j][i];
-                for(k=0; k<i; k++)    //Scorre tutta
-                    //v[j] = v[j] - a[i][k] * a[j][k]
-                    v[j] = v[j] - a[i][k] * a[j][k];
-                //a[j][i] = v[j] / sqrt( v[i] )
-                if(v[i]>0)
-                	a[j][i] = v[j] / sqrt( v[i] );
-                else
-                	a[j][i] = 0.0f;
+    for( j=0; j<N; j++){
+        for( i=0; i<N; i++ ){
+            a[i][j] = 0;
+            if( i>=j){
+                v[i]=c[i][j];
+                for(k=0; k<=(j-1); k++)
+                    v[i] -= a[j][k] * a[i][k];
+                if(v[j]>0)
+                    a[i][j] = v[i] / sqrt( v[j] );
             }
-            else
-                //Triangolare superiore a[j][i]
-            	a[j][i] = 0.0f;
         }
     }
 }
