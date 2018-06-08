@@ -52,7 +52,7 @@ int main(int argc, const char * argv[]) {
 
     printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-	choseParameters(&numBlocks, &numThreads);
+	Parameters(&numBlocks, &numThreads);
 	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
 	SIMS = numBlocks*PATH;
 
