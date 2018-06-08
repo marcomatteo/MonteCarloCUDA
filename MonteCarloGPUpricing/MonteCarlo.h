@@ -84,11 +84,4 @@ typedef struct{
     int numOpt, path;
 } MonteCarloData;
 
-//	Host functions declarations
-void Chol( double c[N][N], double a[N][N] );
-void printVect( double *mat, int c );
-void printOption( OptionData o);
-void printMat( double *mat, int r, int c );
-void printMultiOpt( MultiOptionData *o);
-
 #endif /* MONTECARLO_H_ */

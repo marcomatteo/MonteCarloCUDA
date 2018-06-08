@@ -53,7 +53,7 @@ void Chol( double c[N][N], double a[N][N] ){
 //////////   FINANCE FUNCTIONS
 //////////////////////////////////////////////////////
 
-static double randMinMax(double min, double max){
+double randMinMax(double min, double max){
     double x=(double)rand()/(double)(RAND_MAX);
     return max*x+(1.0f-x)*min;
 }
@@ -242,17 +242,6 @@ void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
 ///////////////////////////////////
 //    PRINT FUNCTIONS
 ///////////////////////////////////
-void printVect( double *mat, int c ){
-    int i,j,r=1;
-    for(i=0; i<r; i++){
-        printf("\n!\t");
-        for(j=0; j<c; j++){
-            printf("\t%f\t",mat[j+i*c]);
-        }
-        printf("\t!");
-    }
-    printf("\n\n");
-}
 
 void printOption( OptionData o){
     printf("\n-\tOption data\t-\n\n");
@@ -261,18 +250,6 @@ void printOption( OptionData o){
     printf("Risk free interest rate: %.2f %%\n", o.r * 100);
     printf("Volatility:\t\t\t %.2f %%\n", o.v * 100);
     printf("Time to maturity:\t\t %.2f %s\n", o.t, (o.t>1)?("years"):("year"));
-}
-
-void printMat( double *mat, int r, int c ){
-    int i,j;
-    for(i=0; i<r; i++){
-        printf("\n!\t");
-        for(j=0; j<c; j++){
-            printf("\t%f\t",mat[j+i*c]);
-        }
-        printf("\t!");
-    }
-    printf("\n\n");
 }
 
 void printMultiOpt( MultiOptionData *o){
