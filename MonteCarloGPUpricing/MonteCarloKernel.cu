@@ -10,7 +10,7 @@
 #include <cuda_runtime.h>
 
 // includes, project
-#include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
+//#include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
 
 
 // Struct for Monte Carlo methods
