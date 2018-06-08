@@ -49,11 +49,6 @@ void Chol( double c[N][N], double a[N][N] ){
     }
 }
 
-double randMinMax(double min, double max){
-    double x=(double)rand()/(double)(RAND_MAX);
-    return max*x+(1.0f-x)*min;
-}
-
 //////////////////////////////////////////////////////
 //////////   FINANCE FUNCTIONS
 //////////////////////////////////////////////////////

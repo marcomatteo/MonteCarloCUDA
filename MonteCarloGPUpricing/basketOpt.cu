@@ -150,6 +150,11 @@ int main(int argc, const char * argv[]) {
 //                                      FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////////
 
+double randMinMax(double min, double max){
+    double x=(double)rand()/(double)(RAND_MAX);
+    return max*x+(1.0f-x)*min;
+}
+
 //Simulation std, rho and covariance matrix
 void getRandomSigma( double* std ){
     int i;
