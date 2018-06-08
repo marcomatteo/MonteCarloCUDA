@@ -7,7 +7,6 @@
 #include "MonteCarlo.h"
 #include <curand.h>
 #include <curand_kernel.h>
-#include <helper_cuda.h>
 
 // Struct for Monte Carlo methods
 typedef struct{
