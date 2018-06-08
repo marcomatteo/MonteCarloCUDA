@@ -357,11 +357,11 @@ extern "C" void Parameters(int *numBlocks, int *numThreads){
     printf("Ottimizzazione parametri? (Y/N) ");
     scanf("%s",&risp);
     if((risp=='Y')||(risp=='y')){
-        optimalAdjust(&deviceProp,numBlocks, numThreads);
+        optimalAdjust(&deviceProp,numBlocks, &numThreads[0]);
         return;
     }
     for (i=0; i<THREADS; i++) {
-        sizeAdjust(&deviceProp,numBlocks, numThreads);
-        memAdjust(&deviceProp,numThreads);
+        sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
+        memAdjust(&deviceProp, &numThreads[i]);
     }
 }
