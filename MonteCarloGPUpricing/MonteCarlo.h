@@ -13,8 +13,8 @@
 #include <math.h>
 #include <time.h>
 
-#define N 20
-#define PATH 200000 * 2
+#define N 3
+#define PATH 200000
 #define THREADS 4
 
 /**
@@ -45,19 +45,6 @@ typedef struct {
     double lgd;    			// loss given default
 } CreditData;
 
-/*	Dinamic MultiOptionData
-typedef struct{
-    double *s;  //Stock vector
-    double *v;  //Volatility vector
-    double *p;  //Correlation matrix
-    double *d;  //Drift vector
-    double *w;  //Weight vector
-    double k;
-    double t;
-    double r;
-    int n;
-} MultiOptionData;
-*/
 // Static MultiOptionData
 typedef struct{
     double s[N];  	//Stock vector
@@ -99,11 +86,9 @@ typedef struct{
 
 //	Host functions declarations
 void Chol( double c[N][N], double a[N][N] );
+void printVect( double *mat, int c );
+void printOption( OptionData o);
+void printMat( double *mat, int r, int c );
+void printMultiOpt( MultiOptionData *o);
 
-/*
-//	Device functions declarations
-extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
-extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
-*/
 #endif /* MONTECARLO_H_ */

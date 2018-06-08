@@ -26,10 +26,6 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
 void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 void choseParameters(int *numBlocks, int *numThreads);
 void Parameters(int *numBlocks, int *numThreads);
-void printVect( double *mat, int c );
-void printOption( OptionData o);
-void printMat( double *mat, int r, int c );
-void printMultiOpt( MultiOptionData *o);
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- VARIABLES -----------------------------------*/
@@ -154,29 +150,6 @@ int main(int argc, const char * argv[]) {
 //                                      FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////////
 
-// Algoritmo Golub e Van Loan
-void Chol( double c[N][N], double a[N][N] ){
-    int i = 0, j = 0, k = 0;
-    double v[N];
-    for( j=0; j<N; j++){
-        for( i=0; i<N; i++ ){
-            a[i][j] = 0;
-            if( i>=j){
-                v[i]=c[i][j];
-                for(k=0; k<=(j-1); k++)
-                    v[i] -= a[j][k] * a[i][k];
-                if(v[j]>0)
-                    a[i][j] = v[i] / sqrt( v[j] );
-            }
-        }
-    }
-}
-
-double randMinMax(double min, double max){
-    double x=(double)rand()/(double)(RAND_MAX);
-    return max*x+(1.0f-x)*min;
-}
-
 //Simulation std, rho and covariance matrix
 void getRandomSigma( double* std ){
     int i;
@@ -204,57 +177,6 @@ void pushVett( double* vet, double x ){
         vet[i] = x;
 }
 
-///////////////////////////////////
-//	PRINT FUNCTIONS
-///////////////////////////////////
-void printVect( double *mat, int c ){
-    int i,j,r=1;
-    for(i=0; i<r; i++){
-        printf("\n!\t");
-        for(j=0; j<c; j++){
-            printf("\t%f\t",mat[j+i*c]);
-        }
-        printf("\t!");
-    }
-    printf("\n\n");
-}
-
-void printOption( OptionData o){
-    printf("\n-\tOption data\t-\n\n");
-    printf("Underlying asset price:\t € %.2f\n", o.s);
-    printf("Strike price:\t\t € %.2f\n", o.k);
-    printf("Risk free interest rate: %.2f %%\n", o.r * 100);
-    printf("Volatility:\t\t\t %.2f %%\n", o.v * 100);
-    printf("Time to maturity:\t\t %.2f %s\n", o.t, (o.t>1)?("years"):("year"));
-}
-
-void printMat( double *mat, int r, int c ){
-    int i,j;
-    for(i=0; i<r; i++){
-        printf("\n!\t");
-        for(j=0; j<c; j++){
-            printf("\t%f\t",mat[j+i*c]);
-        }
-        printf("\t!");
-    }
-    printf("\n\n");
-}
-
-void printMultiOpt( MultiOptionData *o){
-    printf("\n-\tBasket Option data\t-\n\n");
-    printf("Number of assets: %d\n",N);
-    printf("Underlying assets prices:\n");
-    printVect(o->s, N);
-    printf("Volatility:\n");
-    printVect(o->v, N);
-    printf("Weights:");
-    printVect(o->w, N);
-    printf("Correlation matrix:\n");
-    printMat(&o->p[0][0], N, N);
-    printf("Strike price:\t € %.2f\n", o->k);
-    printf("Risk free interest rate: %.2f \n", o->r);
-    printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
-}
 
 ///////////////////////////////////
 //	ADJUST FUNCTIONS
@@ -324,6 +246,7 @@ void choseParameters(int *numBlocks, int *numThreads){
 
 void Parameters(int *numBlocks, int *numThreads){
 		cudaDeviceProp deviceProp;
+        int i = 0;
 		CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
 		numThreads[0] = 128;
 		numThreads[1] = 256;
@@ -332,4 +255,9 @@ void Parameters(int *numBlocks, int *numThreads){
 		printf("\nParametri CUDA:\n");
 		printf("Scegli il numero di Blocchi: ");
 		scanf("%d",numBlocks);
+        // Da qua
+        for (i=0; i<THREADS; i++) {
+            sizeAdjust(&deviceProp,numBlocks, numThreads);
+            memAdjust(&deviceProp,numThreads);
+        }
 }
