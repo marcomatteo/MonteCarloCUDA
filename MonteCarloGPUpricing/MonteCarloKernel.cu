@@ -4,10 +4,15 @@
  *  Created on: 06/feb/2018
  *  Author: marco
  */
-
+#include "MonteCarlo.h"
 #include <curand.h>
 #include <curand_kernel.h>
-#include "MonteCarlo.h"
+#include <cuda_runtime.h>
+
+// includes, project
+#include <helper_functions.h> // Helper functions (utilities, parsing, timing)
+#include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
+#include <multithreading.h>
 
 // Struct for Monte Carlo methods
 typedef struct{
