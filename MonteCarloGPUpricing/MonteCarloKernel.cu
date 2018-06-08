@@ -10,9 +10,8 @@
 #include <cuda_runtime.h>
 
 // includes, project
-#include <helper_functions.h> // Helper functions (utilities, parsing, timing)
 #include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
-#include <multithreading.h>
+
 
 // Struct for Monte Carlo methods
 typedef struct{
@@ -43,7 +42,6 @@ void MonteCarlo_free(dev_MonteCarloData *data);
 void MonteCarlo(dev_MonteCarloData *data);
 
 void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
-void Parameters(int *numBlocks, int *numThreads);
 void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
 
@@ -350,6 +348,7 @@ void optimalAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
 extern "C" void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
+    char risp;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
     numThreads[0] = 128;
     numThreads[1] = 256;
