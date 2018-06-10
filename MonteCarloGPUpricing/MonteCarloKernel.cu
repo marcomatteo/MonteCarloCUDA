@@ -4,13 +4,10 @@
  *  Created on: 06/feb/2018
  *  Author: marco
  */
-#include "MonteCarlo.h"
+
 #include <curand.h>
 #include <curand_kernel.h>
-// includes, project
-#include <helper_functions.h> // Helper functions (utilities, parsing, timing)
-#include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
-#include <multithreading.h>
+#include "MonteCarlo.h"
 
 // Struct for Monte Carlo methods
 typedef struct{
@@ -291,4 +288,3 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
 	// Closing
 	MonteCarlo_free(&data);
 }
-
