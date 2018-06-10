@@ -7,18 +7,15 @@
 //
 
 #include "MonteCarlo.h"
-#include <cuda_runtime.h>
-
-// includes, project
-#include <helper_functions.h> // Helper functions (utilities, parsing, timing)
-#include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
-#include <multithreading.h>
 
 extern "C" double host_bsCall ( OptionData );
 extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 extern "C" void printOption( OptionData o);
-extern "C" void Parameters(int *numBlocks, int *numThreads);
+
+void Parameters(int *numBlocks, int *numThreads);
+void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
+void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //                                      MAIN
@@ -142,7 +139,7 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
     printf("\n");
 }
 
-extern "C" void Parameters(int *numBlocks, int *numThreads){
+void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
