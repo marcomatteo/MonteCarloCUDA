@@ -58,13 +58,14 @@ double randMinMax(double min, double max){
     return max*x+(1.0f-x)*min;
 }
 
-//Generator of a normal pseudo-random number with mean mu and volatility sigma with Box-Muller method
+// Metodo di Box-Muller per generare una v.a. gaussiana con media mu e varianza sigma
 static double gaussian( double mu, double sigma ){
     double x = randMinMax(0, 1);
     double y = randMinMax(0, 1);
     return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
 }
 
+// Approssimazione di Hastings della funzione cumulata di una v.a. gaussiana
 static double cnd(double d){
     const double       A1 = 0.31938153;
     const double       A2 = -0.356563782;
@@ -79,6 +80,7 @@ static double cnd(double d){
     return cnd;
 }
 
+// Prezzo di una opzione call secondo la formula di Black & Scholes
 double host_bsCall ( OptionData option ){
     double d1 = ( log(option.s / option.k) + (option.r + 0.5 * option.v * option.v) * option.t) / (option.v * sqrt(option.t));
     double d2 = d1 - option.v * sqrt(option.t);
@@ -111,6 +113,7 @@ static double callPayoff( OptionData option ){
     return (value>0) ? (value):(0);
 }
 
+// Call payoff di un vettore di sottostanti
 static void multiStockValue(double *s, double *v, double *g, double t, double r, int n, double *values){
     int i;
     for(i=0;i<n;i++){

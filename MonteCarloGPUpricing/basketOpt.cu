@@ -7,23 +7,21 @@
 //
 
 #include "MonteCarlo.h"
-#include <cuda_runtime.h>
-
-// includes, project
-#include <helper_functions.h> // Helper functions (utilities, parsing, timing)
-#include <helper_cuda.h>      // helper functions (cuda error checking and initialization)
-#include <multithreading.h>
 
 extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
 extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
 extern "C" void Chol( double c[N][N], double a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
 extern "C" double randMinMax(double min, double max);
-extern "C" void Parameters(int *numBlocks, int *numThreads);
+//extern "C" void Parameters(int *numBlocks, int *numThreads);
 
 void getRandomSigma( double* std );
 void getRandomRho( double* rho );
 void pushVett( double* vet, double x );
+
+void Parameters(int *numBlocks, int *numThreads);
+void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
+void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- VARIABLES -----------------------------------*/
@@ -214,7 +212,7 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
     printf("\n");
 }
 
-extern "C" void Parameters(int *numBlocks, int *numThreads){
+void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
