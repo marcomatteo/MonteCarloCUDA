@@ -245,7 +245,28 @@ void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
 ///////////////////////////////////
 //    PRINT FUNCTIONS
 ///////////////////////////////////
-
+void printVect( double *mat, int c ){
+    int i,j,r=1;
+    for(i=0; i<r; i++){
+        printf("\n!\t");
+        for(j=0; j<c; j++){
+            printf("\t%f\t",mat[j+i*c]);
+        }
+        printf("\t!");
+    }
+    printf("\n\n");
+}
+void printMat( double *mat, int r, int c ){
+    int i,j;
+    for(i=0; i<r; i++){
+        printf("\n!\t");
+        for(j=0; j<c; j++){
+            printf("\t%f\t",mat[j+i*c]);
+        }
+        printf("\t!");
+    }
+    printf("\n\n");
+}
 void printOption( OptionData o){
     printf("\n-\tOption data\t-\n\n");
     printf("Underlying asset price:\t € %.2f\n", o.s);
