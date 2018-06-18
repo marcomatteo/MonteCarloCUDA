@@ -188,22 +188,13 @@ void MonteCarlo(dev_MonteCarloData *data){
 	long double sum=0, sum2=0, price, empstd;
     long int nSim = data->numBlocks * PATH;
     for ( i = 0; i < data->numBlocks; i++ ){
-    	// aggiunto per prova valore medio
-    	nSim = PATH;
-    	price = exp(-(data->option.r*data->option.t)) * (data->h_CallValue[i].Expected/(double)nSim);
-    	empstd = sqrt((double)((double)nSim * data->h_CallValue[i].Confidence - data->h_CallValue[i].Expected * data->h_CallValue[i].Expected)/((double)nSim * (double)(nSim - 1)));
-    	// commento per prova
-    	//sum += data->h_CallValue[i].Expected;
-	    //sum2 += data->h_CallValue[i].Confidence;
-    	sum += price;
-    	sum2 += 1.96 * empstd / (double)sqrt((double)nSim);
+    	sum += data->h_CallValue[i].Expected;
+	    sum2 += data->h_CallValue[i].Confidence;
 	}
-	//price = exp(-(data->option.r*data->option.t)) * (sum/(double)nSim);
-    //empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
-    //data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
-    //data->callValue.Expected = price;
-    data->callValue.Confidence = sum2 / data->numBlocks;
-    data->callValue.Expected = sum / data->numBlocks;
+	price = exp(-(data->option.r*data->option.t)) * (sum/(double)nSim);
+    empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
+    data->callValue.Expected = price;
 }
 
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads){
