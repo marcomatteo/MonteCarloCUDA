@@ -190,8 +190,8 @@ void MonteCarlo(dev_MonteCarloData *data){
     for ( i = 0; i < data->numBlocks; i++ ){
     	// aggiunto per prova valore medio
     	nSim = PATH;
-    	price = exp(-(data->option.r*data->option.t)) * (sum/(double)nSim);
-    	empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    	price = exp(-(data->option.r*data->option.t)) * (data->h_CallValue[i].Expected/(double)nSim);
+    	empstd = sqrt((double)((double)nSim * data->h_CallValue[i].Confidence - data->h_CallValue[i].Expected * data->h_CallValue[i].Expected)/((double)nSim * (double)(nSim - 1)));
     	// commento per prova
     	//sum += data->h_CallValue[i].Expected;
 	    //sum2 += data->h_CallValue[i].Confidence;
