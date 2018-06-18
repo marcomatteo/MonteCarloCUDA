@@ -82,7 +82,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     int blockIndex = blockIdx.x;
 
     /*------------------ SHARED MEMORY DICH ----------------*/
-    extern __shared__ unsigned double s_Sum[];
+    extern __shared__ double s_Sum[];
 
     // Global thread index
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -188,13 +188,22 @@ void MonteCarlo(dev_MonteCarloData *data){
 	long double sum=0, sum2=0, price, empstd;
     long int nSim = data->numBlocks * PATH;
     for ( i = 0; i < data->numBlocks; i++ ){
-    	sum += data->h_CallValue[i].Expected;
-	    sum2 += data->h_CallValue[i].Confidence;
+    	// aggiunto per prova valore medio
+    	nSim = PATH;
+    	price = exp(-(data->option.r*data->option.t)) * (sum/(double)nSim);
+    	empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    	// commento per prova
+    	//sum += data->h_CallValue[i].Expected;
+	    //sum2 += data->h_CallValue[i].Confidence;
+    	sum += price;
+    	sum2 += 1.96 * empstd / (double)sqrt((double)nSim);
 	}
-	price = exp(-(data->option.r*data->option.t)) * (sum/(double)nSim);
-    empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
-    data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
-    data->callValue.Expected = price;
+	//price = exp(-(data->option.r*data->option.t)) * (sum/(double)nSim);
+    //empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    //data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
+    //data->callValue.Expected = price;
+    data->callValue.Confidence = sum2 / data->numBlocks;
+    data->callValue.Expected = sum / data->numBlocks;
 }
 
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads){

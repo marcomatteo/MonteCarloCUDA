@@ -58,8 +58,8 @@ typedef struct{
 } MultiOptionData;
 
 typedef struct {
-    unsigned double Expected;   	// the simulated price
-    unsigned double Confidence;    // confidence intervall
+    double Expected;   	// the simulated price
+    double Confidence;    // confidence intervall
 } OptionValue;
 
 typedef struct{
