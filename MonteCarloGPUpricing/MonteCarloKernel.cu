@@ -82,7 +82,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     int blockIndex = blockIdx.x;
 
     /*------------------ SHARED MEMORY DICH ----------------*/
-    extern __shared__ double s_Sum[];
+    extern __shared__ unsigned double s_Sum[];
 
     // Global thread index
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
