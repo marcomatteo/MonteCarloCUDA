@@ -186,7 +186,7 @@ void MonteCarlo(dev_MonteCarloData *data){
 
 	// Closing Monte Carlo
 	float sum=0, sum2=0, price, empstd;
-    long int nSim = data->numBlocks * PATH;
+    long int nSim = data->numBlocks * data->path;
     for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
@@ -212,7 +212,7 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
     return data.callValue;
 }
 
-extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThreads){
+extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThreads, int sims){
 	MultiOptionData option;
 		option.w[0] = 1;
 		option.d[0] = 0;
@@ -228,7 +228,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
     	data.numOpt = N;
-    	data.path = PATH;
+    	data.path = sims / numBlocks;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);

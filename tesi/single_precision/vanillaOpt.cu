@@ -10,7 +10,7 @@
 
 extern "C" float host_bsCall ( OptionData );
 extern "C" OptionValue host_vanillaOpt(OptionData, int);
-extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
+extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int, int);
 extern "C" void printOption( OptionData o);
 
 void Parameters(int *numBlocks, int *numThreads);
@@ -42,7 +42,7 @@ int main(int argc, const char * argv[]) {
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
-    printf("Inserisci il numero di simulazioni (x10.000): ");
+    printf("Inserisci il numero di simulazioni (x100.000): ");
     scanf("%d",&SIMS);
 	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
