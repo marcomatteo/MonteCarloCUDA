@@ -70,7 +70,7 @@ int main(int argc, const char * argv[]) {
     //printf("N^ simulations: %d\n",SIMS);
     for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
-    	GPU_sim[i] = dev_vanillaOpt(&option, numBlocks, numThreads[i]);
+    	GPU_sim[i] = dev_vanillaOpt(&option, numBlocks, numThreads[i],SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
    	    CudaCheck( cudaEventSynchronize( d_stop ));
    	    CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
