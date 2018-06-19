@@ -134,7 +134,6 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
         int maxThreads = (int)maxShared / (2*sizeDouble);
         printf("The optimal number of thread should be: %d\n",maxThreads);
     }
-    printf("\n");
 }
 
 void Parameters(int *numBlocks, int *numThreads){
