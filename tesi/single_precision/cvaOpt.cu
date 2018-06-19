@@ -8,7 +8,7 @@
 
 #include "MonteCarlo.h"
 
-extern "C" float host_bsCall ( OptionData );
+extern "C" double host_bsCall ( OptionData );
 extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims);
 extern "C" void printOption( OptionData o);
@@ -42,9 +42,9 @@ int main(int argc, const char * argv[]) {
 		cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
 	//float CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0;
-    float difference, dt,
-    *price = (float*)malloc(sizeof(float)*(cva.n+1)),
-    *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
+    double difference, dt,
+    *price = (double*)malloc(sizeof(double)*(cva.n+1)),
+    *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
     cudaEvent_t d_start, d_stop;
 
     printf("Expected Exposures of an Equity Option\n");
@@ -61,7 +61,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_stop ));
 
     //	Black & Scholes price
-    dt = option.t/(float)cva.n;
+    dt = option.t/(double)cva.n;
     bs_price[0] = host_bsCall(option);
     for(i=1;i<cva.n+1;i++){
     	if((option.t -= dt)<0)
