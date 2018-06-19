@@ -127,7 +127,7 @@ int main(int argc, const char * argv[]) {
     }
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
-    printf("Simulated price for the option with CPU: Expected price, I.C.\n %f \nI.C. %f\n", price, CPU_sim.Confidence);
+    printf("Simulated price for the option with CPU: Expected price, I.C.\n%f \n%f\n", price, CPU_sim.Confidence);
     printf("Total execution time CPU: %f\n\n", d_CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
     for(i=0; i<THREADS; i++){
