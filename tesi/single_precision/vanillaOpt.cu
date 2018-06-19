@@ -44,6 +44,7 @@ int main(int argc, const char * argv[]) {
 	Parameters(&numBlocks, numThreads);
     printf("Inserisci il numero di simulazioni (x100.000): ");
     scanf("%d",&SIMS);
+    SIMS *= 100000;
 	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printOption(option);
@@ -56,7 +57,7 @@ int main(int argc, const char * argv[]) {
 
     // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\n");
-    //printf("N^ simulations: %d\n",SIMS);
+    printf("N^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_vanillaOpt(option, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
@@ -67,7 +68,7 @@ int main(int argc, const char * argv[]) {
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\n");
-    //printf("N^ simulations: %d\n",SIMS);
+    printf("N^ simulations: %d\n",SIMS);
     for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
     	GPU_sim[i] = dev_vanillaOpt(&option, numBlocks, numThreads[i],SIMS);
