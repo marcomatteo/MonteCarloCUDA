@@ -185,7 +185,7 @@ void MonteCarlo(dev_MonteCarloData *data){
 	CudaCheck(cudaMemcpy(data->h_CallValue, data->d_CallValue, data->numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
 
 	// Closing Monte Carlo
-	long float sum=0, sum2=0, price, empstd;
+	float sum=0, sum2=0, price, empstd;
     long int nSim = data->numBlocks * PATH;
     for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
