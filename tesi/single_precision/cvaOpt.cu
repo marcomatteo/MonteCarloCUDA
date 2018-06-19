@@ -141,7 +141,6 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
 
 void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
-    int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
     numThreads[0] = 128;
     numThreads[1] = 256;
