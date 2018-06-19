@@ -57,7 +57,7 @@ int main(int argc, const char * argv[]) {
 
     // CPU Monte Carlo
     printf("\nMonte Carlo execution on CPU:\n");
-    //printf("N^ simulations: %d\n",SIMS);
+    printf("N^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_vanillaOpt(option, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
@@ -82,19 +82,19 @@ int main(int argc, const char * argv[]) {
 
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
-    printf("Simulated price for the option with CPU: € %f with I.C. %f\n", price, CPU_sim.Confidence);
-    printf("Total execution time CPU: %f s with device function\n\n", d_CPU_timeSpent);
+    printf("Simulated price for the option with CPU: Expected price, I.C.\n %f \nI.C. %f\n", price, CPU_sim.Confidence);
+    printf("Total execution time CPU: %f\n\n", d_CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
-    printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
-    printf("\n");
     for(i=0; i<THREADS; i++){
-    	printf(": \t %d ",numThreads[i]);
-    	printf(" \t %f ",GPU_sim[i].Expected);
-    	printf(" \t %f  ",GPU_sim[i].Confidence);
-    	printf(" \t %f \t",difference[i]);
-    	printf(" \t %f ",GPU_timeSpent[i]);
-    	printf(" \t %.2f \t",speedup[i]);
-    	printf(":\n");
+        printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
+        printf("\n");
+    	printf("%d \n",numThreads[i]);
+    	printf("%f \n",GPU_sim[i].Expected);
+    	printf("%f \n",GPU_sim[i].Confidence);
+    	printf("%f \n",difference[i]);
+    	printf("%f \n",GPU_timeSpent[i]);
+    	printf("%.2f \n",speedup[i]);
+    	printf("---\n");
     }
     
     CudaCheck( cudaEventDestroy( d_start ));
@@ -144,10 +144,10 @@ void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    numThreads[0] = 256;
-    numThreads[1] = 1024;
-    //numThreads[2] = 512;
-    //numThreads[3] = 1024;
+    numThreads[0] = 128;
+    numThreads[1] = 256;
+    numThreads[2] = 512;
+    numThreads[3] = 1024;
     *numBlocks = BLOCKS;
     //printf("\nParametri CUDA:\n");
     for (i=0; i<THREADS; i++) {

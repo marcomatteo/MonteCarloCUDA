@@ -127,20 +127,19 @@ int main(int argc, const char * argv[]) {
     }
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
-    printf( "CPU:\n");
-    printf("\tSimulated price: € %f with I.C. %f\n", CPU_sim.Expected, CPU_sim.Confidence);
-    printf("\tExecution time: %f s (with device function)\n\n", CPU_timeSpent);
-    printf("GPU:\n");
-    printf("  : NumThreads : Price : Confidence Interval : Difference from CPU price :  Time : Speedup :");
-    printf("\n");
+    printf("Simulated price for the option with CPU: Expected price, I.C.\n %f \nI.C. %f\n", price, CPU_sim.Confidence);
+    printf("Total execution time CPU: %f\n\n", d_CPU_timeSpent);
+    printf("Simulated price for the option with GPU:\n");
     for(i=0; i<THREADS; i++){
-        	printf(": \t %d ",numThreads[i]);
-        	printf(" \t %f ",GPU_sim[i].Expected);
-        	printf(" \t %f  ",GPU_sim[i].Confidence);
-        	printf(" \t %f \t",difference[i]);
-        	printf(" \t %f ",GPU_timeSpent[i]);
-        	printf(" \t %.2f \t",speedup[i]);
-        	printf(":\n");
+        printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
+        printf("\n");
+        printf("%d \n",numThreads[i]);
+        printf("%f \n",GPU_sim[i].Expected);
+        printf("%f \n",GPU_sim[i].Confidence);
+        printf("%f \n",difference[i]);
+        printf("%f \n",GPU_timeSpent[i]);
+        printf("%.2f \n",speedup[i]);
+        printf("---\n");
     }
     CudaCheck( cudaEventDestroy( d_start ));
     CudaCheck( cudaEventDestroy( d_stop ));
