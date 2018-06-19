@@ -10,7 +10,7 @@
 
 extern "C" float host_bsCall ( OptionData );
 extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
+extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims);
 extern "C" void printOption( OptionData o);
 
 void Parameters(int *numBlocks, int *numThreads);
@@ -76,7 +76,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nCVA execution on GPU:\nN^ simulations per time interval: %d * %d\n",SIMS,cva.n);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(&cva, numBlocks, numThreads);
+    dev_cvaEquityOption(&cva, numBlocks, numThreads, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
@@ -150,8 +150,8 @@ void Parameters(int *numBlocks, int *numThreads){
     printf("\nParametri CUDA:\n");
     printf("Scegli il numero di Blocchi: ");
     scanf("%d",numBlocks);
-    for (i=0; i<THREADS; i++) {
-        sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
-        memAdjust(&deviceProp, &numThreads[i]);
-    }
+    printf("Scegli il numero di Threads: ");
+    scanf("%d",numThreads);
+    sizeAdjust(&deviceProp,numBlocks, numThreads);
+    memAdjust(&deviceProp, numThreads);
 }

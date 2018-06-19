@@ -197,7 +197,7 @@ void MonteCarlo(dev_MonteCarloData *data){
     data->callValue.Expected = price;
 }
 
-extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads){
+extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
 	dev_MonteCarloData data;
 	    data.option = *option;
 	    data.numBlocks = numBlocks;
@@ -237,7 +237,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
+extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     int i;
     float dt = cva->opt.t / (float)cva->n;
 

@@ -9,7 +9,7 @@
 #include "MonteCarlo.h"
 
 extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
-extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
+extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int,int);
 extern "C" void Chol( float c[N][N], float a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
 extern "C" float randMinMax(float min, float max);
@@ -81,8 +81,11 @@ int main(int argc, const char * argv[]) {
 	printf("Basket Option Pricing\n");
 	//	CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
-	SIMS = numBlocks*PATH;
-	printf("\nScenari di Monte Carlo: %d\n",SIMS);
+    printf("Inserisci il numero simulazioni (x100.000): ");
+    scanf("%d",&SIMS);
+    SIMS *= 100000;
+	//SIMS = numBlocks*PATH;
+	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	if(N<7)
 		printMultiOpt(&option);
@@ -97,7 +100,8 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
     /* CPU Monte Carlo */
-    printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n",SIMS);
+    printf("\nMonte Carlo execution on CPU:\n");
+    //printf("N^ simulations: %d\n",SIMS);
     //h_start = clock();
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_basketOpt(&option, SIMS);
@@ -109,10 +113,11 @@ int main(int argc, const char * argv[]) {
     CPU_timeSpent /= 1000;
 
     // GPU Monte Carlo
-    printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
+    printf("\nMonte Carlo execution on GPU:\n");
+    //printf("N^ simulations: %d\n",SIMS);
     for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
-       	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i]);
+       	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i], SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
         CudaCheck( cudaEventSynchronize( d_stop ));
         CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
@@ -216,13 +221,14 @@ void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    numThreads[0] = 128;
-    numThreads[1] = 256;
-    numThreads[2] = 512;
-    numThreads[3] = 1024;
-    printf("\nParametri CUDA:\n");
-    printf("Scegli il numero di Blocchi: ");
-    scanf("%d",numBlocks);
+    numThreads[0] = 256;
+    numThreads[1] = 1024;
+    //numThreads[2] = 512;
+    //numThreads[3] = 1024;
+    //printf("\nParametri CUDA:\n");
+    //printf("Scegli il numero di Blocchi: ");
+    //scanf("%d",numBlocks);
+    *numBlocks = BLOCKS;
     for (i=0; i<THREADS; i++) {
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);
