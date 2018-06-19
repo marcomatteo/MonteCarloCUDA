@@ -272,8 +272,8 @@ void printOption( OptionData o){
     printf("Underlying asset price:\t € %.2f\n", o.s);
     printf("Strike price:\t\t € %.2f\n", o.k);
     printf("Risk free interest rate: %.2f %%\n", o.r * 100);
-    printf("Volatility:\t\t\t %.2f %%\n", o.v * 100);
-    printf("Time to maturity:\t\t %.2f %s\n", o.t, (o.t>1)?("years"):("year"));
+    printf("Volatility:\t\t %.2f %%\n", o.v * 100);
+    printf("Time to maturity:\t %.2f %s\n", o.t, (o.t>1)?("years"):("year"));
 }
 
 void printMultiOpt( MultiOptionData *o){
