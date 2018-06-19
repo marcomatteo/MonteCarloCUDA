@@ -85,9 +85,9 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the option with CPU: Expected price, I.C.\n%f \n%f\n", price, CPU_sim.Confidence);
     printf("Total execution time CPU: %f\n\n", d_CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
+    printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
+    printf("\n");
     for(i=0; i<THREADS; i++){
-        printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
-        printf("\n");
     	printf("%d \n",numThreads[i]);
     	printf("%f \n",GPU_sim[i].Expected);
     	printf("%f \n",GPU_sim[i].Confidence);
