@@ -60,8 +60,8 @@ float randMinMax(float min, float max){
 
 // Metodo di Box-Muller per generare una v.a. gaussiana con media mu e varianza sigma
 static float gaussian( float mu, float sigma ){
-    float x = randMinMax(0, 1);
-    float y = randMinMax(0, 1);
+    float x = (float)rand()/(float)(RAND_MAX);
+    float y = (float)rand()/(float)(RAND_MAX);
     return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
 }
 
@@ -108,7 +108,7 @@ static void simGaussVect(float *drift, float *volatility, float *result){
 // Call payoff
 static float callPayoff( OptionData option ){
     float value = option.s * exp(
-    		(option.r-0.5*option.v*option.v)*option.t+gaussian(0,1)*sqrt(option.t)*option.v)
+    (option.r-0.5*option.v*option.v)*option.t+gaussian(0,1)*sqrt(option.t)*option.v)
     - option.k;
     return (value>0) ? (value):(0);
 }
@@ -192,7 +192,7 @@ OptionValue host_basketOpt(MultiOptionData *option, int sim){
     data.option = *option;
     data.numOpt = N;
     data.path = sim;
-
+    // Monte Carlo
     MonteCarlo(&data);
     return data.callValue;
 }
@@ -275,7 +275,6 @@ void printOption( OptionData o){
     printf("Volatility:\t\t %.2f %%\n", o.v * 100);
     printf("Time to maturity:\t %.2f %s\n", o.t, (o.t>1)?("years"):("year"));
 }
-
 void printMultiOpt( MultiOptionData *o){
     printf("\n-\tBasket Option data\t-\n\n");
     printf("Number of assets: %d\n",N);
