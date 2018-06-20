@@ -34,8 +34,8 @@ int main(int argc, const char * argv[]) {
 	int numBlocks, numThreads[THREADS], i;
 	int SIMS;
 	OptionValue CPU_sim, GPU_sim[THREADS];
-	float d_CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
-	float price, bs_price, difference[THREADS];
+	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
+	float bs_price, difference[THREADS];
 	cudaEvent_t d_start, d_stop;
 
     /*--------------------------- START PROGRAM -----------------------------------*/
@@ -62,9 +62,8 @@ int main(int argc, const char * argv[]) {
     CPU_sim=host_vanillaOpt(option, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
-    CudaCheck( cudaEventElapsedTime( &d_CPU_timeSpent, d_start, d_stop ));
-    d_CPU_timeSpent /= 1000;
-    price = CPU_sim.Expected;
+    CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
+    CPU_timeSpent /= 1000;
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\n");
@@ -77,13 +76,12 @@ int main(int argc, const char * argv[]) {
    	    CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
    	    GPU_timeSpent[i] /= 1000;
    	    difference[i] = abs(GPU_sim[i].Expected - bs_price);
-   	    speedup[i] = abs(d_CPU_timeSpent / GPU_timeSpent[i]);
+   	    speedup[i] = abs(CPU_timeSpent / GPU_timeSpent[i]);
     }
 
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
-    printf("Simulated price for the option with CPU: Expected price, I.C.\n%f \n%f\n", price, CPU_sim.Confidence);
-    printf("Total execution time CPU: %f\n\n", d_CPU_timeSpent);
+    printf("Simulated price for the option with CPU: Expected price, I.C., time\n%f \n%f \n%f \n",  CPU_sim.Expected, CPU_sim.Confidence, CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
     printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");

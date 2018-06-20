@@ -81,8 +81,11 @@ int main(int argc, const char * argv[]) {
 	printf("Basket Option Pricing\n");
 	//	CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
-	SIMS = numBlocks*PATH;
-	printf("\nScenari di Monte Carlo: %d\n",SIMS);
+    printf("Inserisci il numero simulazioni (x100.000): ");
+    scanf("%d",&SIMS);
+    SIMS *= 100000;
+	//SIMS = numBlocks*PATH;
+	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	if(N<7)
 		printMultiOpt(&option);
@@ -123,19 +126,18 @@ int main(int argc, const char * argv[]) {
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
     printf( "CPU:\n");
-    printf("\tSimulated price: € %f with I.C. %f\n", CPU_sim.Expected, CPU_sim.Confidence);
-    printf("\tExecution time: %f s (with device function)\n\n", CPU_timeSpent);
+    printf("Simulated price for the option with CPU: Expected price, I.C., time\n%f \n%f \n%f", CPU_sim.Expected, CPU_sim.Confidence, CPU_timeSpent);
     printf("GPU:\n");
     printf("  : NumThreads : Price : Confidence Interval : Difference from CPU price :  Time : Speedup :");
     printf("\n");
     for(i=0; i<THREADS; i++){
-        	printf(": \t %d ",numThreads[i]);
-        	printf(" \t %f ",GPU_sim[i].Expected);
-        	printf(" \t %f  ",GPU_sim[i].Confidence);
-        	printf(" \t %f \t",difference[i]);
-        	printf(" \t %f ",GPU_timeSpent[i]);
-        	printf(" \t %.2f \t",speedup[i]);
-        	printf(":\n");
+        printf("%d \n",numThreads[i]);
+        printf("%f \n",GPU_sim[i].Expected);
+        printf("%f \n",GPU_sim[i].Confidence);
+        printf("%f \n",difference[i]);
+        printf("%f \n",GPU_timeSpent[i]);
+        printf("%.2f \n",speedup[i]);
+        printf("---\n");
     }
     CudaCheck( cudaEventDestroy( d_start ));
     CudaCheck( cudaEventDestroy( d_stop ));
@@ -209,7 +211,6 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
         int maxThreads = (int)maxShared / (2*sizeDouble);
         printf("The optimal number of thread should be: %d\n",maxThreads);
     }
-    printf("\n");
 }
 
 void Parameters(int *numBlocks, int *numThreads){
@@ -220,9 +221,7 @@ void Parameters(int *numBlocks, int *numThreads){
     numThreads[1] = 256;
     numThreads[2] = 512;
     numThreads[3] = 1024;
-    printf("\nParametri CUDA:\n");
-    printf("Scegli il numero di Blocchi: ");
-    scanf("%d",numBlocks);
+    *numBlocks = BLOCKS;
     for (i=0; i<THREADS; i++) {
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);

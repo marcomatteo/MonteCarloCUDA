@@ -34,16 +34,18 @@ int main(int argc, const char * argv[]) {
 	int numBlocks, numThreads[THREADS], i;
 	int SIMS;
 	OptionValue CPU_sim, GPU_sim[THREADS];
-	float d_CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
-	double price, bs_price, difference[THREADS];
+	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
+	double bs_price, difference[THREADS];
 	cudaEvent_t d_start, d_stop;
 
     /*--------------------------- START PROGRAM -----------------------------------*/
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
-	Parameters(&numBlocks, numThreads);
-	SIMS = numBlocks*PATH;
-	printf("\nScenari di Monte Carlo: %d\n",SIMS);
+    Parameters(&numBlocks, numThreads);
+    printf("Inserisci il numero di simulazioni (x100.000): ");
+    scanf("%d",&SIMS);
+    SIMS *= 100000;
+    printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printOption(option);
 	// Time instructions
@@ -59,9 +61,9 @@ int main(int argc, const char * argv[]) {
     CPU_sim=host_vanillaOpt(option, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
-    CudaCheck( cudaEventElapsedTime( &d_CPU_timeSpent, d_start, d_stop ));
-    d_CPU_timeSpent /= 1000;
-    price = CPU_sim.Expected;
+    CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
+    CPU_timeSpent /= 1000;
+ 
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
@@ -134,7 +136,6 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
         int maxThreads = (int)maxShared / (2*sizeDouble);
         printf("The optimal number of thread should be: %d\n",maxThreads);
     }
-    printf("\n");
 }
 
 void Parameters(int *numBlocks, int *numThreads){
@@ -145,9 +146,7 @@ void Parameters(int *numBlocks, int *numThreads){
     numThreads[1] = 256;
     numThreads[2] = 512;
     numThreads[3] = 1024;
-    printf("\nParametri CUDA:\n");
-    printf("Scegli il numero di Blocchi: ");
-    scanf("%d",numBlocks);
+    *numBlocks = BLOCKS;
     for (i=0; i<THREADS; i++) {
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);
