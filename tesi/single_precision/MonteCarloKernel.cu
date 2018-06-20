@@ -82,9 +82,10 @@ __device__ void sumReduction( float *data ){
             data[tid] += data[tid + halfblock];
             data[tid2] += data[tid2 + halfblock];
         }
-        __syncthreads;
         halfblock /= 2;
     }while(halfblock>=128);
+    __syncthreads;
+
     if(tid<32){
         if(blockSize>=64){
             data[tid]+=data[tid+32];
