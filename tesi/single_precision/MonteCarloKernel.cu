@@ -72,6 +72,42 @@ __device__ float blackScholes(float *bt){
 	return price;
 }
 
+__device__ void sumReduction( float *data ){
+    unsigned int tid = threadIdx.x;
+    unsigned int tid2 = tid + blockDim.x;
+    unsigned int blockSize = blockDim.x;
+    unsigned int halfblock = blockSize/2;
+    do{
+        if(tid<halfblock){
+            data[tid] += data[tid + halfblock];
+            data[tid2] += data[tid2 + halfblock];
+        }
+        __syncthreads;
+    }while((halfblock/2)>=64);
+    if(tid<32){
+        if(blockSize>=64){
+            data[tid]=data[tid+32];
+            data[tid2]=data[tid2+32];
+        }
+        if(blockSize>=32){
+            data[tid]=data[tid+16];
+            data[tid2]=data[tid2+16];
+        }
+        if(blockSize>=16){
+            data[tid]=data[tid+8];
+            data[tid2]=data[tid2+8];
+        }
+        if(blockSize>=8){
+            data[tid]=data[tid+4];
+            data[tid2]=data[tid2+4];
+        }
+        if(blockSize>=4){
+            data[tid]=data[tid+2];
+            data[tid2]=data[tid2+2];
+        }
+    }
+    __syncthreads;
+}
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
     int i;
@@ -101,12 +137,12 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         sum.Expected += price;
         sum.Confidence += price*price;
     }
-    __syncthreads();
     // Copy to the shared memory
     s_Sum[sumIndex] = sum.Expected;
     s_Sum[sum2Index] = sum.Confidence;
     __syncthreads();
     // Reduce shared memory accumulators and write final result to global memory
+    /*
     int halfblock = blockDim.x/2;
     do{
         if ( sumIndex < halfblock ){
@@ -116,8 +152,10 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         __syncthreads();
         halfblock /= 2;
     }while ( halfblock != 0 );
+     */
     //__syncthreads();
     // Keeping the first element for each block using one thread
+    sumReduction(s_Sum);
     if (sumIndex == 0){
     		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
     		d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
