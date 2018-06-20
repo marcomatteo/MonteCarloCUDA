@@ -155,7 +155,36 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
      */
     //__syncthreads();
     // Keeping the first element for each block using one thread
-    sumReduction(s_Sum);
+    do{
+        if(tid<halfblock){
+            data[tid] += data[tid + halfblock];
+            data[tid2] += data[tid2 + halfblock];
+        }
+        __syncthreads;
+    }while((halfblock/2)>=64);
+    if(tid<32){
+        if(blockSize>=64){
+            data[tid]=data[tid+32];
+            data[tid2]=data[tid2+32];
+        }
+        if(blockSize>=32){
+            data[tid]=data[tid+16];
+            data[tid2]=data[tid2+16];
+        }
+        if(blockSize>=16){
+            data[tid]=data[tid+8];
+            data[tid2]=data[tid2+8];
+        }
+        if(blockSize>=8){
+            data[tid]=data[tid+4];
+            data[tid2]=data[tid2+4];
+        }
+        if(blockSize>=4){
+            data[tid]=data[tid+2];
+            data[tid2]=data[tid2+2];
+        }
+    }
+    __syncthreads;
     if (sumIndex == 0){
     		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
     		d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
