@@ -120,6 +120,20 @@ int main(int argc, const char * argv[]) {
         for(i=0;i<N;i++)
             for(j=0;j<N;j++)
                 cva.opt.p[i][j]=cholRho[i][j];
+    }else{
+        OptionData option;
+        option.v = opt.v;
+        option.s = opt.s;
+        option.k = opt.k;
+        option.r = opt.r;
+        option.t = opt.t;
+        bs_price[0] = host_bsCall(option);
+        for(i=1;i<cva.n+1;i++){
+            if((opt.t -= dt)<0)
+                bs_price[i] = 0;
+            else
+                bs_price[i] = host_bsCall(option);
+        }
     }
 
 	// Timer init
@@ -128,13 +142,7 @@ int main(int argc, const char * argv[]) {
 
     //	Black & Scholes price
     dt = opt.t/(float)cva.n;
-    bs_price[0] = host_bsCall(opt);
-    for(i=1;i<cva.n+1;i++){
-    	if((opt.t -= dt)<0)
-    		bs_price[i] = 0;
-    	else
-    		bs_price[i] = host_bsCall(opt);
-    }
+    
 
     //	Ripristino valore originale del Time to mat
     opt.t= 1.f;
@@ -148,14 +156,16 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     CPU_timeSpent /= 1000;
     printf("\nPrezzi Simulati:\n");
-    printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
-    for(i=0;i<cva.n+1;i++){
-        difference = abs(cva.ee[i].Expected - bs_price[i]);
-        printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
+    if(N==1){
+        printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
+        for(i=0;i<cva.n+1;i++){
+            difference = abs(cva.ee[i].Expected - bs_price[i]);
+            printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
+        }
     }
     printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
     printf("\nTotal execution time: %f s\n\n", CPU_timeSpent);
-
+    printf("--------------------------------------------------\n");
     // GPU Monte Carlo
     printf("\nCVA execution on GPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
