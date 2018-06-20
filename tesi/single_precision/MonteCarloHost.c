@@ -149,8 +149,8 @@ void MonteCarlo(MonteCarloData *data){
         for(i=0; i<data->path; i++){
             st_sum = 0;
             //Simulation of stock prices
-            simGaussVect((double)data->option.d, (double)&data->option.p[0][0], bt);
-            multiStockValue((double)data->option.s, (double)data->option.v, bt, (double)data->option.t, (double)data->option.r, N, s);
+            simGaussVect(data->option.d, &data->option.p[0][0], bt);
+            multiStockValue(data->option.s, data->option.v, bt, data->option.t, data->option.r, N, s);
             for(j=0;j<N;j++)
                 st_sum += s[j]*data->option.w[j];
             price = (double)st_sum - data->option.k;
@@ -280,13 +280,13 @@ void printMultiOpt( MultiOptionData *o){
     printf("\n-\tBasket Option data\t-\n\n");
     printf("Number of assets: %d\n",N);
     printf("Underlying assets prices:\n");
-    printVect((double)o->s, N);
+    printVect(o->s, N);
     printf("Volatility:\n");
-    printVect((double)o->v, N);
+    printVect(o->v, N);
     printf("Weights:");
-    printVect((double)o->w, N);
+    printVect(o->w, N);
     printf("Correlation matrix:\n");
-    printMat((double)&o->p[0][0], N, N);
+    printMat(&o->p[0][0], N, N);
     printf("Strike price:\t € %.2f\n", o->k);
     printf("Risk free interest rate: %.2f \n", o->r);
     printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
