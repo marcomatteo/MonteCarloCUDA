@@ -44,66 +44,61 @@ int main(int argc, const char * argv[]) {
     cudaEvent_t d_start, d_stop;
     // Option Data
     if(N>1){
-        MultiOptionData option;
+        MultiOptionData opt;
         double dw = (double)1 / N;
         int j;
         //    Volatility
-        option.v[0] = 0.2;
-        option.v[1] = 0.3;
-        option.v[2] = 0.2;
+        opt.v[0] = 0.2;
+        opt.v[1] = 0.3;
+        opt.v[2] = 0.2;
         //    Spot prices
-        option.s[0] = 100;
-        option.s[1] = 100;
-        option.s[2] = 100;
+        opt.s[0] = 100;
+        opt.s[1] = 100;
+        opt.s[2] = 100;
         //    Weights
-        option.w[0] = dw;
-        option.w[1] = dw;
-        option.w[2] = dw;
+        opt.w[0] = dw;
+        opt.w[1] = dw;
+        opt.w[2] = dw;
         //    Correlations
-        option.p[0][0] = 1;
-        option.p[0][1] = -0.5;
-        option.p[0][2] = -0.5;
-        option.p[1][0] = -0.5;
-        option.p[1][1] = 1;
-        option.p[1][2] = -0.5;
-        option.p[2][0] = -0.5;
-        option.p[2][1] = -0.5;
-        option.p[2][2] = 1;
+        opt.p[0][0] = 1;
+        opt.p[0][1] = -0.5;
+        opt.p[0][2] = -0.5;
+        opt.p[1][0] = -0.5;
+        opt.p[1][1] = 1;
+        opt.p[1][2] = -0.5;
+        opt.p[2][0] = -0.5;
+        opt.p[2][1] = -0.5;
+        opt.p[2][2] = 1;
         //    Drift vectors for the brownians
-        option.d[0] = 0;
-        option.d[1] = 0;
-        option.d[2] = 0;
+        opt.d[0] = 0;
+        opt.d[1] = 0;
+        opt.d[2] = 0;
         
-        option.k= 100.f;
-        option.r= 0.048790164;
-        option.t= 1.f;
+        opt.k= 100.f;
+        opt.r= 0.048790164;
+        opt.t= 1.f;
     
         if(N!=3){
             srand((unsigned)time(NULL));
-            getRandomSigma(option.v);
-            getRandomRho(&option.p[0][0]);
-            pushVett(option.s,100);
-            pushVett(option.w,dw);
-            pushVett(option.d,0);
+            getRandomSigma(opt.v);
+            getRandomRho(&opt.p[0][0]);
+            pushVett(opt.s,100);
+            pushVett(opt.w,dw);
+            pushVett(opt.d,0);
         }
-        //    Cholevski factorization
-        Chol(option.p, cholRho);
-        for(i=0;i<N;i++)
-            for(j=0;j<N;j++)
-                cva.option.p[i][j]=cholRho[i][j];
     }
     else{
-        MultiOptionData option;
-        option.v[0] = 0.25;
-        option.s[0] = 100;
-        option.k= 100.f;
-        option.r= 0.05;
-        option.t= 1.f;
-        option.w[0] = 1;
-        option.d[0] = 0;
-        option.p[0][0] = 1;
+        MultiOptionData opt;
+        opt.v[0] = 0.25;
+        opt.s[0] = 100;
+        opt.k= 100.f;
+        opt.r= 0.05;
+        opt.t= 1.f;
+        opt.w[0] = 1;
+        opt.d[0] = 0;
+        opt.p[0][0] = 1;
     }
-    cva.opt = option;
+    cva.opt = opt;
 	
 	//float CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0, CPU_timeSpent=0;
@@ -119,24 +114,32 @@ int main(int argc, const char * argv[]) {
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
 
 	//	Print Option details
-	printOption(option);
+    printMultiOpt(&opt);
+    
+    if(N>1){
+        //    Cholevski factorization
+        Chol(opt.p, cholRho);
+        for(i=0;i<N;i++)
+            for(j=0;j<N;j++)
+                cva.opt.p[i][j]=cholRho[i][j];
+    }
 
 	// Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
 
     //	Black & Scholes price
-    dt = option.t/(float)cva.n;
-    bs_price[0] = host_bsCall(option);
+    dt = opt.t/(float)cva.n;
+    bs_price[0] = host_bsCall(opt);
     for(i=1;i<cva.n+1;i++){
-    	if((option.t -= dt)<0)
+    	if((opt.t -= dt)<0)
     		bs_price[i] = 0;
     	else
-    		bs_price[i] = host_bsCall(option);
+    		bs_price[i] = host_bsCall(opt);
     }
 
     //	Ripristino valore originale del Time to mat
-    option.t= 1.f;
+    opt.t= 1.f;
     
     // CPU Monte Carlo
     printf("\nCVA execution on CPU:\n");
