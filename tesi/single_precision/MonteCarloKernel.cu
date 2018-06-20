@@ -10,25 +10,10 @@
 #include "MonteCarlo.h"
 
 // Struct for Monte Carlo methods
-typedef struct {
-    float Expected;       // the simulated price
-    float Confidence;    // confidence intervall
-} dev_OptionValue;
-
 typedef struct{
-    float s[N];      //Stock vector
-    float v[N];      //Volatility vector
-    float p[N][N]; //Correlation matrix
-    float d[N];      //Drift vector
-    float w[N];      //Weight vector
-    float k;
-    float t;
-    float r;
-} dev_MultiOptionData;
-
-typedef struct{
-	dev_OptionValue *h_CallValue, *d_CallValue, callValue;
-	dev_MultiOptionData option;
+	OptionValue *h_CallValue, *d_CallValue;
+	OptionValue callValue;
+	MultiOptionData option;
     curandState *RNG;
     int numBlocks, numThreads, numOpt, path;
 } dev_MonteCarloData;
@@ -212,17 +197,7 @@ void MonteCarlo(dev_MonteCarloData *data){
     data->callValue.Expected = price;
 }
 
-extern "C" OptionValue dev_basketOpt(MultiOptionData *opt, int numBlocks, int numThreads, int sims){
-    dev_MultiOptionData option;
-    option.w[0] = (float)opt->w;
-    option.d[0] = (float)opt->d;
-    option.p[0][0] = (float)opt->p;
-    option.s[0] = (float)opt->s;
-    option.v[0] = (float)opt->v;
-    option.k = (float)opt->k;
-    option.r = (float)opt->r;
-    option.t = (float)opt->t;
-    
+extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
 	dev_MonteCarloData data;
 	    data.option = *option;
 	    data.numBlocks = numBlocks;
@@ -238,15 +213,15 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *opt, int numBlocks, int nu
 }
 
 extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThreads, int sims){
-	dev_MultiOptionData option;
+	MultiOptionData option;
 		option.w[0] = 1;
 		option.d[0] = 0;
 		option.p[0][0] = 1;
-		option.s[0] = (float)opt->s;
-		option.v[0] = (float)opt->v;
-		option.k = (float)opt->k;
-		option.r = (float)opt->r;
-		option.t = (float)opt->t;
+		option.s[0] = opt->s;
+		option.v[0] = opt->v;
+		option.k = opt->k;
+		option.r = opt->r;
+		option.t = opt->t;
 
     dev_MonteCarloData data;
     	data.option = option;
@@ -271,11 +246,11 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     	data.option.w[0] = 1;
     	data.option.d[0] = 0;
     	data.option.p[0][0] = 1;
-    	data.option.s[0] = (float)cva->opt.s;
-    	data.option.v[0] = (float)cva->opt.v;
-    	data.option.k = (float)cva->opt.k;
-    	data.option.r = (float)cva->opt.r;
-    	data.option.t = (float)cva->opt.t;
+    	data.option.s[0] = cva->opt.s;
+    	data.option.v[0] = cva->opt.v;
+    	data.option.k = cva->opt.k;
+    	data.option.r = cva->opt.r;
+    	data.option.t = cva->opt.t;
     // Kernel parameters
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
@@ -307,8 +282,8 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 		sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
 	}
 	// CVA and FVA
-	cva->cva = -sommaProdotto1 * cva->credit.lgd/100;
-	cva->fva = -sommaProdotto2 * cva->credit.lgd/100;
+	cva->cva = -sommaProdotto1*cva->credit.lgd/100;
+	cva->fva = -sommaProdotto2*cva->credit.lgd/100;
 
 	// Closing
 	MonteCarlo_free(&data);

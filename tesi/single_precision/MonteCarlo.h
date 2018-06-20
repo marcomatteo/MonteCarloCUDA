@@ -33,47 +33,47 @@
 #endif
 
 typedef struct {
-    double s;    // stock price
-    double k;    // strike price
-    double r;    // risk-free rate
-    double v;    // the volatility
-    double t;    // time to maturity
+    float s;    // stock price
+    float k;    // strike price
+    float r;    // risk-free rate
+    float v;    // the volatility
+    float t;    // time to maturity
 } OptionData;
 
 typedef struct {
-    double creditspread;    // credit spread
-    double fundingspread;   // funding spread
-    double lgd;    			// loss given default
+    float creditspread;    // credit spread
+    float fundingspread;   // funding spread
+    float lgd;    			// loss given default
 } CreditData;
 
 // Static MultiOptionData
 typedef struct{
-    double s[N];  	//Stock vector
-    double v[N];  	//Volatility vector
-    double p[N][N]; //Correlation matrix
-    double d[N];  	//Drift vector
-    double w[N];  	//Weight vector
-    double k;
-    double t;
-    double r;
+    float s[N];  	//Stock vector
+    float v[N];  	//Volatility vector
+    float p[N][N]; //Correlation matrix
+    float d[N];  	//Drift vector
+    float w[N];  	//Weight vector
+    float k;
+    float t;
+    float r;
 } MultiOptionData;
 
 typedef struct {
-    double Expected;   	// the simulated price
-    double Confidence;    // confidence intervall
+    float Expected;   	// the simulated price
+    float Confidence;    // confidence intervall
 } OptionValue;
 
 typedef struct{
 	// Expected Exposures
 	OptionValue *ee;
 	// Default probabilities
-	double *dp,*fp;
+	float *dp,*fp;
 	// Credit spreads
 	CreditData credit;
 	// Option data
 	OptionData opt;
 	// CVA, FVA
-	double cva, fva;
+	float cva, fva;
 	// Num of simulations
 	int n;
 }CVA;
