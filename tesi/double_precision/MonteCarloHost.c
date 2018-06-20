@@ -60,8 +60,8 @@ double randMinMax(double min, double max){
 
 // Metodo di Box-Muller per generare una v.a. gaussiana con media mu e varianza sigma
 static double gaussian( double mu, double sigma ){
-    double x=(double)rand()/(double)(RAND_MAX);
-    double x=(double)rand()/(double)(RAND_MAX);
+    double x = randMinMax(0, 1);
+    double y = randMinMax(0, 1);
     return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
 }
 

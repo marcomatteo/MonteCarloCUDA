@@ -8,7 +8,7 @@
 
 #include "MonteCarlo.h"
 
-extern "C" double host_bsCall ( OptionData );
+extern "C" float host_bsCall ( OptionData );
 extern "C" OptionValue host_vanillaOpt(OptionData, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int, int);
 extern "C" void printOption( OptionData o);
@@ -35,7 +35,7 @@ int main(int argc, const char * argv[]) {
 	int SIMS;
 	OptionValue CPU_sim, GPU_sim[THREADS];
 	float d_CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
-	double price, bs_price, difference[THREADS];
+	float price, bs_price, difference[THREADS];
 	cudaEvent_t d_start, d_stop;
 
     /*--------------------------- START PROGRAM -----------------------------------*/
@@ -45,7 +45,7 @@ int main(int argc, const char * argv[]) {
     printf("Inserisci il numero di simulazioni (x100.000): ");
     scanf("%d",&SIMS);
     SIMS *= 100000;
-	printf("\nScenari di Monte Carlo: %d\n",SIMS);
+	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printOption(option);
 	// Time instructions

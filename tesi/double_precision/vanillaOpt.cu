@@ -42,9 +42,7 @@ int main(int argc, const char * argv[]) {
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
-    printf("Inserisci il numero di simulazioni (x100.000): ");
-    scanf("%d",&SIMS);
-    SIMS *= 100000;
+	SIMS = numBlocks*PATH;
 	printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printOption(option);
@@ -136,7 +134,7 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
         int maxThreads = (int)maxShared / (2*sizeDouble);
         printf("The optimal number of thread should be: %d\n",maxThreads);
     }
-    //printf("\n");
+    printf("\n");
 }
 
 void Parameters(int *numBlocks, int *numThreads){
@@ -147,7 +145,9 @@ void Parameters(int *numBlocks, int *numThreads){
     numThreads[1] = 256;
     numThreads[2] = 512;
     numThreads[3] = 1024;
-    *numBlocks = BLOCKS;
+    printf("\nParametri CUDA:\n");
+    printf("Scegli il numero di Blocchi: ");
+    scanf("%d",numBlocks);
     for (i=0; i<THREADS; i++) {
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);

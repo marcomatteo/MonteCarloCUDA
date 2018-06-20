@@ -10,14 +10,14 @@
 
 extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
 extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int,int);
-extern "C" void Chol( double c[N][N], double a[N][N] );
+extern "C" void Chol( float c[N][N], float a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
-extern "C" double randMinMax(double min, double max);
+extern "C" float randMinMax(float min, float max);
 //extern "C" void Parameters(int *numBlocks, int *numThreads);
 
-void getRandomSigma( double* std );
-void getRandomRho( double* rho );
-void pushVett( double* vet, double x );
+void getRandomSigma( float* std );
+void getRandomRho( float* rho );
+void pushVett( float* vet, float x );
 
 void Parameters(int *numBlocks, int *numThreads);
 void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
@@ -72,7 +72,7 @@ int main(int argc, const char * argv[]) {
 	int numBlocks, numThreads[THREADS], SIMS, i, j;
 	OptionValue CPU_sim, GPU_sim[THREADS];
 	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
-	double cholRho[N][N], difference[THREADS];
+	float cholRho[N][N], difference[THREADS];
 	// Timer
 	// clock_t h_start, h_stop;
 	cudaEvent_t d_start, d_stop;
@@ -151,12 +151,12 @@ int main(int argc, const char * argv[]) {
 //////////////////////////////////////////////////////////////
 
 //Simulation std, rho and covariance matrix
-void getRandomSigma( double* std ){
+void getRandomSigma( float* std ){
     int i;
     for(i=0;i<N;i++)
         std[i] = randMinMax(0, 1);
 }
-void getRandomRho( double* rho ){
+void getRandomRho( float* rho ){
     int i,j;
     //creating the vectors of rhos
     for(i=0;i<N;i++){
@@ -171,7 +171,7 @@ void getRandomRho( double* rho ){
         }
     }
 }
-void pushVett( double* vet, double x ){
+void pushVett( float* vet, float x ){
     int i;
     for(i=0;i<N;i++)
         vet[i] = x;
