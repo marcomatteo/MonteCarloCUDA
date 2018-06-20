@@ -84,7 +84,7 @@ __device__ void sumReduction( float *data ){
         }
         __syncthreads;
         halfblock /= 2;
-    }while(halfblock>=64);
+    }while(halfblock>=128);
     if(tid<32){
         if(blockSize>=64){
             data[tid]+=data[tid+32];
@@ -148,10 +148,11 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     s_Sum[sumIndex] = sum.Expected;
     s_Sum[sum2Index] = sum.Confidence;
     __syncthreads();
+    sumReduction(s_Sum);
     // Reduce shared memory accumulators and write final result to global memory
-    
-    int halfblock = blockDim.x/2;
     /*
+    int halfblock = blockDim.x/2;
+    
     do{
         if ( sumIndex < halfblock ){
             s_Sum[sumIndex] += s_Sum[sumIndex+halfblock];
@@ -163,6 +164,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
      */
     //__syncthreads();
     // Keeping the first element for each block using one thread
+    /*
     do{
         if(sumIndex<halfblock){
             s_Sum[sumIndex] += s_Sum[sumIndex + halfblock];
@@ -199,6 +201,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         }
 
     }
+     */
     if (sumIndex == 0){
     		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
     		d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
