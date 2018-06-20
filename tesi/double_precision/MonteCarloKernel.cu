@@ -135,7 +135,7 @@ void MonteCarlo_init(dev_MonteCarloData *data){
 	cudaEvent_t start, stop;
 	CudaCheck( cudaEventCreate( &start ));
     CudaCheck( cudaEventCreate( &stop ));
-    double time;
+    float time;
 
     int n_option = data->numOpt;
     int n_path = data->path;
@@ -244,19 +244,12 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 
     dev_MonteCarloData data;
     // Option
-    	data.option.w[0] = 1;
-    	data.option.d[0] = 0;
-    	data.option.p[0][0] = 1;
-    	data.option.s[0] = cva->opt.s;
-    	data.option.v[0] = cva->opt.v;
-    	data.option.k = cva->opt.k;
-    	data.option.r = cva->opt.r;
-    	data.option.t = cva->opt.t;
+    data.option = cva->opt;
     // Kernel parameters
-    	data.numBlocks = numBlocks;
-    	data.numThreads = numThreads;
-    	data.numOpt = N;
-    	data.path = sims / numBlocks;
+    data.numBlocks = numBlocks;
+    data.numThreads = numThreads;
+    data.numOpt = N;
+    data.path = sims / numBlocks;
 
     MonteCarlo_init(&data);
 
