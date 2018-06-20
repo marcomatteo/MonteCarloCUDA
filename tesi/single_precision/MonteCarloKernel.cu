@@ -173,7 +173,8 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
             s_Sum[sum2Index] += s_Sum[sum2Index + halfblock];
         }
         __syncthreads;
-    }while((halfblock/2)>=64);
+        halfblock /= 2;
+    }while(halfblock>=64);
     if(sumIndex<32){
         if(blockSize>=64){
             s_Sum[sumIndex]+=s_Sum[sumIndex+32];
