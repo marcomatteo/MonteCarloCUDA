@@ -34,7 +34,7 @@ int main(int argc, const char * argv[]) {
 	int numBlocks, numThreads[THREADS], i;
 	int SIMS;
 	OptionValue CPU_sim, GPU_sim[THREADS];
-	double CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
+	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
 	double bs_price, difference[THREADS];
 	cudaEvent_t d_start, d_stop;
 

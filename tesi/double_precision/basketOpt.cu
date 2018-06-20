@@ -70,7 +70,7 @@ int main(int argc, const char * argv[]) {
 	// Simulation variables
 	int numBlocks, numThreads[THREADS], SIMS, i, j;
 	OptionValue CPU_sim, GPU_sim[THREADS];
-	double CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
+	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
 	double cholRho[N][N], difference[THREADS];
 	// Timer
 	// clock_t h_start, h_stop;
