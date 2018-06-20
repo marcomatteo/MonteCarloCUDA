@@ -214,26 +214,30 @@ void MonteCarlo(dev_MonteCarloData *data){
 
 extern "C" OptionValue dev_basketOpt(MultiOptionData *opt, int numBlocks, int numThreads, int sims){
     dev_MultiOptionData option;
-    option.w[0] = (float)opt->w;
-    option.d[0] = (float)opt->d;
-    option.p[0][0] = (float)opt->p;
-    option.s[0] = (float)opt->s;
-    option.v[0] = (float)opt->v;
-    option.k = (float)opt->k;
-    option.r = (float)opt->r;
-    option.t = (float)opt->t;
+    option.w[0] = opt->w;
+    option.d[0] = opt->d;
+    option.p[0][0] = opt->p;
+    option.s[0] = opt->s;
+    option.v[0] = opt->v;
+    option.k = opt->k;
+    option.r = opt->r;
+    option.t = opt->t;
     
 	dev_MonteCarloData data;
-	    data.option = *option;
+	    data.option = option;
 	    data.numBlocks = numBlocks;
 	    data.numThreads = numThreads;
 	    data.numOpt = N;
 	    data.path = PATH;
+    
+    OptionValue result;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
     MonteCarlo_free(&data);
 
+    result.Expected = data.callValue.Expected;
+    result.Confidence = data.callValue.Confidence;
     return data.callValue;
 }
 
@@ -242,11 +246,11 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 		option.w[0] = 1;
 		option.d[0] = 0;
 		option.p[0][0] = 1;
-		option.s[0] = (float)opt->s;
-		option.v[0] = (float)opt->v;
-		option.k = (float)opt->k;
-		option.r = (float)opt->r;
-		option.t = (float)opt->t;
+		option.s[0] = opt->s;
+		option.v[0] = opt->v;
+		option.k = opt->k;
+		option.r = opt->r;
+		option.t = opt->t;
 
     dev_MonteCarloData data;
     	data.option = option;
@@ -255,11 +259,16 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     	data.numOpt = N;
     	data.path = sims / numBlocks;
 
+    OptionValue result;
+    
     MonteCarlo_init(&data);
     MonteCarlo(&data);
     MonteCarlo_free(&data);
 
-    return data.callValue;
+    result.Expected = data.callValue.Expected;
+    result.Confidence = data.callValue.Confidence;
+    
+    return result;
 }
 
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
@@ -271,11 +280,11 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     	data.option.w[0] = 1;
     	data.option.d[0] = 0;
     	data.option.p[0][0] = 1;
-    	data.option.s[0] = (float)cva->opt.s;
-    	data.option.v[0] = (float)cva->opt.v;
-    	data.option.k = (float)cva->opt.k;
-    	data.option.r = (float)cva->opt.r;
-    	data.option.t = (float)cva->opt.t;
+    	data.option.s[0] = cva->opt.s;
+    	data.option.v[0] = cva->opt.v;
+    	data.option.k = cva->opt.k;
+    	data.option.r = cva->opt.r;
+    	data.option.t = cva->opt.t;
     // Kernel parameters
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
