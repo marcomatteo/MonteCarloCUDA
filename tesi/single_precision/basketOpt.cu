@@ -127,7 +127,7 @@ int main(int argc, const char * argv[]) {
     }
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
-    printf("Simulated price for the option with CPU: Expected price, I.C., time\n%f \n%f \n%f", CPU_sim.Expected, CPU_sim.Confidence, CPU_timeSpent);
+    printf("Simulated price for the option with CPU: Expected price, I.C., time\n%f \n%f \n%f \n", CPU_sim.Expected, CPU_sim.Confidence, CPU_timeSpent);
     printf("Simulated price for the option with GPU:\n");
     printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
@@ -212,7 +212,7 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
         int maxThreads = (int)maxShared / (2*sizeDouble);
         printf("The optimal number of thread should be: %d\n",maxThreads);
     }
-    printf("\n");
+    //printf("\n");
 }
 
 void Parameters(int *numBlocks, int *numThreads){

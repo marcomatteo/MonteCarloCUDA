@@ -41,17 +41,18 @@ int main(int argc, const char * argv[]) {
 		// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
 		cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
 	//float CPU_timeSpent=0, speedup;
-    float GPU_timeSpent=0;
+    float GPU_timeSpent=0, CPU_timeSpent=0;
     float difference, dt,
-    *price = (float*)malloc(sizeof(float)*(cva.n+1)),
     *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
     cudaEvent_t d_start, d_stop;
 
     printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-	Parameters(&numBlocks, &numThreads);
-	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
-	SIMS = numBlocks*PATH;
+    Parameters(&numBlocks, numThreads);
+    printf("Inserisci il numero di simulazioni (x100.000): ");
+    scanf("%d",&SIMS);
+    SIMS *= 100000;
+    printf("\nScenari di Monte Carlo: %d\n",SIMS);
 
 	//	Print Option details
 	printOption(option);
@@ -72,9 +73,26 @@ int main(int argc, const char * argv[]) {
 
     //	Ripristino valore originale del Time to mat
     option.t= 1.f;
+    
+    // CPU Monte Carlo
+    printf("\nCVA execution on CPU:\n");
+    CudaCheck( cudaEventRecord( d_start, 0 ));
+    dev_cvaEquityOption(&cva, numBlocks, numThreads, SIMS);
+    CudaCheck( cudaEventRecord( d_stop, 0));
+    CudaCheck( cudaEventSynchronize( d_stop ));
+    CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
+    CPU_timeSpent /= 1000;
+    printf("\nPrezzi Simulati:\n");
+    printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
+    for(i=0;i<cva.n+1;i++){
+        difference = abs(cva.ee[i].Expected - bs_price[i]);
+        printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
+    }
+    printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
+    printf("\nTotal execution time: %f s\n\n", CPU_timeSpent);
 
     // GPU Monte Carlo
-    printf("\nCVA execution on GPU:\nN^ simulations per time interval: %d * %d\n",SIMS,cva.n);
+    printf("\nCVA execution on GPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
     dev_cvaEquityOption(&cva, numBlocks, numThreads, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
@@ -95,7 +113,6 @@ int main(int argc, const char * argv[]) {
    	free(cva.dp);
    	free(cva.fp);
    	free(cva.ee);
-   	free(price);
    	free(bs_price);
     return 0;
 }
@@ -142,15 +159,8 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
 void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    numThreads[0] = 128;
-    numThreads[1] = 256;
-    numThreads[2] = 512;
-    numThreads[3] = 1024;
-    printf("\nParametri CUDA:\n");
-    printf("Scegli il numero di Blocchi: ");
-    scanf("%d",numBlocks);
-    printf("Scegli il numero di Threads: ");
-    scanf("%d",numThreads);
+    *numThreads = NTHREADS;
+    *numBlocks = BLOCKS;
     sizeAdjust(&deviceProp,numBlocks, numThreads);
     memAdjust(&deviceProp, numThreads);
 }
