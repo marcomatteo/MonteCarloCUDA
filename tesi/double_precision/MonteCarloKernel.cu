@@ -237,7 +237,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
+extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     int i;
     double dt = cva->opt.t / (double)cva->n;
 
@@ -255,7 +255,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
     	data.numOpt = N;
-    	data.path = PATH;
+    	data.path = sims;
 
     MonteCarlo_init(&data);
 

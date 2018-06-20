@@ -255,7 +255,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     	data.numBlocks = numBlocks;
     	data.numThreads = numThreads;
     	data.numOpt = N;
-    	data.path = PATH;
+    	data.path = sims;
 
     MonteCarlo_init(&data);
 

@@ -9,7 +9,7 @@
 #include "MonteCarlo.h"
 
 extern "C" float host_bsCall ( OptionData );
-extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
+extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims);
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims);
 extern "C" void printOption( OptionData o);
 
