@@ -80,9 +80,9 @@ int main(int argc, const char * argv[]) {
 	printf("Basket Option Pricing\n");
 	//	CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
-    printf("Inserisci il numero simulazioni (x100.000): ");
+    printf("Inserisci il numero simulazioni (x131.072): ");
     scanf("%d",&SIMS);
-    SIMS *= 100000;
+    SIMS *= 131072;
 	//SIMS = numBlocks*PATH;
 	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
@@ -218,8 +218,8 @@ void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    numThreads[0] = 256;
-    numThreads[1] = 1024;
+    numThreads[0] = 128;
+    numThreads[1] = 512;
     //numThreads[2] = 512;
     //numThreads[3] = 1024;
     //printf("\nParametri CUDA:\n");
