@@ -202,7 +202,7 @@ void host_cvaEquityOption(CVA *cva, int sims){
     float dt = cva->opt.t / (float)cva->n;
     MonteCarloData data;
     // Option
-    data.option = cva->option;
+    data.option = cva->opt;
     
     // Execution parameters
     data.numOpt = N;
