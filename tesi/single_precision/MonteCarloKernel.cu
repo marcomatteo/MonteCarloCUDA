@@ -104,7 +104,6 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     s_Sum[sumIndex] = sum.Expected;
     s_Sum[sum2Index] = sum.Confidence;
     __syncthreads();
-    sumReduction(s_Sum);
     // Reduce shared memory accumulators and write final result to global memory
     
     int halfblock = blockDim.x/2;
@@ -116,7 +115,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         __syncthreads();
         if(halfblock==1){
             s_Sum[1] += s_Sum[1+halfblock];
-            s_sum[blockDim.x+1] +s_Sum[blockDim.x+1+halfblock];
+            s_Sum[blockDim.x+1] +s_Sum[blockDim.x+1+halfblock];
         }
         halfblock /= 2;
     }while ( halfblock != 0 );
