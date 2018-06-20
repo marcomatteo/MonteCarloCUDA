@@ -10,7 +10,7 @@
 
 extern "C" double host_bsCall ( OptionData );
 extern "C" OptionValue host_vanillaOpt(OptionData, int);
-extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int);
+extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int,int);
 extern "C" void printOption( OptionData o);
 
 void Parameters(int *numBlocks, int *numThreads);

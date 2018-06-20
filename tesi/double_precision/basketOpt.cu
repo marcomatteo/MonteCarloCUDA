@@ -9,7 +9,7 @@
 #include "MonteCarlo.h"
 
 extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
-extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int);
+extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int,int);
 extern "C" void Chol( double c[N][N], double a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
 extern "C" double randMinMax(double min, double max);
