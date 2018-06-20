@@ -122,8 +122,8 @@ int main(int argc, const char * argv[]) {
                 cva.opt.p[i][j]=cholRho[i][j];
     }else{
         OptionData option;
-        option.v = opt.v;
-        option.s = opt.s;
+        option.v = opt.v[0];
+        option.s = opt.s[0];
         option.k = opt.k;
         option.r = opt.r;
         option.t = opt.t;
