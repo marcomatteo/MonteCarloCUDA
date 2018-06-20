@@ -59,15 +59,9 @@ float randMinMax(float min, float max){
 }
 
 // Metodo di Box-Muller per generare una v.a. gaussiana con media mu e varianza sigma
-<<<<<<< HEAD
-static double gaussian( double mu, double sigma ){
-    double x=(double)rand()/(double)(RAND_MAX);
-    double y=(double)rand()/(double)(RAND_MAX);
-=======
 static float gaussian( float mu, float sigma ){
     float x = (float)rand()/(float)(RAND_MAX);
     float y = (float)rand()/(float)(RAND_MAX);
->>>>>>> parent of 617c296... modifica per correttezza valori cpu
     return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
 }
 
@@ -148,25 +142,6 @@ void MonteCarlo(MonteCarloData *data){
     	}
     }
     else{
-<<<<<<< HEAD
-        //vectors of brownian and ST
-        double bt[N], s[N];
-        float st_sum;
-        int j;
-        for(i=0; i<data->path; i++){
-            st_sum = 0;
-            //Simulation of stock prices
-            simGaussVect((double)data->option.d, (double)&data->option.p[0][0], bt);
-            multiStockValue((double)data->option.s, (double)data->option.v, bt, (double)data->option.t, (double)data->option.r, N, s);
-            for(j=0;j<N;j++)
-                st_sum += s[j]*data->option.w[j];
-            price = (double)st_sum - data->option.k;
-            if(price<0)
-                price = 0.0f;
-            sum += price;
-            var_sum += price*price;
-        }
-=======
     	//vectors of brownian and ST
     	float bt[N], s[N];
     	float st_sum;
@@ -184,7 +159,7 @@ void MonteCarlo(MonteCarloData *data){
     	        sum += price;
     	        var_sum += price*price;
     	}
->>>>>>> parent of 617c296... modifica per correttezza valori cpu
+        
     }
 
     price = exp(-data->option.r*data->option.t) * (sum/(float)data->path);
