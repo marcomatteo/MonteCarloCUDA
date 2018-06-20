@@ -10,7 +10,7 @@
 
 extern "C" double host_bsCall ( OptionData );
 extern "C" OptionValue host_vanillaOpt(OptionData, int);
-extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int,int);
+extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int, int);
 extern "C" void printOption( OptionData o);
 
 void Parameters(int *numBlocks, int *numThreads);
@@ -34,18 +34,18 @@ int main(int argc, const char * argv[]) {
 	int numBlocks, numThreads[THREADS], i;
 	int SIMS;
 	OptionValue CPU_sim, GPU_sim[THREADS];
-	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
+	double CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
 	double bs_price, difference[THREADS];
 	cudaEvent_t d_start, d_stop;
 
     /*--------------------------- START PROGRAM -----------------------------------*/
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
-    Parameters(&numBlocks, numThreads);
-    printf("Inserisci il numero di simulazioni (x100.000): ");
+	Parameters(&numBlocks, numThreads);
+    printf("Inserisci il numero di simulazioni (x131.072): ");
     scanf("%d",&SIMS);
-    SIMS *= 100000;
-    printf("\nScenari di Monte Carlo: %d\n",SIMS);
+    SIMS *= 131072;
+	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printOption(option);
 	// Time instructions
@@ -56,17 +56,17 @@ int main(int argc, const char * argv[]) {
     printf("\nPrezzo Black & Scholes: %f\n",bs_price);
 
     // CPU Monte Carlo
-    printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n",SIMS);
+    printf("\nMonte Carlo execution on CPU:\n");
+    printf("N^ simulations: %d\n",SIMS);
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_vanillaOpt(option, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     CPU_timeSpent /= 1000;
- 
 
     // GPU Monte Carlo
-    printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
+    printf("\nMonte Carlo execution on GPU:\n");
     printf("(NumBlocks, NumSimulations): ( %d ; %d )\n",BLOCKS,SIMS/BLOCKS);
     for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
@@ -86,13 +86,13 @@ int main(int argc, const char * argv[]) {
     printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
     for(i=0; i<THREADS; i++){
-        printf("%d \n",numThreads[i]);
-        printf("%f \n",GPU_sim[i].Expected);
-        printf("%f \n",GPU_sim[i].Confidence);
-        printf("%f \n",difference[i]);
-        printf("%f \n",GPU_timeSpent[i]);
-        printf("%.2f \n",speedup[i]);
-        printf("---\n");
+    	printf("%d \n",numThreads[i]);
+    	printf("%f \n",GPU_sim[i].Expected);
+    	printf("%f \n",GPU_sim[i].Confidence);
+    	printf("%f \n",difference[i]);
+    	printf("%f \n",GPU_timeSpent[i]);
+    	printf("%.2f \n",speedup[i]);
+    	printf("---\n");
     }
     
     CudaCheck( cudaEventDestroy( d_start ));
@@ -142,11 +142,12 @@ void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    numThreads[0] = 128;
-    numThreads[1] = 256;
-    numThreads[2] = 512;
-    numThreads[3] = 1024;
+    numThreads[0] = 256;
+    numThreads[1] = 1024;
+    //numThreads[2] = 512;
+    //numThreads[3] = 1024;
     *numBlocks = BLOCKS;
+    //printf("\nParametri CUDA:\n");
     for (i=0; i<THREADS; i++) {
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);

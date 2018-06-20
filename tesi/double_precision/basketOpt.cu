@@ -13,7 +13,6 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int,int);
 extern "C" void Chol( double c[N][N], double a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
 extern "C" double randMinMax(double min, double max);
-//extern "C" void Parameters(int *numBlocks, int *numThreads);
 
 void getRandomSigma( double* std );
 void getRandomRho( double* rho );
@@ -71,7 +70,7 @@ int main(int argc, const char * argv[]) {
 	// Simulation variables
 	int numBlocks, numThreads[THREADS], SIMS, i, j;
 	OptionValue CPU_sim, GPU_sim[THREADS];
-	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
+	double CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
 	double cholRho[N][N], difference[THREADS];
 	// Timer
 	// clock_t h_start, h_stop;
@@ -100,22 +99,24 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
     /* CPU Monte Carlo */
-    printf("\nMonte Carlo execution on CPU:\nN^ simulations: %d\n",SIMS);
+    printf("\nMonte Carlo execution on CPU:\n");
+    //printf("N^ simulations: %d\n",SIMS);
     //h_start = clock();
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_basketOpt(&option, SIMS);
     //h_stop = clock();
-    //CPU_timeSpent = ((float)(h_stop - h_start)) / CLOCKS_PER_SEC;
+    //CPU_timeSpent = ((double)(h_stop - h_start)) / CLOCKS_PER_SEC;
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     CPU_timeSpent /= 1000;
 
     // GPU Monte Carlo
-    printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
+    printf("\nMonte Carlo execution on GPU:\n");
+    //printf("N^ simulations: %d\n",SIMS);
     for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
-       	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i],SIMS);
+       	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i], SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
         CudaCheck( cudaEventSynchronize( d_stop ));
         CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
@@ -125,10 +126,9 @@ int main(int argc, const char * argv[]) {
     }
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
-    printf( "CPU:\n");
-    printf("Simulated price for the option with CPU: Expected price, I.C., time\n%f \n%f \n%f", CPU_sim.Expected, CPU_sim.Confidence, CPU_timeSpent);
-    printf("GPU:\n");
-    printf("  : NumThreads : Price : Confidence Interval : Difference from CPU price :  Time : Speedup :");
+    printf("Simulated price for the option with CPU: Expected price, I.C., time\n%f \n%f \n%f \n", CPU_sim.Expected, CPU_sim.Confidence, CPU_timeSpent);
+    printf("Simulated price for the option with GPU:\n");
+    printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
     for(i=0; i<THREADS; i++){
         printf("%d \n",numThreads[i]);
@@ -211,16 +211,20 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
         int maxThreads = (int)maxShared / (2*sizeDouble);
         printf("The optimal number of thread should be: %d\n",maxThreads);
     }
+    //printf("\n");
 }
 
 void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    numThreads[0] = 128;
-    numThreads[1] = 256;
-    numThreads[2] = 512;
-    numThreads[3] = 1024;
+    numThreads[0] = 256;
+    numThreads[1] = 1024;
+    //numThreads[2] = 512;
+    //numThreads[3] = 1024;
+    //printf("\nParametri CUDA:\n");
+    //printf("Scegli il numero di Blocchi: ");
+    //scanf("%d",numBlocks);
     *numBlocks = BLOCKS;
     for (i=0; i<THREADS; i++) {
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);

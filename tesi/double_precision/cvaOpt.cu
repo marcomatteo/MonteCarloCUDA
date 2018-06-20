@@ -9,9 +9,16 @@
 #include "MonteCarlo.h"
 
 extern "C" double host_bsCall ( OptionData );
-extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims);
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims);
+extern "C" void host_cvaEquityOption(CVA *, int);
+extern "C" void dev_cvaEquityOption(CVA *, int , int , int );
 extern "C" void printOption( OptionData o);
+extern "C" void Chol( double c[N][N], double a[N][N] );
+extern "C" void printMultiOpt( MultiOptionData *o);
+extern "C" double randMinMax(double min, double max);
+
+void getRandomSigma( double* std );
+void getRandomRho( double* rho );
+void pushVett( double* vet, double x );
 
 void Parameters(int *numBlocks, int *numThreads);
 void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
@@ -23,76 +30,144 @@ void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
-	OptionData option;
-		option.v = 0.25;
-		option.s = 100;
-		option.k= 100.f;
-		option.r= 0.05;
-		option.t= 1.f;
-	int numBlocks, numThreads, i, SIMS;
-	CVA cva;
-	cva.n = 40;
-		cva.credit.creditspread=150;
-		cva.credit.fundingspread=75;
-		cva.credit.lgd=60;
-		cva.opt = option;
-		cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
-		cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
-		// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
-		cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
-	//float CPU_timeSpent=0, speedup;
-    float GPU_timeSpent=0, CPU_timeSpent=0;
-    double difference, dt,
+    CVA cva;
+    cva.credit.creditspread=150;
+    cva.credit.fundingspread=75;
+    cva.credit.lgd=60;
+    cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
+    cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
+    // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
+    cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
+    int numBlocks, numThreads, i, j, SIMS;
+    double difference, dt, cholRho[N][N],
     *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
     cudaEvent_t d_start, d_stop;
-
+    // Option Data
+    MultiOptionData opt;
+    if(N>1){
+        double dw = (double)1 / N;
+        //    Volatility
+        opt.v[0] = 0.2;
+        opt.v[1] = 0.3;
+        opt.v[2] = 0.2;
+        //    Spot prices
+        opt.s[0] = 100;
+        opt.s[1] = 100;
+        opt.s[2] = 100;
+        //    Weights
+        opt.w[0] = dw;
+        opt.w[1] = dw;
+        opt.w[2] = dw;
+        //    Correlations
+        opt.p[0][0] = 1;
+        opt.p[0][1] = -0.5;
+        opt.p[0][2] = -0.5;
+        opt.p[1][0] = -0.5;
+        opt.p[1][1] = 1;
+        opt.p[1][2] = -0.5;
+        opt.p[2][0] = -0.5;
+        opt.p[2][1] = -0.5;
+        opt.p[2][2] = 1;
+        //    Drift vectors for the brownians
+        opt.d[0] = 0;
+        opt.d[1] = 0;
+        opt.d[2] = 0;
+        
+        opt.k= 100.f;
+        opt.r= 0.048790164;
+        opt.t= 1.f;
+    
+        if(N!=3){
+            srand((unsigned)time(NULL));
+            getRandomSigma(opt.v);
+            getRandomRho(&opt.p[0][0]);
+            pushVett(opt.s,100);
+            pushVett(opt.w,dw);
+            pushVett(opt.d,0);
+        }
+    }
+    else{
+        opt.v[0] = 0.25;
+        opt.s[0] = 100;
+        opt.k= 100.f;
+        opt.r= 0.05;
+        opt.t= 1.f;
+        opt.w[0] = 1;
+        opt.d[0] = 0;
+        opt.p[0][0] = 1;
+    }
+    cva.opt = opt;
+	
+	//double CPU_timeSpent=0, speedup;
+    double GPU_timeSpent=0, CPU_timeSpent=0;
+    
     printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
     Parameters(&numBlocks, &numThreads);
-    printf("Inserisci il numero di simulazioni (x100.000): ");
+    printf("Inserisci il numero di simulazioni Monte Carlo(x100.000): ");
     scanf("%d",&SIMS);
     SIMS *= 100000;
+    printf("Inserisci il numero di rivalutazioni: ");
+    scanf("%d",&cva.n);
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
 
 	//	Print Option details
-	printOption(option);
+    printMultiOpt(&opt);
+    
+    if(N>1){
+        //    Cholevski factorization
+        Chol(opt.p, cholRho);
+        for(i=0;i<N;i++)
+            for(j=0;j<N;j++)
+                cva.opt.p[i][j]=cholRho[i][j];
+    }else{
+        OptionData option;
+        option.v = opt.v[0];
+        option.s = opt.s[0];
+        option.k = opt.k;
+        option.r = opt.r;
+        option.t = opt.t;
+        bs_price[0] = host_bsCall(option);
+        for(i=1;i<cva.n+1;i++){
+            if((opt.t -= dt)<0)
+                bs_price[i] = 0;
+            else
+                bs_price[i] = host_bsCall(option);
+        }
+    }
 
 	// Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
 
     //	Black & Scholes price
-    dt = option.t/(double)cva.n;
-    bs_price[0] = host_bsCall(option);
-    for(i=1;i<cva.n+1;i++){
-    	if((option.t -= dt)<0)
-    		bs_price[i] = 0;
-    	else
-    		bs_price[i] = host_bsCall(option);
-    }
+    dt = opt.t/(double)cva.n;
+    
 
     //	Ripristino valore originale del Time to mat
-    option.t= 1.f;
-
+    opt.t= 1.f;
+    
     // CPU Monte Carlo
     printf("\nCVA execution on CPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    host_cvaEquityOption(&cva, numBlocks, numThreads,SIMS);
+    host_cvaEquityOption(&cva, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     CPU_timeSpent /= 1000;
     printf("\nPrezzi Simulati:\n");
-    printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
-    for(i=0;i<cva.n+1;i++){
-        difference = abs(cva.ee[i].Expected - bs_price[i]);
-        printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
+    if(N==1){
+        printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
+        for(i=0;i<cva.n+1;i++){
+            difference = abs(cva.ee[i].Expected - bs_price[i]);
+            printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
+        }
     }
     printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
     printf("\nTotal execution time: %f s\n\n", CPU_timeSpent);
-
+    printf("--------------------------------------------------\n");
     // GPU Monte Carlo
-    printf("\nCVA execution on GPU:\nN^ simulations per time interval: %d * %d\n",SIMS,cva.n);
+    printf("\nCVA execution on GPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
     dev_cvaEquityOption(&cva, numBlocks, numThreads, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
@@ -116,6 +191,34 @@ int main(int argc, const char * argv[]) {
    	free(bs_price);
     return 0;
 }
+
+//Simulation std, rho and covariance matrix
+void getRandomSigma( double* std ){
+    int i;
+    for(i=0;i<N;i++)
+        std[i] = randMinMax(0, 1);
+}
+void getRandomRho( double* rho ){
+    int i,j;
+    //creating the vectors of rhos
+    for(i=0;i<N;i++){
+        for(j=i;j<N;j++){
+            double r;
+            if(i==j)
+                r=1;
+            else
+                r=randMinMax(-1, 1);
+            rho[j+i*N] = r;
+            rho[i+j*N] = r;
+        }
+    }
+}
+void pushVett( double* vet, double x ){
+    int i;
+    for(i=0;i<N;i++)
+        vet[i] = x;
+}
+
 ///////////////////////////////////
 //    ADJUST FUNCTIONS
 ///////////////////////////////////
@@ -158,12 +261,9 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
 
 void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
-    int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
     *numThreads = NTHREADS;
     *numBlocks = BLOCKS;
-    for (i=0; i<THREADS; i++) {
-        sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
-        memAdjust(&deviceProp, &numThreads[i]);
-    }
+    sizeAdjust(&deviceProp,numBlocks, numThreads);
+    memAdjust(&deviceProp, numThreads);
 }
