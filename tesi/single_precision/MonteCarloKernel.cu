@@ -82,8 +82,10 @@ __device__ void sumReduction( float *data ){
             data[tid] += data[tid + halfblock];
             data[tid2] += data[tid2 + halfblock];
         }
+        __syncthreads;
         halfblock /= 2;
-    }while(halfblock>=128);
+    }while(halfblock>0);
+    /*
     __syncthreads;
 
     if(tid<32){
@@ -113,7 +115,7 @@ __device__ void sumReduction( float *data ){
             data[tid2]+=data[tid2+2];
         }
     }
-    
+    */
 }
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
