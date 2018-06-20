@@ -36,9 +36,12 @@ int main(int argc, const char * argv[]) {
     cva.credit.lgd=60;
     cva.dp = (float*)malloc((cva.n+1)*sizeof(float));
     cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
-    int numBlocks, numThreads, i, SIMS;
     // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
+    int numBlocks, numThreads, i, SIMS;
+    float difference, dt, cholRho[N][N],
+    *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
+    cudaEvent_t d_start, d_stop;
     // Option Data
     if(N>1){
         MultiOptionData option;
@@ -102,13 +105,9 @@ int main(int argc, const char * argv[]) {
     }
     cva.opt = option;
 	
-
 	//float CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0, CPU_timeSpent=0;
-    float difference, dt, cholRho[N][N],
-    *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
-    cudaEvent_t d_start, d_stop;
-
+    
     printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
     Parameters(&numBlocks, &numThreads);
