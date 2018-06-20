@@ -280,13 +280,13 @@ void printMultiOpt( MultiOptionData *o){
     printf("\n-\tBasket Option data\t-\n\n");
     printf("Number of assets: %d\n",N);
     printf("Underlying assets prices:\n");
-    printVect((double)o->s, N);
+    printVect(o->s, N);
     printf("Volatility:\n");
-    printVect((double)o->v, N);
+    printVect(o->v, N);
     printf("Weights:");
-    printVect((double)o->w, N);
+    printVect(o->w, N);
     printf("Correlation matrix:\n");
-    printMat((double)&o->p[0][0], N, N);
+    printMat(&o->p[0][0], N, N);
     printf("Strike price:\t € %.2f\n", o->k);
     printf("Risk free interest rate: %.2f \n", o->r);
     printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
