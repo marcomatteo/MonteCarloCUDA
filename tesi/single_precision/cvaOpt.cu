@@ -104,9 +104,9 @@ int main(int argc, const char * argv[]) {
     printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
     Parameters(&numBlocks, &numThreads);
-    printf("Inserisci il numero di simulazioni Monte Carlo(x100.000): ");
+    printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
     scanf("%d",&SIMS);
-    SIMS *= 100000;
+    SIMS *= 131072;
     printf("Inserisci il numero di rivalutazioni: ");
     scanf("%d",&cva.n);
     printf("\nScenari di Monte Carlo: %d\n",SIMS);

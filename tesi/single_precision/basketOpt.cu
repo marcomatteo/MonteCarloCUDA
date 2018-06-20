@@ -80,11 +80,11 @@ int main(int argc, const char * argv[]) {
 	printf("Basket Option Pricing\n");
 	//	CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
-    printf("Inserisci il numero simulazioni (x100.000): ");
+    printf("Inserisci il numero simulazioni (x131.072): ");
     scanf("%d",&SIMS);
-    SIMS *= 100000;
+    SIMS *= 131072;
 	//SIMS = numBlocks*PATH;
-	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
+	printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	if(N<7)
 		printMultiOpt(&option);
@@ -151,8 +151,13 @@ int main(int argc, const char * argv[]) {
 //Simulation std, rho and covariance matrix
 void getRandomSigma( float* std ){
     int i;
-    for(i=0;i<N;i++)
-        std[i] = randMinMax(0, 1);
+    for(i=0;i<N;i++){
+        if((i%2)==0)
+            std[i]=0.3;
+        else
+            std[i]=0.2;
+    }
+        //std[i] = randMinMax(0, 1);
 }
 void getRandomRho( float* rho ){
     int i,j;
@@ -163,7 +168,11 @@ void getRandomRho( float* rho ){
             if(i==j)
                 r=1;
             else
-                r=randMinMax(-1, 1);
+                if(j%2==0)
+                    r = 0.5;
+                else
+                    r= -0.5;
+               // r=randMinMax(-1, 1);
             rho[j+i*N] = r;
             rho[i+j*N] = r;
         }
