@@ -231,7 +231,7 @@ void Parameters(int *numBlocks, int *numThreads){
     for (i=0; i<THREADS; i++) {
         printf("\nParametri Threads (max 1024):\n");
         printf("Scegli il numero di Threads n^ %d: ",i);
-        scanf("%d",numThreads[i]);
+        scanf("%d",&numThreads[i]);
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);
     }
