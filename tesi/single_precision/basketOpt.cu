@@ -13,7 +13,6 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int,int);
 extern "C" void Chol( float c[N][N], float a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
 extern "C" float randMinMax(float min, float max);
-//extern "C" void Parameters(int *numBlocks, int *numThreads);
 
 void getRandomSigma( float* std );
 void getRandomRho( float* rho );

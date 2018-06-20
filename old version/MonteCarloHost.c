@@ -197,7 +197,7 @@ OptionValue host_basketOpt(MultiOptionData *option, int sim){
     return data.callValue;
 }
 
-void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
+void host_cvaEquityOption(CVA *cva, int sims, int path){
 	int i;
 	double dt = cva->opt.t / (double)cva->n;
 	MonteCarloData data;
@@ -212,8 +212,8 @@ void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
 	data.option.t = cva->opt.t;
 
 	// Execution parameters
-	data.numOpt = N;
-	data.path = PATH;
+	data.numOpt = path;
+	data.path = sims;
 
     // Original option price
     MonteCarlo(&data);

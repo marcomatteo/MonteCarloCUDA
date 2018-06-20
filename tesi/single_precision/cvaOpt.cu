@@ -9,9 +9,16 @@
 #include "MonteCarlo.h"
 
 extern "C" float host_bsCall ( OptionData );
-extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims);
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims);
+extern "C" void host_cvaEquityOption(CVA *, int, int);
+extern "C" void dev_cvaEquityOption(CVA *, int , int , int );
 extern "C" void printOption( OptionData o);
+extern "C" void Chol( float c[N][N], float a[N][N] );
+extern "C" void printMultiOpt( MultiOptionData *o);
+extern "C" float randMinMax(float min, float max);
+
+void getRandomSigma( float* std );
+void getRandomRho( float* rho );
+void pushVett( float* vet, float x );
 
 void Parameters(int *numBlocks, int *numThreads);
 void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
@@ -23,15 +30,67 @@ void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
-	OptionData option;
-		option.v = 0.25;
-		option.s = 100;
-		option.k= 100.f;
-		option.r= 0.05;
-		option.t= 1.f;
+    // Option Data
+    if(N>1){
+        MultiOptionData option;
+        //    Volatility
+        option.v[0] = 0.2;
+        option.v[1] = 0.3;
+        option.v[2] = 0.2;
+        //    Spot prices
+        option.s[0] = 100;
+        option.s[1] = 100;
+        option.s[2] = 100;
+        //    Weights
+        option.w[0] = dw;
+        option.w[1] = dw;
+        option.w[2] = dw;
+        //    Correlations
+        option.p[0][0] = 1;
+        option.p[0][1] = -0.5;
+        option.p[0][2] = -0.5;
+        option.p[1][0] = -0.5;
+        option.p[1][1] = 1;
+        option.p[1][2] = -0.5;
+        option.p[2][0] = -0.5;
+        option.p[2][1] = -0.5;
+        option.p[2][2] = 1;
+        //    Drift vectors for the brownians
+        option.d[0] = 0;
+        option.d[1] = 0;
+        option.d[2] = 0;
+        
+        option.k= 100.f;
+        option.r= 0.048790164;
+        option.t= 1.f;
+    
+        if(N!=3){
+            srand((unsigned)time(NULL));
+            getRandomSigma(option.v);
+            getRandomRho(&option.p[0][0]);
+            pushVett(option.s,100);
+            pushVett(option.w,dw);
+            pushVett(option.d,0);
+        }
+        //    Cholevski factorization
+        Chol(cva.option.p, cholRho);
+        for(i=0;i<N;i++)
+            for(j=0;j<N;j++)
+                cva.option.p[i][j]=cholRho[i][j];
+    }
+    else{
+        MultiOptionData option;
+        option.v[0] = 0.25;
+        option.s[0] = 100;
+        option.k= 100.f;
+        option.r= 0.05;
+        option.t= 1.f;
+        option.w[0] = 1;
+        option.d[0] = 0;
+        option.p[0][0] = 1;
+    }
 	int numBlocks, numThreads, i, SIMS;
 	CVA cva;
-	cva.n = 40;
 		cva.credit.creditspread=150;
 		cva.credit.fundingspread=75;
 		cva.credit.lgd=60;
@@ -42,16 +101,18 @@ int main(int argc, const char * argv[]) {
 		cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
 	//float CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0, CPU_timeSpent=0;
-    float difference, dt,
+    float difference, dt, cholRho[N][N],
     *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
     cudaEvent_t d_start, d_stop;
 
     printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
     Parameters(&numBlocks, &numThreads);
-    printf("Inserisci il numero di simulazioni (x100.000): ");
+    printf("Inserisci il numero di simulazioni Monte Carlo(x100.000): ");
     scanf("%d",&SIMS);
     SIMS *= 100000;
+    printf("Inserisci il numero di rivalutazioni: ");
+    scanf("%d",&cva.n);
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
 
 	//	Print Option details
@@ -77,7 +138,7 @@ int main(int argc, const char * argv[]) {
     // CPU Monte Carlo
     printf("\nCVA execution on CPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(&cva, numBlocks, numThreads, SIMS);
+    host_cvaEquityOption(&cva, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
@@ -116,6 +177,34 @@ int main(int argc, const char * argv[]) {
    	free(bs_price);
     return 0;
 }
+
+//Simulation std, rho and covariance matrix
+void getRandomSigma( float* std ){
+    int i;
+    for(i=0;i<N;i++)
+        std[i] = randMinMax(0, 1);
+}
+void getRandomRho( float* rho ){
+    int i,j;
+    //creating the vectors of rhos
+    for(i=0;i<N;i++){
+        for(j=i;j<N;j++){
+            float r;
+            if(i==j)
+                r=1;
+            else
+                r=randMinMax(-1, 1);
+            rho[j+i*N] = r;
+            rho[i+j*N] = r;
+        }
+    }
+}
+void pushVett( float* vet, float x ){
+    int i;
+    for(i=0;i<N;i++)
+        vet[i] = x;
+}
+
 ///////////////////////////////////
 //    ADJUST FUNCTIONS
 ///////////////////////////////////
