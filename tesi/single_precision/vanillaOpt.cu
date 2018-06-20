@@ -42,9 +42,9 @@ int main(int argc, const char * argv[]) {
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
-    printf("Inserisci il numero di simulazioni (x100.000): ");
+    printf("Inserisci il numero di simulazioni (x131.072): ");
     scanf("%d",&SIMS);
-    SIMS *= 100000;
+    SIMS *= 131072;
 	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printOption(option);
