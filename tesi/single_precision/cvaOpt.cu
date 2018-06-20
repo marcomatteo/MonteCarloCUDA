@@ -9,7 +9,7 @@
 #include "MonteCarlo.h"
 
 extern "C" float host_bsCall ( OptionData );
-extern "C" void host_cvaEquityOption(CVA *, int, int);
+extern "C" void host_cvaEquityOption(CVA *, int);
 extern "C" void dev_cvaEquityOption(CVA *, int , int , int );
 extern "C" void printOption( OptionData o);
 extern "C" void Chol( float c[N][N], float a[N][N] );
@@ -38,15 +38,14 @@ int main(int argc, const char * argv[]) {
     cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
     // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
-    int numBlocks, numThreads, i, SIMS;
+    int numBlocks, numThreads, i, j, SIMS;
     float difference, dt, cholRho[N][N],
     *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
     cudaEvent_t d_start, d_stop;
     // Option Data
+    MultiOptionData opt;
     if(N>1){
-        MultiOptionData opt;
         double dw = (double)1 / N;
-        int j;
         //    Volatility
         opt.v[0] = 0.2;
         opt.v[1] = 0.3;
@@ -88,7 +87,6 @@ int main(int argc, const char * argv[]) {
         }
     }
     else{
-        MultiOptionData opt;
         opt.v[0] = 0.25;
         opt.s[0] = 100;
         opt.k= 100.f;
