@@ -30,9 +30,20 @@ void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
+    CVA cva;
+    cva.credit.creditspread=150;
+    cva.credit.fundingspread=75;
+    cva.credit.lgd=60;
+    cva.dp = (float*)malloc((cva.n+1)*sizeof(float));
+    cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
+    int numBlocks, numThreads, i, SIMS;
+    // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
+    cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
     // Option Data
     if(N>1){
         MultiOptionData option;
+        double dw = (double)1 / N;
+        int j;
         //    Volatility
         option.v[0] = 0.2;
         option.v[1] = 0.3;
@@ -73,7 +84,7 @@ int main(int argc, const char * argv[]) {
             pushVett(option.d,0);
         }
         //    Cholevski factorization
-        Chol(cva.option.p, cholRho);
+        Chol(option.p, cholRho);
         for(i=0;i<N;i++)
             for(j=0;j<N;j++)
                 cva.option.p[i][j]=cholRho[i][j];
@@ -89,16 +100,9 @@ int main(int argc, const char * argv[]) {
         option.d[0] = 0;
         option.p[0][0] = 1;
     }
-	int numBlocks, numThreads, i, SIMS;
-	CVA cva;
-		cva.credit.creditspread=150;
-		cva.credit.fundingspread=75;
-		cva.credit.lgd=60;
-		cva.opt = option;
-		cva.dp = (float*)malloc((cva.n+1)*sizeof(float));
-		cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
-		// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
-		cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
+    cva.opt = option;
+	
+
 	//float CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0, CPU_timeSpent=0;
     float difference, dt, cholRho[N][N],
