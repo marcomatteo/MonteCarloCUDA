@@ -41,15 +41,14 @@ int main(int argc, const char * argv[]) {
 		// Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
 		cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
 	//float CPU_timeSpent=0, speedup;
-    float GPU_timeSpent=0;
+    float GPU_timeSpent=0, CPU_timeSpent=0;
     double difference, dt,
-    *price = (double*)malloc(sizeof(double)*(cva.n+1)),
     *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
     cudaEvent_t d_start, d_stop;
 
     printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-    Parameters(&numBlocks, numThreads);
+    Parameters(&numBlocks, &numThreads);
     printf("Inserisci il numero di simulazioni (x100.000): ");
     scanf("%d",&SIMS);
     SIMS *= 100000;
@@ -78,7 +77,7 @@ int main(int argc, const char * argv[]) {
     // CPU Monte Carlo
     printf("\nCVA execution on CPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(&cva, numBlocks, numThreads, SIMS);
+    host_cvaEquityOption(&cva, numBlocks, numThreads,SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
@@ -114,7 +113,6 @@ int main(int argc, const char * argv[]) {
    	free(cva.dp);
    	free(cva.fp);
    	free(cva.ee);
-   	free(price);
    	free(bs_price);
     return 0;
 }
