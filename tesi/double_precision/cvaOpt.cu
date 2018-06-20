@@ -99,7 +99,7 @@ int main(int argc, const char * argv[]) {
     cva.opt = opt;
 	
 	//double CPU_timeSpent=0, speedup;
-    double GPU_timeSpent=0, CPU_timeSpent=0;
+    float GPU_timeSpent=0, CPU_timeSpent=0;
     
     printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
