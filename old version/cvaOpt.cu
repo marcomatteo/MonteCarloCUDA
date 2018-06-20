@@ -9,8 +9,8 @@
 #include "MonteCarlo.h"
 
 extern "C" double host_bsCall ( OptionData );
-extern "C" void host_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads);
+extern "C" void host_cvaEquityOption(CVA *, int , int );
+extern "C" void dev_cvaEquityOption(CVA *, int , int );
 extern "C" void printOption( OptionData o);
 
 void Parameters(int *numBlocks, int *numThreads);
@@ -50,8 +50,10 @@ int main(int argc, const char * argv[]) {
     printf("Expected Exposures of an Equity Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
 	Parameters(&numBlocks, &numThreads);
+    printf("Inserisci il numero di simulazioni (x200000): ");
+    scanf("%d",&SIMS);
+    SIMS = SIMS*PATH;
 	printf("Simulazione di ( %d ; %d )\n",numBlocks, numThreads);
-	SIMS = numBlocks*PATH;
 
 	//	Print Option details
 	printOption(option);
@@ -76,7 +78,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nCVA execution on GPU:\nN^ simulations per time interval: %d * %d\n",SIMS,cva.n);
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(&cva, numBlocks, numThreads);
+    dev_cvaEquityOption(&cva, numThreads, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
@@ -147,9 +149,12 @@ void Parameters(int *numBlocks, int *numThreads){
     numThreads[1] = 256;
     numThreads[2] = 512;
     numThreads[3] = 1024;
+    /*
     printf("\nParametri CUDA:\n");
     printf("Scegli il numero di Blocchi: ");
     scanf("%d",numBlocks);
+     */
+    *numBlocks = BLOCKS;
     for (i=0; i<THREADS; i++) {
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);

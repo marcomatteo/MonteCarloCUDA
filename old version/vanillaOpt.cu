@@ -42,7 +42,9 @@ int main(int argc, const char * argv[]) {
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
 	Parameters(&numBlocks, numThreads);
-	SIMS = numBlocks*PATH;
+    printf("Inserisci il numero di simulazioni (x200.000): ");
+    scanf("%d",&SIMS);
+	SIMS = SIMS*PATH;
 	printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printOption(option);
@@ -67,7 +69,7 @@ int main(int argc, const char * argv[]) {
     printf("\nMonte Carlo execution on GPU:\nN^ simulations: %d\n",SIMS);
     for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
-    	GPU_sim[i] = dev_vanillaOpt(&option, numBlocks, numThreads[i]);
+    	GPU_sim[i] = dev_vanillaOpt(&option, numThreads[i], SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
    	    CudaCheck( cudaEventSynchronize( d_stop ));
    	    CudaCheck( cudaEventElapsedTime( &GPU_timeSpent[i], d_start, d_stop ));
@@ -145,9 +147,12 @@ void Parameters(int *numBlocks, int *numThreads){
     numThreads[1] = 256;
     numThreads[2] = 512;
     numThreads[3] = 1024;
+    /*
     printf("\nParametri CUDA:\n");
     printf("Scegli il numero di Blocchi: ");
     scanf("%d",numBlocks);
+     */
+    *numBlocks = BLOCKS;
     for (i=0; i<THREADS; i++) {
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);

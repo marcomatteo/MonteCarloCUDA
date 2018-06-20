@@ -186,7 +186,7 @@ void MonteCarlo(dev_MonteCarloData *data){
 
 	// Closing Monte Carlo
 	long double sum=0, sum2=0, price, empstd;
-    long int nSim = data->numBlocks * PATH;
+    long int nSim = data->numBlocks * data->path;
     for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
@@ -197,13 +197,13 @@ void MonteCarlo(dev_MonteCarloData *data){
     data->callValue.Expected = price;
 }
 
-extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads){
+extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numThreads, int sims){
 	dev_MonteCarloData data;
 	    data.option = *option;
-	    data.numBlocks = numBlocks;
+	    data.numBlocks = BLOCKS;
 	    data.numThreads = numThreads;
 	    data.numOpt = N;
-	    data.path = PATH;
+	    data.path = sims / BLOCKS;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
@@ -212,7 +212,7 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
     return data.callValue;
 }
 
-extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThreads){
+extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numThreads, int sims){
 	MultiOptionData option;
 		option.w[0] = 1;
 		option.d[0] = 0;
@@ -225,10 +225,10 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
     dev_MonteCarloData data;
     	data.option = option;
-    	data.numBlocks = numBlocks;
+    	data.numBlocks = BLOCKS;
     	data.numThreads = numThreads;
     	data.numOpt = N;
-    	data.path = PATH;
+    	data.path = sims / BLOCKS;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
@@ -237,7 +237,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
+extern "C" void dev_cvaEquityOption(CVA *cva, int numThreads, int sims){
     int i;
     double dt = cva->opt.t / (double)cva->n;
 
@@ -252,10 +252,10 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads){
     	data.option.r = cva->opt.r;
     	data.option.t = cva->opt.t;
     // Kernel parameters
-    	data.numBlocks = numBlocks;
+    	data.numBlocks = BLOCKS;
     	data.numThreads = numThreads;
     	data.numOpt = N;
-    	data.path = PATH;
+    	data.path = sims / BLOCKS;
 
     MonteCarlo_init(&data);
 
