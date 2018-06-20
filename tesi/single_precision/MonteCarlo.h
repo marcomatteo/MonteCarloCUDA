@@ -14,7 +14,7 @@
 #include <time.h>
 
 #define N 3
-#define THREADS 4
+#define THREADS 2
 #define NTHREADS 256
 #define BLOCKS 512
 

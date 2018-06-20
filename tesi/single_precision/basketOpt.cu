@@ -221,8 +221,8 @@ void Parameters(int *numBlocks, int *numThreads){
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
     numThreads[0] = 256;
     numThreads[1] = 1024;
-    numThreads[2] = 512;
-    numThreads[3] = 1024;
+    //numThreads[2] = 512;
+    //numThreads[3] = 1024;
     //printf("\nParametri CUDA:\n");
     //printf("Scegli il numero di Blocchi: ");
     //scanf("%d",numBlocks);
