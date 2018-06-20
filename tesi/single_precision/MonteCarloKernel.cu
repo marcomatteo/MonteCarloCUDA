@@ -90,32 +90,27 @@ __device__ void sumReduction( float *data ){
             data[tid]+=data[tid+32];
             data[tid2]+=data[tid2+32];
         }
-        __syncthreads;
 
         if(blockSize>=32){
             data[tid]+=data[tid+16];
             data[tid2]+=data[tid2+16];
         }
-        __syncthreads;
+
 
         if(blockSize>=16){
             data[tid]+=data[tid+8];
             data[tid2]+=data[tid2+8];
         }
-        __syncthreads;
 
         if(blockSize>=8){
             data[tid]+=data[tid+4];
             data[tid2]+=data[tid2+4];
         }
-        __syncthreads;
 
         if(blockSize>=4){
             data[tid]+=data[tid+2];
             data[tid2]+=data[tid2+2];
         }
-        __syncthreads;
-
     }
     __syncthreads;
 }
@@ -181,31 +176,26 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
             s_Sum[sumIndex]+=s_Sum[sumIndex+32];
             s_Sum[sum2Index]+=s_Sum[sum2Index+32];
         }
-        __syncthreads;
 
         if(blockSize>=32){
             s_Sum[sumIndex]+=s_Sum[sumIndex+16];
             s_Sum[sum2Index]+=s_Sum[sum2Index+16];
         }
-        __syncthreads;
 
         if(blockSize>=16){
             s_Sum[sumIndex]+=s_Sum[sumIndex+8];
             s_Sum[sum2Index]+=s_Sum[sum2Index+8];
         }
-        __syncthreads;
 
         if(blockSize>=8){
             s_Sum[sumIndex]+=s_Sum[sumIndex+4];
             s_Sum[sum2Index]+=s_Sum[sum2Index+4];
         }
-        __syncthreads;
 
         if(blockSize>=4){
             s_Sum[sumIndex]+=s_Sum[sumIndex+2];
             s_Sum[sum2Index]+=s_Sum[sum2Index+2];
         }
-        __syncthreads;
 
     }
     __syncthreads;
