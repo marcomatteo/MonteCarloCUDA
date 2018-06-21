@@ -57,9 +57,8 @@ int main(int argc, const char * argv[]) {
 	option.k= 100.f;
 	option.r= 0.048790164;
 	option.t= 1.f;
-
+    srand((unsigned)time(NULL));
 	if(N!=3){
-		srand((unsigned)time(NULL));
 		getRandomSigma(option.v);
 		getRandomRho(&option.p[0][0]);
 		pushVett(option.s,100);
@@ -150,12 +149,16 @@ int main(int argc, const char * argv[]) {
 
 //Simulation std, rho and covariance matrix
 void getRandomSigma( float* std ){
-    int i;
+    int i,j=;
     for(i=0;i<N;i++){
-        if((i%2)==0)
+        if(j==0){
             std[i]=0.3;
-        else
+            j=1;
+        }
+        else{
             std[i]=0.2;
+            j=0;
+        }
     }
         //std[i] = randMinMax(0, 1);
 }
