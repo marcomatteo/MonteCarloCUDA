@@ -74,7 +74,7 @@ __device__ double blackScholes(double *bt){
 
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
-    int i,j;
+    
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
@@ -90,23 +90,24 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     curandState threadState = randseed[tid];
 
     OptionValue sum = {0, 0};
-
+    int i;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
     	double price=0.0f, bt[N],s[N],st_sum=0;
+        int k,j;
     	// Random Number Generation
         double g[N];
-        for(i=0;i<N_OPTION;i++)
-            g[i]=curand_normal(&threadState);
-        for(i=0;i<N_OPTION;i++){
+        for(k=0;k<N_OPTION;k++)
+            g[k]=curand_normal(&threadState);
+        for(k=0;k<N_OPTION;k++){
             double somma = 0;
             for(j=0;j<N_OPTION;j++)
                 //somma += first->data[i][k]*second->data[k][j];
-                somma += OPTION.p[i][j] * g[j];
+                somma += OPTION.p[k][j] * g[j];
             //result->data[i][j] = somma;
-            bt[i] = somma;
+            bt[k] = somma;
         }
-        for(i=0;i<N_OPTION;i++)
-            bt[i] += OPTION.d[i];
+        for(k=0;k<N_OPTION;k++)
+            bt[k] += OPTION.d[k];
    		// Price simulation with the Black&Scholes payoff function
         for(j=0;j<N_OPTION;j++)
             s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
