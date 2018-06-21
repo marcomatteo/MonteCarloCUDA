@@ -74,7 +74,6 @@ int main(int argc, const char * argv[]) {
         opt.d[1] = 0;
         opt.d[2] = 0;
         
-        srand((unsigned)time(NULL));
         if(N!=3){
             getRandomSigma(opt.v);
             getRandomRho(&opt.p[0][0]);
@@ -92,7 +91,7 @@ int main(int argc, const char * argv[]) {
     }
     
     opt.k= 100.f;
-    opt.r= 0.048790164;
+    opt.r= 0.04879;
     opt.t= 1.f;
     cva.opt = opt;
 	

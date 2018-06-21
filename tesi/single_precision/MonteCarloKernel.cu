@@ -115,7 +115,6 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         __syncthreads();
         halfblock /= 2;
     }while ( halfblock != 0 );
-     
     if (sumIndex == 0){
     		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
     		d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
@@ -244,10 +243,10 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     // Option
     data.option = cva->opt;
     // Kernel parameters
-    	data.numBlocks = numBlocks;
-    	data.numThreads = numThreads;
-    	data.numOpt = N;
-    	data.path = sims / numBlocks;
+    data.numBlocks = numBlocks;
+    data.numThreads = numThreads;
+    data.numOpt = N;
+    data.path = sims / numBlocks;
 
     MonteCarlo_init(&data);
 

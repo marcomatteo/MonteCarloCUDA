@@ -46,7 +46,7 @@ int main(int argc, const char * argv[]) {
     // Option Data
     MultiOptionData opt;
     if(N>1){
-        double dw = (double)1 / N;
+        float dw = (float)1 / N;
         //    Volatility
         opt.v[0] = 0.2;
         opt.v[1] = 0.3;
@@ -74,7 +74,6 @@ int main(int argc, const char * argv[]) {
         opt.d[1] = 0;
         opt.d[2] = 0;
         
-        srand((unsigned)time(NULL));
         if(N!=3){
             getRandomSigma(opt.v);
             getRandomRho(&opt.p[0][0]);
@@ -91,7 +90,7 @@ int main(int argc, const char * argv[]) {
         opt.p[0][0] = 1;
     }
     opt.k= 100.f;
-    opt.r= 0.048790164;
+    opt.r= 0.04879;
     opt.t= 1.f;
     cva.opt = opt;
 	

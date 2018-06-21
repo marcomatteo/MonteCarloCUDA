@@ -74,7 +74,7 @@ __device__ double blackScholes(double *bt){
 
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
-    
+    int i;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
@@ -90,40 +90,12 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     curandState threadState = randseed[tid];
 
     OptionValue sum = {0, 0};
-    int i;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
         double price=0.0f, bt[N];
-        /*
-        double s[N],st_sum=0;
-        int k,j;
-    	// Random Number Generation
-        double g[N];
-        for(k=0;k<N_OPTION;k++)
-            g[k]=curand_normal(&threadState);
-        for(k=0;k<N_OPTION;k++){
-            double somma = 0;
-            for(j=0;j<N_OPTION;j++)
-                //somma += first->data[i][k]*second->data[k][j];
-                somma += OPTION.p[k][j] * g[j];
-            //result->data[i][j] = somma;
-            bt[k] = somma;
-        }
-        for(k=0;k<N_OPTION;k++)
-            bt[k] += OPTION.d[k];
-         */
-        brownianVect(bt,threadState);
 
-   		/* Price simulation with the Black&Scholes payoff function
-        for(j=0;j<N_OPTION;j++)
-            s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
-        // Third step: Mean price
-        for(j=0;j<N_OPTION;j++)
-            st_sum += s[j] * OPTION.w[j];
-        // Fourth step: Option payoff
-        price = st_sum - OPTION.k;
-        if(price<0)
-            price = 0.0f;
-         */
+    	// Random Number Generation
+        brownianVect(bt,threadState);
+        // Price simulation with the Black&Scholes payoff function
         price=blackScholes(bt);
 
         sum.Expected += price;
@@ -140,12 +112,10 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         if ( sumIndex < halfblock ){
             s_Sum[sumIndex] += s_Sum[sumIndex+halfblock];
             s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
-            __syncthreads();
         }
         __syncthreads();
         halfblock /= 2;
     }while ( halfblock != 0 );
-    // Keeping the first element for each block using one thread
     if (sumIndex == 0){
     		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
     		d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
