@@ -227,15 +227,11 @@ void Parameters(int *numBlocks, int *numThreads){
     cudaDeviceProp deviceProp;
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    numThreads[0] = 128;
-    numThreads[1] = 1024;
-    //numThreads[2] = 512;
-    //numThreads[3] = 1024;
-    //printf("\nParametri CUDA:\n");
-    //printf("Scegli il numero di Blocchi: ");
-    //scanf("%d",numBlocks);
     *numBlocks = BLOCKS;
     for (i=0; i<THREADS; i++) {
+        printf("\nParametri Threads (max 1024):\n");
+        printf("Scegli il numero di Threads n^ %d: ",i);
+        scanf("%d",&numThreads[i]);
         sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
         memAdjust(&deviceProp, &numThreads[i]);
     }

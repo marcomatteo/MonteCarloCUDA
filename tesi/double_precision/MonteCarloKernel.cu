@@ -92,7 +92,8 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     OptionValue sum = {0, 0};
     int i;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-    	double price=0.0f, bt[N],s[N],st_sum=0;
+    	/*
+        double price=0.0f, bt[N],s[N],st_sum=0;
         int k,j;
     	// Random Number Generation
         double g[N];
@@ -108,7 +109,10 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         }
         for(k=0;k<N_OPTION;k++)
             bt[k] += OPTION.d[k];
-   		// Price simulation with the Black&Scholes payoff function
+         */
+        brownianVect(bt,threadState);
+
+   		/* Price simulation with the Black&Scholes payoff function
         for(j=0;j<N_OPTION;j++)
             s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
         // Third step: Mean price
@@ -118,6 +122,8 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         price = st_sum - OPTION.k;
         if(price<0)
             price = 0.0f;
+         */
+        price=blackScholes(bt);
 
         sum.Expected += price;
         sum.Confidence += price*price;
