@@ -34,6 +34,7 @@ int main(int argc, const char * argv[]) {
     cva.credit.creditspread=150;
     cva.credit.fundingspread=75;
     cva.credit.lgd=60;
+    cva.n = PATH;
     cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
     cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
     // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
@@ -73,12 +74,8 @@ int main(int argc, const char * argv[]) {
         opt.d[1] = 0;
         opt.d[2] = 0;
         
-        opt.k= 100.f;
-        opt.r= 0.048790164;
-        opt.t= 1.f;
-    
+        srand((unsigned)time(NULL));
         if(N!=3){
-            srand((unsigned)time(NULL));
             getRandomSigma(opt.v);
             getRandomRho(&opt.p[0][0]);
             pushVett(opt.s,100);
@@ -89,13 +86,14 @@ int main(int argc, const char * argv[]) {
     else{
         opt.v[0] = 0.25;
         opt.s[0] = 100;
-        opt.k= 100.f;
-        opt.r= 0.05;
-        opt.t= 1.f;
         opt.w[0] = 1;
         opt.d[0] = 0;
         opt.p[0][0] = 1;
     }
+    
+    opt.k= 100.f;
+    opt.r= 0.048790164;
+    opt.t= 1.f;
     cva.opt = opt;
 	
 	//double CPU_timeSpent=0, speedup;
@@ -106,9 +104,7 @@ int main(int argc, const char * argv[]) {
     Parameters(&numBlocks, &numThreads);
     printf("Inserisci il numero di simulazioni Monte Carlo(x100.000): ");
     scanf("%d",&SIMS);
-    SIMS *= 100000;
-    printf("Inserisci il numero di rivalutazioni: ");
-    scanf("%d",&cva.n);
+    SIMS *= 131072;
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
 
 	//	Print Option details
@@ -156,13 +152,13 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     CPU_timeSpent /= 1000;
     printf("\nPrezzi Simulati:\n");
-    if(N==1){
+ 
         printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
         for(i=0;i<cva.n+1;i++){
             difference = abs(cva.ee[i].Expected - bs_price[i]);
             printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
         }
-    }
+    
     printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
     printf("\nTotal execution time: %f s\n\n", CPU_timeSpent);
     printf("--------------------------------------------------\n");
@@ -195,19 +191,31 @@ int main(int argc, const char * argv[]) {
 //Simulation std, rho and covariance matrix
 void getRandomSigma( double* std ){
     int i;
-    for(i=0;i<N;i++)
-        std[i] = randMinMax(0, 1);
+    for(i=0;i<N;i++){
+        if(j==0){
+            std[i]=0.3;
+            j=1;
+        }
+        else{
+            std[i]=0.2;
+            j=0;
+        }
+    }
 }
 void getRandomRho( double* rho ){
     int i,j;
     //creating the vectors of rhos
     for(i=0;i<N;i++){
         for(j=i;j<N;j++){
-            double r;
+            float r;
             if(i==j)
                 r=1;
             else
-                r=randMinMax(-1, 1);
+                if(j%2==0)
+                    r = 0.5;
+                else
+                    r= -0.5;
+            // r=randMinMax(-1, 1);
             rho[j+i*N] = r;
             rho[i+j*N] = r;
         }
