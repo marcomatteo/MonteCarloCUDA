@@ -230,7 +230,7 @@ void host_cvaEquityOption(CVA *cva, int sims){
         //sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
     }
     // CVA and FVA
-    cva->cva = -sommaProdotto1 * cva->lgd;
+    cva->cva = sommaProdotto1 * (1-cva->lgd);
     //cva->fva = -sommaProdotto2*cva->credit.lgd/100;
 }
 

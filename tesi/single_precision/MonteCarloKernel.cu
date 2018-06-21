@@ -272,7 +272,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 		//sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
 	}
 	// CVA and FVA
-	cva->cva = -sommaProdotto1 * cva->lgd;
+	cva->cva = sommaProdotto1 * (1 - cva->lgd);
 	//cva->fva = -sommaProdotto2*cva->credit.lgd;
 
 	// Closing
