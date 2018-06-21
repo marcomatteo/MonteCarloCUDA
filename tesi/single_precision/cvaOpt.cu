@@ -74,12 +74,8 @@ int main(int argc, const char * argv[]) {
         opt.d[1] = 0;
         opt.d[2] = 0;
         
-        opt.k= 100.f;
-        opt.r= 0.048790164;
-        opt.t= 1.f;
-    
+        srand((unsigned)time(NULL));
         if(N!=3){
-            srand((unsigned)time(NULL));
             getRandomSigma(opt.v);
             getRandomRho(&opt.p[0][0]);
             pushVett(opt.s,100);
@@ -90,13 +86,13 @@ int main(int argc, const char * argv[]) {
     else{
         opt.v[0] = 0.25;
         opt.s[0] = 100;
-        opt.k= 100.f;
-        opt.r= 0.05;
-        opt.t= 1.f;
         opt.w[0] = 1;
         opt.d[0] = 0;
         opt.p[0][0] = 1;
     }
+    opt.k= 100.f;
+    opt.r= 0.048790164;
+    opt.t= 1.f;
     cva.opt = opt;
 	
 	//float CPU_timeSpent=0, speedup;
@@ -193,9 +189,18 @@ int main(int argc, const char * argv[]) {
 
 //Simulation std, rho and covariance matrix
 void getRandomSigma( float* std ){
-    int i;
-    for(i=0;i<N;i++)
-        std[i] = randMinMax(0, 1);
+    int i,j=0;
+    for(i=0;i<N;i++){
+        if(j==0){
+            std[i]=0.3;
+            j=1;
+        }
+        else{
+            std[i]=0.2;
+            j=0;
+        }
+    }
+    //std[i] = randMinMax(0, 1);
 }
 void getRandomRho( float* rho ){
     int i,j;
@@ -206,7 +211,11 @@ void getRandomRho( float* rho ){
             if(i==j)
                 r=1;
             else
-                r=randMinMax(-1, 1);
+                if(j%2==0)
+                    r = 0.5;
+                else
+                    r= -0.5;
+            // r=randMinMax(-1, 1);
             rho[j+i*N] = r;
             rho[i+j*N] = r;
         }
@@ -217,7 +226,6 @@ void pushVett( float* vet, float x ){
     for(i=0;i<N;i++)
         vet[i] = x;
 }
-
 ///////////////////////////////////
 //    ADJUST FUNCTIONS
 ///////////////////////////////////
