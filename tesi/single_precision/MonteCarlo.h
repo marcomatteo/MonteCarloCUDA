@@ -17,7 +17,7 @@
 #define THREADS 2
 #define NTHREADS 256
 #define BLOCKS 256
-#define PATH 40
+#define PATH 100
 
 /**
  * This macro checks return value of the CUDA runtime call and exits
