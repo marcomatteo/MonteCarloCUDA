@@ -113,10 +113,6 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
             s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
         }
         __syncthreads();
-        if(halfblock==1){
-            s_Sum[1] += s_Sum[1+halfblock];
-            s_Sum[blockDim.x+1] +s_Sum[blockDim.x+1+halfblock];
-        }
         halfblock /= 2;
     }while ( halfblock != 0 );
      

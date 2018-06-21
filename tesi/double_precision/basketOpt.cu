@@ -149,21 +149,30 @@ int main(int argc, const char * argv[]) {
 //////////////////////////////////////////////////////////////
 
 //Simulation std, rho and covariance matrix
-void getRandomSigma( double* std ){
+void getRandomSigma( float* std ){
     int i;
-    for(i=0;i<N;i++)
-        std[i] = randMinMax(0, 1);
+    for(i=0;i<N;i++){
+        if((i%2)==0)
+            std[i]=0.3;
+        else
+            std[i]=0.2;
+    }
+    //std[i] = randMinMax(0, 1);
 }
-void getRandomRho( double* rho ){
+void getRandomRho( float* rho ){
     int i,j;
     //creating the vectors of rhos
     for(i=0;i<N;i++){
         for(j=i;j<N;j++){
-            double r;
+            float r;
             if(i==j)
                 r=1;
             else
-                r=randMinMax(-1, 1);
+                if(j%2==0)
+                    r = 0.5;
+                else
+                    r= -0.5;
+            // r=randMinMax(-1, 1);
             rho[j+i*N] = r;
             rho[i+j*N] = r;
         }
@@ -219,7 +228,7 @@ void Parameters(int *numBlocks, int *numThreads){
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
     numThreads[0] = 128;
-    numThreads[1] = 512;
+    numThreads[1] = 1024;
     //numThreads[2] = 512;
     //numThreads[3] = 1024;
     //printf("\nParametri CUDA:\n");

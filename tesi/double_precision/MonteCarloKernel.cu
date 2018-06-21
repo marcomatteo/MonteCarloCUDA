@@ -74,7 +74,7 @@ __device__ double blackScholes(double *bt){
 
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
-    int i;
+    int i,j;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
@@ -92,11 +92,31 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     OptionValue sum = {0, 0};
 
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-    	double price=0.0f, bt[N];
+    	double price=0.0f, bt[N],s[N],st_sum=0;
     	// Random Number Generation
-   		brownianVect(bt,threadState);
+        double g[N];
+        for(i=0;i<N_OPTION;i++)
+            g[i]=curand_normal(&threadState);
+        for(i=0;i<N_OPTION;i++){
+            double somma = 0;
+            for(j=0;j<N_OPTION;j++)
+                //somma += first->data[i][k]*second->data[k][j];
+                somma += OPTION.p[i][j] * g[j];
+            //result->data[i][j] = somma;
+            bt[i] = somma;
+        }
+        for(i=0;i<N_OPTION;i++)
+            bt[i] += OPTION.d[i];
    		// Price simulation with the Black&Scholes payoff function
-        price=blackScholes(bt);
+        for(j=0;j<N_OPTION;j++)
+            s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
+        // Third step: Mean price
+        for(j=0;j<N_OPTION;j++)
+            st_sum += s[j] * OPTION.w[j];
+        // Fourth step: Option payoff
+        price = st_sum - OPTION.k;
+        if(price<0)
+            price = 0.0f;
 
         sum.Expected += price;
         sum.Confidence += price*price;
@@ -114,9 +134,9 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
             s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
             __syncthreads();
         }
+        __syncthreads();
         halfblock /= 2;
     }while ( halfblock != 0 );
-    __syncthreads();
     // Keeping the first element for each block using one thread
     if (sumIndex == 0){
     		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
