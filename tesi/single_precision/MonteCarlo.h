@@ -68,7 +68,7 @@ typedef struct{
     // Expected Exposures
     OptionValue *ee;
     // Default probabilities
-    float defInt, lgd;
+    float defInt, lgd, *dp;
     // Option data
     MultiOptionData opt;
     // CVA
