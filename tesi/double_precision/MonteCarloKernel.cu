@@ -92,8 +92,9 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     OptionValue sum = {0, 0};
     int i;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-    	/*
-        double price=0.0f, bt[N],s[N],st_sum=0;
+        double price=0.0f, bt[N];
+        /*
+        double s[N],st_sum=0;
         int k,j;
     	// Random Number Generation
         double g[N];
