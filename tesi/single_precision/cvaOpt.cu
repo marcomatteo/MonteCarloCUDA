@@ -34,6 +34,7 @@ int main(int argc, const char * argv[]) {
     cva.credit.creditspread=150;
     cva.credit.fundingspread=75;
     cva.credit.lgd=60;
+    cva.n = PATH;
     cva.dp = (float*)malloc((cva.n+1)*sizeof(float));
     cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
     // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
@@ -107,8 +108,6 @@ int main(int argc, const char * argv[]) {
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= 131072;
-    printf("Inserisci il numero di rivalutazioni: ");
-    scanf("%d",&cva.n);
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
 
 	//	Print Option details
