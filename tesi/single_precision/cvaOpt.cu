@@ -32,7 +32,7 @@ int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
     CVA cva;
     cva.defInt = 0.03;
-    cva.lgd = 0.4;
+    cva.lgd = (1 - 0.4);
     cva.n = PATH;
     cva.dp = (float*)malloc((cva.n+1)*sizeof(float));
     //cva.fp = (float*)malloc((cva.n+1)*sizeof(float));

@@ -257,7 +257,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     // Expected Exposures (ee), Default probabilities (dp,fp)
     float sommaProdotto1=0;
     //float sommaProdotto2=0;
-	for( i=1; i<(cva->n+1); i++){
+	for( i=1; i < (cva->n+1); i++){
 		if((data.option.t -= (dt))<0){
 			cva->ee[i].Confidence = 0;
 			cva->ee[i].Expected = 0;
@@ -266,13 +266,13 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 			MonteCarlo(&data);
 			cva->ee[i] = data.callValue;
 		}
-        cva->dp[i] = exp(-(dt)*(i-1) * cva->defInt) - exp(-(dt*i) * cva->defInt);
+        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
 		//cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
         sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
 		//sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
 	}
 	// CVA and FVA
-	cva->cva = -sommaProdotto1 * (1 - cva->lgd);
+	cva->cva = sommaProdotto1 * cva->lgd;
 	//cva->fva = -sommaProdotto2*cva->credit.lgd;
 
 	// Closing
