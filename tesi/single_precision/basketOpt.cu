@@ -149,7 +149,7 @@ int main(int argc, const char * argv[]) {
 
 //Simulation std, rho and covariance matrix
 void getRandomSigma( float* std ){
-    int i,j=;
+    int i,j=0;
     for(i=0;i<N;i++){
         if(j==0){
             std[i]=0.3;
