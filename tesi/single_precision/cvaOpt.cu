@@ -31,12 +31,12 @@ void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
     CVA cva;
-    cva.credit.creditspread=150;
-    cva.credit.fundingspread=75;
-    cva.credit.lgd=60;
+    cva.defInt = 0,03;
+    cva.lgd = 0,4;
     cva.n = PATH;
     cva.dp = (float*)malloc((cva.n+1)*sizeof(float));
-    cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
+    //cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
+
     // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
     int numBlocks, numThreads, i, j, SIMS;
@@ -83,21 +83,21 @@ int main(int argc, const char * argv[]) {
         }
     }
     else{
-        opt.v[0] = 0.25;
+        opt.v[0] = 0.2;
         opt.s[0] = 100;
         opt.w[0] = 1;
         opt.d[0] = 0;
         opt.p[0][0] = 1;
     }
     opt.k= 100.f;
-    opt.r= 0.04879;
+    opt.r= 0.05;
     opt.t= 1.f;
     cva.opt = opt;
 	
 	//float CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0, CPU_timeSpent=0;
     
-    printf("Expected Exposures of an Equity Option\n");
+    printf("Expected Exposures of an European Call Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
     Parameters(&numBlocks, &numThreads);
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
@@ -157,7 +157,7 @@ int main(int argc, const char * argv[]) {
             printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
         }
     
-    printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
+    printf("\nCVA: %f\n\n",cva.cva);
     printf("\nTotal execution time: %f s\n\n", CPU_timeSpent);
     printf("--------------------------------------------------\n");
     // GPU Monte Carlo
@@ -177,10 +177,10 @@ int main(int argc, const char * argv[]) {
    		difference = abs(cva.ee[i].Expected - bs_price[i]);
    		printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
    	}
-   	printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
+    printf("\nCVA: %f\n\n",cva.cva);
 
    	free(cva.dp);
-   	free(cva.fp);
+   	//free(cva.fp);
    	free(cva.ee);
    	free(bs_price);
     return 0;

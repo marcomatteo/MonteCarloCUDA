@@ -42,9 +42,9 @@ typedef struct {
 } OptionData;
 
 typedef struct {
-    double creditspread;    // credit spread
-    double fundingspread;   // funding spread
-    double lgd;    			// loss given default
+    double creditspread;    // Credit of default
+    double fundingspread;   // Funding spread
+    double lgd;    			// Loss given default
 } CreditData;
 
 // Static MultiOptionData
@@ -68,13 +68,11 @@ typedef struct{
 	// Expected Exposures
 	OptionValue *ee;
 	// Default probabilities
-	double *dp,*fp;
-	// Credit spreads
-	CreditData credit;
+	double defInt, lgd, *dp;
 	// Option data
 	MultiOptionData opt;
-	// CVA, FVA
-	double cva, fva;
+	// CVA
+	double cva;
 	// Num of simulations
 	int n;
 }CVA;

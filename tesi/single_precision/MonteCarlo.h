@@ -13,7 +13,7 @@
 #include <math.h>
 #include <time.h>
 
-#define N 6
+#define N 1
 #define THREADS 2
 #define NTHREADS 256
 #define BLOCKS 256
@@ -65,18 +65,16 @@ typedef struct {
 } OptionValue;
 
 typedef struct{
-	// Expected Exposures
-	OptionValue *ee;
-	// Default probabilities
-	float *dp,*fp;
-	// Credit spreads
-	CreditData credit;
-	// Option data
-	MultiOptionData opt;
-	// CVA, FVA
-	float cva, fva;
-	// Num of simulations
-	int n;
+    // Expected Exposures
+    OptionValue *ee;
+    // Default probabilities
+    float defInt, lgd;
+    // Option data
+    MultiOptionData opt;
+    // CVA
+    float cva;
+    // Num of simulations
+    int n;
 }CVA;
 
 // Struct for Monte Carlo methods
