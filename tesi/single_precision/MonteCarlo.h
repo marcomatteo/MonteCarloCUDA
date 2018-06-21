@@ -13,7 +13,7 @@
 #include <math.h>
 #include <time.h>
 
-#define N 10
+#define N 6
 #define THREADS 2
 #define NTHREADS 256
 #define BLOCKS 256
