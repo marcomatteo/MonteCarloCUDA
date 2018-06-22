@@ -37,8 +37,8 @@ int main(int argc, const char * argv[]) {
     MultiOptionData opt;
     char risp;
     printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti)\t", PATH, N);
-    scanf("%s",&risp);
-    if(risp == "b"){
+    scanf(" %s",&risp);
+    if(risp == 'b'){
         printf("CVA of an European basket Option\n");
         cva.ns = N;
         double dw = (double)1 / N;
@@ -106,7 +106,7 @@ int main(int argc, const char * argv[]) {
 	//	Print Option details
     printMultiOpt(&opt);
     
-    if(risp == "b"){
+    if(risp == 'b'){
         //    Cholevski factorization
         Chol(opt.p, cholRho);
         for(i=0;i<N;i++)
