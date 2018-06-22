@@ -37,7 +37,7 @@ int main(int argc, const char * argv[]) {
     MultiOptionData opt;
     char risp;
     printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti)\t", PATH, N);
-    scanf("%c",&risp);
+    scanf("%s",&risp);
     if(risp == "b"){
         printf("CVA of an European basket Option\n");
         cva.ns = N;
