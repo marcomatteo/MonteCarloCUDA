@@ -68,12 +68,12 @@ typedef struct{
     // Expected Exposures
     OptionValue *ee;
     // Default probabilities
-    double *dp, defInt, lgd;
+    float *dp, defInt, lgd;
     // double *fp; // Founding probabilities
     // Option data
     MultiOptionData opt;
     // CVA
-    double cva;
+    float cva;
     // FVA
     //double fva;
     // Num of simulations
