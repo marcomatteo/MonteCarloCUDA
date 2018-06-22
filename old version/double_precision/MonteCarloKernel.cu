@@ -40,13 +40,13 @@ void MonteCarlo(dev_MonteCarloData *data);
 __device__ __constant__ MultiOptionData OPTION;
 __device__ __constant__ int N_OPTION, N_PATH;
 
-__device__ void brownianVect(float *bt, curandState threadState){
+__device__ void brownianVect(double *bt, curandState threadState){
 	int i,j;
-	float g[N];
+	double g[N];
 	for(i=0;i<N_OPTION;i++)
 		g[i]=curand_normal(&threadState);
 	for(i=0;i<N_OPTION;i++){
-		float somma = 0;
+		double somma = 0;
 		for(j=0;j<N_OPTION;j++)
 	 		//somma += first->data[i][k]*second->data[k][j];
 			somma += OPTION.p[i][j] * g[j];
@@ -57,9 +57,9 @@ __device__ void brownianVect(float *bt, curandState threadState){
 		bt[i] += OPTION.d[i];
 }
 
-__device__ float blackScholes(float *bt){
+__device__ double blackScholes(double *bt){
 	int j;
-	float s[N], st_sum=0, price;
+	double s[N], st_sum=0, price;
 	for(j=0;j<N_OPTION;j++)
 	     s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
 	// Third step: Mean price
@@ -72,6 +72,7 @@ __device__ float blackScholes(float *bt){
 	return price;
 }
 
+
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
     int i;
     // Parameters for shared memory
@@ -81,7 +82,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     int blockIndex = blockIdx.x;
 
     /*------------------ SHARED MEMORY DICH ----------------*/
-    extern __shared__ float s_Sum[];
+    extern __shared__ double s_Sum[];
 
     // Global thread index
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -89,32 +90,32 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     curandState threadState = randseed[tid];
 
     OptionValue sum = {0, 0};
-
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-    	float price=0.0f, bt[N];
+        double price=0.0f, bt[N];
+
     	// Random Number Generation
-   		brownianVect(bt,threadState);
-   		// Price simulation with the Black&Scholes payoff function
+        brownianVect(bt,threadState);
+        // Price simulation with the Black&Scholes payoff function
         price=blackScholes(bt);
 
         sum.Expected += price;
         sum.Confidence += price*price;
     }
+    __syncthreads();
     // Copy to the shared memory
     s_Sum[sumIndex] = sum.Expected;
     s_Sum[sum2Index] = sum.Confidence;
     __syncthreads();
     // Reduce shared memory accumulators and write final result to global memory
     int halfblock = blockDim.x/2;
-    // Reduction in log2(threadBlocks) steps, so threadBlock must be power of 2
-    while ( halfblock != 0 ){
+    do{
         if ( sumIndex < halfblock ){
             s_Sum[sumIndex] += s_Sum[sumIndex+halfblock];
             s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
         }
         __syncthreads();
         halfblock /= 2;
-    }
+    }while ( halfblock != 0 );
     if (sumIndex == 0){
     		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
     		d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
@@ -174,7 +175,7 @@ void MonteCarlo(dev_MonteCarloData *data){
 	CudaCheck(cudaMemcpyToSymbol(OPTION,&data->option,sizeof(MultiOptionData)));
 
 	/*----------------- SHARED MEMORY -------------------*/
-	int i, numShared = sizeof(float) * data->numThreads * 2;
+	int i, numShared = sizeof(double) * data->numThreads * 2;
 
 	MultiMCBasketOptKernel<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
 	cuda_error_check("\Errore nel lancio MultiMCBasketOptKernel: ","\n");
@@ -183,15 +184,15 @@ void MonteCarlo(dev_MonteCarloData *data){
 	CudaCheck(cudaMemcpy(data->h_CallValue, data->d_CallValue, data->numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
 
 	// Closing Monte Carlo
-	float sum=0, sum2=0, price, empstd;
+	double sum=0, sum2=0, price, empstd;
     long int nSim = data->numBlocks * data->path;
     for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
 	}
-	price = exp(-(data->option.r*data->option.t)) * (sum/(float)nSim);
-    empstd = sqrt((float)((float)nSim * sum2 - sum * sum)/((float)nSim * (float)(nSim - 1)));
-    data->callValue.Confidence = 1.96 * empstd / (float)sqrt((float)nSim);
+	price = exp(-(data->option.r*data->option.t)) * (sum/(double)nSim);
+    empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
     data->callValue.Expected = price;
 }
 
@@ -237,7 +238,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     int i;
-    float dt = cva->opt.t / (float)cva->n;
+    double dt = cva->opt.t / (double)cva->n;
 
     dev_MonteCarloData data;
     // Option
@@ -255,9 +256,8 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     cva->ee[0] = data.callValue;
 
     // Expected Exposures (ee), Default probabilities (dp,fp)
-    float sommaProdotto1=0;
-    //float sommaProdotto2=0;
-	for( i=1; i < (cva->n+1); i++){
+    double sommaProdotto1=0,sommaProdotto2=0;
+	for( i=1; i<(cva->n+1); i++){
 		if((data.option.t -= (dt))<0){
 			cva->ee[i].Confidence = 0;
 			cva->ee[i].Expected = 0;
@@ -266,14 +266,16 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 			MonteCarlo(&data);
 			cva->ee[i] = data.callValue;
 		}
-        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
-		//cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
-        sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
-		//sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
+		cva->dp[i] = exp(-(dt)*(i-1) * cva->credit.creditspread / 100 / cva->credit.lgd)
+				- exp(-(dt*i) * cva->credit.creditspread / 100 / cva->credit.lgd );
+		cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd)
+						- exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
+		sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
+		sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
 	}
 	// CVA and FVA
-	cva->cva = sommaProdotto1 * cva->lgd;
-	//cva->fva = -sommaProdotto2*cva->credit.lgd;
+	cva->cva = -sommaProdotto1*cva->credit.lgd/100;
+	cva->fva = -sommaProdotto2*cva->credit.lgd/100;
 
 	// Closing
 	MonteCarlo_free(&data);

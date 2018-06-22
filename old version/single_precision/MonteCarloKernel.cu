@@ -8,6 +8,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 #include "MonteCarlo.h"
+#define imin(a,b) (a<b?a:b)
 
 // Struct for Monte Carlo methods
 typedef struct{
@@ -67,9 +68,7 @@ __device__ float blackScholes(float *bt){
 		st_sum += s[j] * OPTION.w[j];
 	// Fourth step: Option payoff
 	price = st_sum - OPTION.k;
-	if(price<0)
-		price = 0.0f;
-	return price;
+	return imin(0,price);
 }
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
@@ -77,20 +76,17 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
-    // Parameter for reduction
-    int blockIndex = blockIdx.x;
-
+    // Global thread index
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
     /*------------------ SHARED MEMORY DICH ----------------*/
     extern __shared__ float s_Sum[];
 
-    // Global thread index
-    int tid = threadIdx.x + blockIdx.x * blockDim.x;
     // Copy random number state to local memory
     curandState threadState = randseed[tid];
 
     OptionValue sum = {0, 0};
 
-    for( i=sumIndex; i<N_PATH; i+=blockDim.x){
+    while(i<N_PATH){
     	float price=0.0f, bt[N];
     	// Random Number Generation
    		brownianVect(bt,threadState);
@@ -99,6 +95,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
         sum.Expected += price;
         sum.Confidence += price*price;
+        tid += blockDim.x * gridDim.x;
     }
     // Copy to the shared memory
     s_Sum[sumIndex] = sum.Expected;
@@ -116,8 +113,8 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         halfblock /= 2;
     }
     if (sumIndex == 0){
-    		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
-    		d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
+    		d_CallValue[blockDim.x].Expected = s_Sum[sumIndex];
+    		d_CallValue[blockDim.x].Confidence = s_Sum[sum2Index];
     }
 }
 
@@ -195,13 +192,13 @@ void MonteCarlo(dev_MonteCarloData *data){
     data->callValue.Expected = price;
 }
 
-extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
+extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int threads, int sims){
 	dev_MonteCarloData data;
 	    data.option = *option;
-	    data.numBlocks = numBlocks;
-	    data.numThreads = numThreads;
+	    data.numBlocks = imin(32,(SIMPB + threads-1)/threads);
+	    data.numThreads = threads;
 	    data.numOpt = N;
-	    data.path = sims / numBlocks;
+	    data.path = SIMPB;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
@@ -210,23 +207,23 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
     return data.callValue;
 }
 
-extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThreads, int sims){
+extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int threads, int sims){
 	MultiOptionData option;
-		option.w[0] = 1;
-		option.d[0] = 0;
-		option.p[0][0] = 1;
-		option.s[0] = opt->s;
-		option.v[0] = opt->v;
-		option.k = opt->k;
-		option.r = opt->r;
-		option.t = opt->t;
+    option.w[0] = 1;
+    option.d[0] = 0;
+    option.p[0][0] = 1;
+    option.s[0] = opt->s;
+    option.v[0] = opt->v;
+    option.k = opt->k;
+    option.r = opt->r;
+    option.t = opt->t;
 
     dev_MonteCarloData data;
-    	data.option = option;
-    	data.numBlocks = numBlocks;
-    	data.numThreads = numThreads;
-    	data.numOpt = 1;
-    	data.path = sims / numBlocks;
+    data.option = option;
+    data.numBlocks = imin(32,(SIMPB + threads-1)/threads);
+    data.numThreads = threads;
+    data.numOpt = 1;
+    data.path = SIMPB;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
@@ -235,7 +232,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
+extern "C" void dev_cvaEquityOption(CVA *cva, int threads, int sims){
     int i;
     float dt = cva->opt.t / (float)cva->n;
 
@@ -243,10 +240,10 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     // Option
     data.option = cva->opt;
     // Kernel parameters
-    data.numBlocks = numBlocks;
-    data.numThreads = numThreads;
+    data.numBlocks = imin(32,(SIMPB + threads-1)/threads);
+    data.numThreads = threads;
     data.numOpt = N;
-    data.path = sims / numBlocks;
+    data.path = SIMPB;
 
     MonteCarlo_init(&data);
 
@@ -257,7 +254,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     // Expected Exposures (ee), Default probabilities (dp,fp)
     float sommaProdotto1=0;
     //float sommaProdotto2=0;
-	for( i=1; i < (cva->n+1); i++){
+	for( i=1; i < cva->n; i++){
 		if((data.option.t -= (dt))<0){
 			cva->ee[i].Confidence = 0;
 			cva->ee[i].Expected = 0;
