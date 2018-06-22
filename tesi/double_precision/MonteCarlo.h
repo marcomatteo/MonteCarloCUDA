@@ -72,7 +72,7 @@ typedef struct{
     // Credit spreads
     CreditData credit;
     // Option data
-    OptionData opt;
+    MultiOptionData opt;
     // CVA, FVA
     double cva, fva;
     // Num of simulations
