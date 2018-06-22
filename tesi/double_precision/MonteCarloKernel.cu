@@ -194,7 +194,7 @@ void MonteCarlo(dev_MonteCarloData *data){
 	// Closing Monte Carlo
     CudaCheck( cudaEventRecord( start, 0 ));
 	long double sum=0, sum2=0, price, empstd;
-    long int nSim = data->path * numBlocks;
+    long int nSim = data->path * data->numBlocks;
     for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
