@@ -48,9 +48,7 @@ __device__ void brownianVect(float *bt, curandState threadState){
 	for(i=0;i<N_OPTION;i++){
 		float somma = 0;
 		for(j=0;j<N_OPTION;j++)
-	 		//somma += first->data[i][k]*second->data[k][j];
 			somma += OPTION.p[i][j] * g[j];
-	     	//result->data[i][j] = somma;
 		bt[i] = somma;
 	}
 	for(i=0;i<N_OPTION;i++)
@@ -60,14 +58,16 @@ __device__ void brownianVect(float *bt, curandState threadState){
 __device__ float blackScholes(float *bt){
 	int j;
 	float s[N], st_sum=0, price;
-	for(j=0;j<N_OPTION;j++)
-	     s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
+    for(j=0;j<N_OPTION;j++){
+        float geomBt = (OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t + OPTION.v[j] * bt[j] * sqrtf(OPTION.t);
+	     s[j] = OPTION.s[j] * expf(geomBt);
+    }
 	// Third step: Mean price
 	for(j=0;j<N_OPTION;j++)
 		st_sum += s[j] * OPTION.w[j];
 	// Fourth step: Option payoff
 	price = st_sum - OPTION.k;
-	
+
     return (price>0)?(price):(0);
 }
 
@@ -153,9 +153,9 @@ void MonteCarlo_init(dev_MonteCarloData *data){
     printf( "RNG done in %f milliseconds\n", time);
 
     //	Host Memory Allocation
-    CudaCheck(cudaMallocHost(&data->h_CallValue, sizeof(OptionValue)*(data->numBlocks)));
+    CudaCheck(cudaMallocHost(&data->h_CallValue, sizeof(OptionValue)*data->numBlocks));
     //	Device Memory Allocation
-    CudaCheck(cudaMalloc(&data->d_CallValue, sizeof(OptionValue)*(data->numBlocks)));
+    CudaCheck(cudaMalloc(&data->d_CallValue, sizeof(OptionValue)*data->numBlocks));
 
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
@@ -182,14 +182,14 @@ void MonteCarlo(dev_MonteCarloData *data){
 	CudaCheck(cudaMemcpy(data->h_CallValue, data->d_CallValue, data->numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
 
 	// Closing Monte Carlo
-	float sum=0, sum2=0, price, empstd;
+	long float sum=0, sum2=0, price, empstd;
     long int nSim = data->numBlocks * data->path;
     for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
 	}
-	price = exp(-(data->option.r*data->option.t)) * (sum/(float)nSim);
-    empstd = sqrt((float)((float)nSim * sum2 - sum * sum)/((float)nSim * (float)(nSim - 1)));
+	price = expf(-(data->option.r*data->option.t)) * (sum/(float)nSim);
+    empstd = sqrtf((float)((float)nSim * sum2 - sum * sum)/((float)nSim * (float)(nSim - 1)));
     data->callValue.Confidence = 1.96 * empstd / (float)sqrt((float)nSim);
     data->callValue.Expected = price;
 }
@@ -244,7 +244,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     // Kernel parameters
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
-    data.numOpt = N;
+    data.numOpt = cva->ns;
     data.path = sims / numBlocks;
 
     MonteCarlo_init(&data);
@@ -265,8 +265,8 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 			MonteCarlo(&data);
 			cva->ee[i] = data.callValue;
 		}
-        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
-		//cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
+        cva->dp[i] = expf(-(dt*i) * cva->defInt) - expf(-(dt*(i+1)) * cva->defInt);
+		//cva->fp[i] = expf(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - expf(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
         sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
 		//sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
 	}

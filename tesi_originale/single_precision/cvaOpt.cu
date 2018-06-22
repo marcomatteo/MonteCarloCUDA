@@ -20,14 +20,6 @@ void getRandomSigma( float* std );
 void getRandomRho( float* rho );
 void pushVett( float* vet, float x );
 
-void Parameters(int *numBlocks, int *numThreads);
-void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
-void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
-
-////////////////////////////////////////////////////////////////////////////////////////
-//                                      MAIN
-////////////////////////////////////////////////////////////////////////////////////////
-
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
     CVA cva;
@@ -37,15 +29,18 @@ int main(int argc, const char * argv[]) {
     cva.dp = (float*)malloc((cva.n+1)*sizeof(float));
     //cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
 
-    // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
+    // n+1 because it starts from 1
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
-    int numBlocks, numThreads, i, j, SIMS;
-    float difference, dt, cholRho[N][N],
-    *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
-    cudaEvent_t d_start, d_stop;
+    float *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
+
     // Option Data
     MultiOptionData opt;
-    if(N>1){
+    char risp;
+    printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti)\t", PATH, N);
+    scanf(" %s",&risp);
+    if(risp == 'b'){
+        printf("\nCVA of an European basket Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
+        cva.ns = N;
         float dw = (float)1 / N;
         //    Volatility
         opt.v[0] = 0.2;
@@ -83,32 +78,34 @@ int main(int argc, const char * argv[]) {
         }
     }
     else{
-        opt.v[0] = 0.2;
+        printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);        opt.v[0] = 0.2;
         opt.s[0] = 100;
         opt.w[0] = 1;
         opt.d[0] = 0;
         opt.p[0][0] = 1;
+        cva.ns = 1;
     }
     opt.k= 100.f;
     opt.r= 0.05;
     opt.t= 1.f;
     cva.opt = opt;
 	
-	//float CPU_timeSpent=0, speedup;
+    cudaEvent_t d_start, d_stop;
+    int numBlocks, numThreads, i, j, SIMS;
+    float difference, dt, cholRho[N][N];
     float GPU_timeSpent=0, CPU_timeSpent=0;
     
-    printf("Expected Exposures of an European Call Option\n");
-	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-    Parameters(&numBlocks, &numThreads);
+	//	CUDA Parameters optimized
+    numThreads = NTHREADS;
+    numBlocks = BLOCKS;
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
     scanf("%d",&SIMS);
-    SIMS *= 131072;
+    SIMS *= SIMPB;
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
-
-	//	Print Option details
-    printMultiOpt(&opt);
     
-    if(N>1){
+    if(risp == 'b'){
+        //    Print Option details
+        printMultiOpt(&opt);
         //    Cholevski factorization
         Chol(opt.p, cholRho);
         for(i=0;i<N;i++)
@@ -121,6 +118,7 @@ int main(int argc, const char * argv[]) {
         option.k = opt.k;
         option.r = opt.r;
         option.t = opt.t;
+        printOption(option);
         bs_price[0] = host_bsCall(option);
         for(i=1;i<cva.n+1;i++){
             if((opt.t -= dt)<0)
@@ -138,7 +136,7 @@ int main(int argc, const char * argv[]) {
     dt = opt.t/(float)cva.n;
     
 
-    //	Ripristino valore originale del Time to mat
+    //	Restore original Time to mat
     opt.t= 1.f;
     
     // CPU Monte Carlo
@@ -199,7 +197,6 @@ void getRandomSigma( float* std ){
             j=0;
         }
     }
-    //std[i] = randMinMax(0, 1);
 }
 void getRandomRho( float* rho ){
     int i,j;
@@ -214,7 +211,6 @@ void getRandomRho( float* rho ){
                     r = 0.5;
                 else
                     r= -0.5;
-            // r=randMinMax(-1, 1);
             rho[j+i*N] = r;
             rho[i+j*N] = r;
         }
@@ -225,51 +221,4 @@ void pushVett( float* vet, float x ){
     for(i=0;i<N;i++)
         vet[i] = x;
 }
-///////////////////////////////////
-//    ADJUST FUNCTIONS
-///////////////////////////////////
 
-void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
-    int maxGridSize = deviceProp->maxGridSize[0];
-    int maxBlockSize = deviceProp->maxThreadsPerBlock;
-    //    Replacing in case of wrong size
-    if(*numBlocks > maxGridSize){
-        *numBlocks = maxGridSize;
-        printf("Warning: maximum size of Grid is %d",*numBlocks);
-    }
-    if(*numThreads > maxBlockSize){
-        *numThreads = maxBlockSize;
-        printf("Warning: maximum size of Blocks is %d",*numThreads);
-    }
-}
-
-void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
-    size_t maxShared = deviceProp->sharedMemPerBlock;
-    size_t maxConstant = deviceProp->totalConstMem;
-    int sizeDouble = sizeof(float);
-    int numShared = sizeDouble * *numThreads * 2;
-    if(sizeof(MultiOptionData) > maxConstant){
-        printf("\nWarning: Excess use of constant memory: %zu\n",maxConstant);
-        printf("A float variable size is: %d\n",sizeDouble);
-        printf("In a MultiOptionData struct there's a consumption of %zu constant memory\n",sizeof(MultiOptionData));
-        printf("In this Basket Option there's %d stocks\n",N);
-        int maxDim = (int)maxConstant/(sizeDouble*5);
-        printf("The optimal number of dims should be: %d stocks\n",maxDim);
-    }
-    if(numShared > maxShared){
-        printf("\nWarning: Excess use of shared memory: %zu\n",maxShared);
-        printf("A float variable size is: %d\n",sizeDouble);
-        int maxThreads = (int)maxShared / (2*sizeDouble);
-        printf("The optimal number of thread should be: %d\n",maxThreads);
-    }
-    printf("\n");
-}
-
-void Parameters(int *numBlocks, int *numThreads){
-    cudaDeviceProp deviceProp;
-    CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    *numThreads = NTHREADS;
-    *numBlocks = BLOCKS;
-    sizeAdjust(&deviceProp,numBlocks, numThreads);
-    memAdjust(&deviceProp, numThreads);
-}
