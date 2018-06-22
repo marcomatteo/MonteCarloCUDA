@@ -84,6 +84,7 @@ int main(int argc, const char * argv[]) {
         opt.w[0] = 1;
         opt.d[0] = 0;
         opt.p[0][0] = 1;
+        cva.ns = 1;
     }
     opt.k= 100.f;
     opt.r= 0.05;
@@ -102,8 +103,6 @@ int main(int argc, const char * argv[]) {
     scanf("%d",&SIMS);
     SIMS *= SIMPB;
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
-
-	
     
     if(risp == 'b'){
         //    Print Option details
