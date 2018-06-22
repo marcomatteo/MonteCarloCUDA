@@ -41,12 +41,6 @@ typedef struct {
     double t;    // time to maturity
 } OptionData;
 
-typedef struct {
-    double creditspread;    // Credit of default
-    double fundingspread;   // Funding spread
-    double lgd;    			// Loss given default
-} CreditData;
-
 // Static MultiOptionData
 typedef struct{
     double s[N];  	//Stock vector
@@ -64,17 +58,24 @@ typedef struct {
     double Confidence;    // confidence intervall
 } OptionValue;
 
+/* typedef struct {
+ float creditspread;    // credit spread
+ float fundingspread;   // funding spread
+ float lgd;                // loss given default
+ } CreditData; */
+
 typedef struct{
     // Expected Exposures
     OptionValue *ee;
     // Default probabilities
-    double *dp,*fp;
-    // Credit spreads
-    CreditData credit;
+    double *dp, defInt, lgd;
+    // double *fp; // Founding probabilities
     // Option data
     MultiOptionData opt;
-    // CVA, FVA
-    double cva, fva;
+    // CVA
+    double cva;
+    // FVA
+    //double fva;
     // Num of simulations
     int n;
 }CVA;

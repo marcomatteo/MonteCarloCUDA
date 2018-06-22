@@ -31,13 +31,15 @@ void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
     CVA cva;
+    //cva.credit.creditspread=180;
+    //cva.credit.fundingspread=75;
     cva.defInt = 0.03;
     cva.lgd = (1 - 0.4);
     cva.n = PATH;
     cva.dp = (float*)malloc((cva.n+1)*sizeof(float));
-    //cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
-
-    // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
+    //cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
+    
+    // Vector of EE, dim n+1 because starts in 0
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
     int numBlocks, numThreads, i, j, SIMS;
     float difference, dt, cholRho[N][N],
@@ -94,11 +96,10 @@ int main(int argc, const char * argv[]) {
     opt.t= 1.f;
     cva.opt = opt;
 	
-	//float CPU_timeSpent=0, speedup;
-    float GPU_timeSpent=0, CPU_timeSpent=0;
+    float GPU_timeSpent=0, CPU_timeSpent=0, speedup;
     
     printf("Expected Exposures of an European Call Option\n");
-	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
+    //  CUDA parameters
     Parameters(&numBlocks, &numThreads);
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
     scanf("%d",&SIMS);
@@ -138,7 +139,7 @@ int main(int argc, const char * argv[]) {
     dt = opt.t/(float)cva.n;
     
 
-    //	Ripristino valore originale del Time to mat
+    //	Original Time to mat
     opt.t= 1.f;
     
     // CPU Monte Carlo
@@ -177,6 +178,7 @@ int main(int argc, const char * argv[]) {
    		difference = abs(cva.ee[i].Expected - bs_price[i]);
    		printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
    	}
+    // printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
     printf("\nCVA: %f\n\n",cva.cva);
 
    	free(cva.dp);
