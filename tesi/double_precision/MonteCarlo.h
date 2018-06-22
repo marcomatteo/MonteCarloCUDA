@@ -65,16 +65,18 @@ typedef struct {
 } OptionValue;
 
 typedef struct{
-	// Expected Exposures
-	OptionValue *ee;
-	// Default probabilities
-	double defInt, lgd, *dp;
-	// Option data
-	MultiOptionData opt;
-	// CVA
-	double cva;
-	// Num of simulations
-	int n;
+    // Expected Exposures
+    OptionValue *ee;
+    // Default probabilities
+    double *dp,*fp;
+    // Credit spreads
+    CreditData credit;
+    // Option data
+    OptionData opt;
+    // CVA, FVA
+    double cva, fva;
+    // Num of simulations
+    int n;
 }CVA;
 
 // Struct for Monte Carlo methods
