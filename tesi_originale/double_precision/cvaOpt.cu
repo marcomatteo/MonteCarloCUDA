@@ -29,12 +29,10 @@ int main(int argc, const char * argv[]) {
     cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
     //cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
 
-    // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
+    // n+1 because it starts from 1
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
-    int numBlocks, numThreads, i, j, SIMS;
-    double difference, dt, cholRho[N][N],
     *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
-    cudaEvent_t d_start, d_stop;
+
     // Option Data
     MultiOptionData opt;
     if(N>1){
@@ -86,12 +84,15 @@ int main(int argc, const char * argv[]) {
     opt.t= 1.f;
     cva.opt = opt;
 	
+    cudaEvent_t d_start, d_stop;
+    int numBlocks, numThreads, i, j, SIMS;
+    double difference, dt, cholRho[N][N],
 	//double CPU_timeSpent=0, speedup;
     float GPU_timeSpent=0, CPU_timeSpent=0;
-    
+
     printf("Expected Exposures of an European Call Option\n");
-	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-    numThreads[0] = NTHREADS;
+	//	CUDA Parameters optimized
+    numThreads = NTHREADS;
     numBlocks = BLOCKS;
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
     scanf("%d",&SIMS);
@@ -131,7 +132,7 @@ int main(int argc, const char * argv[]) {
     dt = opt.t/(double)cva.n;
     
 
-    //	Ripristino valore originale del Time to mat
+    //	Restore original Time to mat
     opt.t= 1.f;
     
     // CPU Monte Carlo
@@ -192,7 +193,6 @@ void getRandomSigma( double* std ){
             j=0;
         }
     }
-    //std[i] = randMinMax(0, 1);
 }
 void getRandomRho( double* rho ){
     int i,j;
@@ -207,7 +207,6 @@ void getRandomRho( double* rho ){
                     r = 0.5;
                 else
                     r= -0.5;
-            // r=randMinMax(-1, 1);
             rho[j+i*N] = r;
             rho[i+j*N] = r;
         }
