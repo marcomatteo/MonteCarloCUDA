@@ -169,9 +169,10 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     GPU_timeSpent /= 1000;
-
-    printf("\nTotal execution time: %f s\n\n", GPU_timeSpent);
-
+    speedup = CPU_timeSpent/GPU_timeSpent;
+    printf("\nTotal execution time: %f s\n", GPU_timeSpent);
+    printf("SpeedUp: %f\n\n", speedup);
+    
     printf("\nPrezzi Simulati:\n");
    	printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
    	for(i=0;i<cva.n+1;i++){

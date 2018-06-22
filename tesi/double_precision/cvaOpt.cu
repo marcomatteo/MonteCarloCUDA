@@ -34,7 +34,7 @@ int main(int argc, const char * argv[]) {
     //cva.credit.creditspread=180;
     //cva.credit.fundingspread=75;
     cva.defInt = 0.03;
-    cva.credit.lgd = 1 - 0.4;
+    cva.lgd = 1 - 0.4;
     cva.n = PATH;
     cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
     //cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
@@ -172,8 +172,9 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     GPU_timeSpent /= 1000;
-
-    printf("\nTotal execution time: %f s\n\n", GPU_timeSpent);
+    speedup = CPU_timeSpent/GPU_timeSpent;
+    printf("\nTotal execution time: %f s\n", GPU_timeSpent);
+    printf("SpeedUp: %f\n\n", speedup);
 
     printf("\nPrezzi Simulati:\n");
    	printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
@@ -181,7 +182,8 @@ int main(int argc, const char * argv[]) {
    		difference = abs(cva.ee[i].Expected - bs_price[i]);
    		printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
    	}
-   	printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
+   	//printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
+    printf("\nCVA: %f\n\n",cva.cva);
 
    	free(cva.dp);
    	// free(cva.fp);
