@@ -67,7 +67,7 @@ int main(int argc, const char * argv[]) {
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\n");
-    printf("(NumBlocks, NumSimulations): ( %d ; %d )\n",BLOCKS,SIMS/BLOCKS);
+    
     for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
     	GPU_sim[i] = dev_vanillaOpt(&option, numBlocks, numThreads[i],SIMS);
@@ -86,7 +86,7 @@ int main(int argc, const char * argv[]) {
     printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
     for(i=0; i<THREADS; i++){
-    	printf("%d \n",numThreads[i]);
+        printf("(NumBlocks, NumThreads): ( %d ; %d )\n",((SIMS+(numThreads*100)-1)/(numThreads*100)),numThreads[i]);
     	printf("%f \n",GPU_sim[i].Expected);
     	printf("%f \n",GPU_sim[i].Confidence);
     	printf("%f \n",difference[i]);
