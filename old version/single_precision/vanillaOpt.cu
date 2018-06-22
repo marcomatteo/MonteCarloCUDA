@@ -67,7 +67,6 @@ int main(int argc, const char * argv[]) {
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\n");
-    printf("(NumBlocks, NumSimulations): ( %d ; %d )\n",BLOCKS,SIMS/BLOCKS);
     for(i=0; i<NTHREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
     	GPU_sim[i] = dev_vanillaOpt(&option, threadsPerBlock[i], SIMS);
