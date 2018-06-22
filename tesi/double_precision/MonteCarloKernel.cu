@@ -86,7 +86,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     curandState threadState = randseed[tid];
 
     OptionValue sum = {0, 0};
-    for( i=tid; i<N_PATH; i+=(blockDim.x*gridDim.x)){
+    for( i=0; i<N_PATH; i+=blockDim.x){
         double price=0.0f, bt[N];
     	// Random Number Generation
         brownianVect(bt,threadState);
@@ -194,7 +194,7 @@ void MonteCarlo(dev_MonteCarloData *data){
 	// Closing Monte Carlo
     CudaCheck( cudaEventRecord( start, 0 ));
 	long double sum=0, sum2=0, price, empstd;
-    long int nSim = data->path;
+    long int nSim = data->path * numBlocks;
     for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
@@ -240,7 +240,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     data.numBlocks = (sims + (numThreads*100)-1)/(numThreads*100);
     data.numThreads = numThreads;
     data.numOpt = 1;
-    data.path = sims;
+    data.path = (sims+numBlocks-1)/numBlocks;
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
