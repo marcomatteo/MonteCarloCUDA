@@ -71,6 +71,7 @@ typedef struct{
     // Default probabilities
     double defInt, lgd, *dp;
     // Option data
+    int ns; 
     MultiOptionData opt;
     // CVA
     double cva;

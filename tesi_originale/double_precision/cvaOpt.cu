@@ -40,6 +40,7 @@ int main(int argc, const char * argv[]) {
     scanf("%c",&risp);
     if(risp == 'b'){
         printf("CVA of an European Call Option\n");
+        cva.ns = N;
         double dw = (double)1 / N;
         //    Volatility
         opt.v[0] = 0.2;
@@ -105,7 +106,7 @@ int main(int argc, const char * argv[]) {
 	//	Print Option details
     printMultiOpt(&opt);
     
-    if(N>1){
+    if(risp == 'b'){
         //    Cholevski factorization
         Chol(opt.p, cholRho);
         for(i=0;i<N;i++)
