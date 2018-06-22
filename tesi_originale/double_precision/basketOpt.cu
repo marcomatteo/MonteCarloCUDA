@@ -73,7 +73,7 @@ int main(int argc, const char * argv[]) {
 	printf("Basket Option Pricing\n");
 	//	CUDA parameters for parallel execution
     numBlocks = BLOCKS;
-    numThreads = NTHREADS;
+    numThreads[0] = NTHREADS;
     printf("Inserisci il numero simulazioni (x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= SIMPB;
