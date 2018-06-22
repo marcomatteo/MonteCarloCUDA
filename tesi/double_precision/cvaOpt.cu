@@ -83,7 +83,7 @@ int main(int argc, const char * argv[]) {
         }
     }
     else{
-        opt.v[0] = 0.25;
+        opt.v[0] = 0.2;
         opt.s[0] = 100;
         opt.w[0] = 1;
         opt.d[0] = 0;
@@ -91,7 +91,7 @@ int main(int argc, const char * argv[]) {
     }
     
     opt.k= 100.f;
-    opt.r= 0.04879;
+    opt.r= 0.05;
     opt.t= 1.f;
     cva.opt = opt;
 	
