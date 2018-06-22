@@ -168,6 +168,7 @@ void MonteCarlo(dev_MonteCarloData *data){
     cudaEvent_t start, stop;
     CudaCheck( cudaEventCreate( &start ));
     CudaCheck( cudaEventCreate( &stop ));
+    float time;
     /*--------------- CONSTANT MEMORY ----------------*/
     CudaCheck(cudaMemcpyToSymbol(OPTION,&data->option,sizeof(MultiOptionData)));
     
