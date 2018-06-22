@@ -86,7 +86,8 @@ int main(int argc, const char * argv[]) {
     printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
     for(i=0; i<THREADS; i++){
-        printf("(NumBlocks, NumThreads): ( %d ; %d )\n",((SIMS+(numThreads*100)-1)/(numThreads*100)),numThreads[i]);
+        double blocks = (SIMS+(numThreads*100)-1)/(numThreads*100);
+        printf("(NumBlocks, NumThreads): ( %d ; %d )\n",blocks,numThreads[i]);
     	printf("%f \n",GPU_sim[i].Expected);
     	printf("%f \n",GPU_sim[i].Confidence);
     	printf("%f \n",difference[i]);
