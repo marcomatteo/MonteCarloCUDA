@@ -232,6 +232,7 @@ void host_cvaEquityOption(CVA *cva, int sims){
         sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
         sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
      */
+        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
         sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
     }
     // CVA
