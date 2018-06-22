@@ -67,9 +67,8 @@ __device__ double blackScholes(double *bt){
 		st_sum += s[j] * OPTION.w[j];
 	// Fourth step: Option payoff
 	price = st_sum - OPTION.k;
-	if(price<0)
-		price = 0.0f;
-	return price;
+
+    return (price>0)?(price):(0);
 }
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
@@ -107,14 +106,14 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
     // Reduce shared memory accumulators and write final result to global memory
     int halfblock = blockDim.x/2;
     // Reduction in log2(threadBlocks) steps, so threadBlock must be power of 2
-    while ( halfblock != 0 ){
+    do{
         if ( sumIndex < halfblock ){
             s_Sum[sumIndex] += s_Sum[sumIndex+halfblock];
             s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
         }
         __syncthreads();
         halfblock /= 2;
-    }
+    }while ( halfblock != 0 );
     if (sumIndex == 0){
     		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
     		d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
@@ -132,7 +131,7 @@ void MonteCarlo_init(dev_MonteCarloData *data){
 	cudaEvent_t start, stop;
 	CudaCheck( cudaEventCreate( &start ));
     CudaCheck( cudaEventCreate( &stop ));
-    double time;
+    float time;
 
     int n_option = data->numOpt;
     int n_path = data->path;
@@ -154,9 +153,9 @@ void MonteCarlo_init(dev_MonteCarloData *data){
     printf( "RNG done in %f milliseconds\n", time);
 
     //	Host Memory Allocation
-    CudaCheck(cudaMallocHost(&data->h_CallValue, sizeof(OptionValue)*(data->numBlocks)));
+    CudaCheck(cudaMallocHost(&data->h_CallValue, sizeof(OptionValue)*data->numBlocks));
     //	Device Memory Allocation
-    CudaCheck(cudaMalloc(&data->d_CallValue, sizeof(OptionValue)*(data->numBlocks)));
+    CudaCheck(cudaMalloc(&data->d_CallValue, sizeof(OptionValue)*data->numBlocks));
 
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
@@ -183,9 +182,9 @@ void MonteCarlo(dev_MonteCarloData *data){
 	CudaCheck(cudaMemcpy(data->h_CallValue, data->d_CallValue, data->numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
 
 	// Closing Monte Carlo
-	double sum=0, sum2=0, price, empstd;
+	long double sum=0, sum2=0, price, empstd;
     long int nSim = data->numBlocks * data->path;
-    for ( i = 0; i < (data->numBlocks-1); i++ ){
+    for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
 	}
