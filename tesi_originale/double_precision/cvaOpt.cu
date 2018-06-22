@@ -36,9 +36,9 @@ int main(int argc, const char * argv[]) {
     // Option Data
     MultiOptionData opt;
     char risp;
-    printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti", PATH, N);
+    printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti)\t", PATH, N);
     scanf("%c",&risp);
-    if(risp=='b'){
+    if(risp == 'b'){
         printf("CVA of an European Call Option\n");
         double dw = (double)1 / N;
         //    Volatility
