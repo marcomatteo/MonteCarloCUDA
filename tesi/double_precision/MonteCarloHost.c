@@ -213,7 +213,8 @@ void host_cvaEquityOption(CVA *cva, int sims){
     cva->ee[0] = data.callValue;
     
     // Expected Exposures (ee), Default probabilities (dp,fp)
-    double sommaProdotto1=0,sommaProdotto2=0;
+    double sommaProdotto1=0;
+    //double sommaProdotto2=0;
     for( i=1; i<(cva->n+1); i++){
         if((data.option.t -= (dt))<0){
             cva->ee[i].Confidence = 0;
@@ -223,16 +224,21 @@ void host_cvaEquityOption(CVA *cva, int sims){
             MonteCarlo(&data);
             cva->ee[i] = data.callValue;
         }
+    /*
         cva->dp[i] = exp(-(dt)*(i-1) * cva->credit.creditspread / 100 / cva->credit.lgd)
         - exp(-(dt*i) * cva->credit.creditspread / 100 / cva->credit.lgd );
         cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd)
         - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
         sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
         sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
+     */
+        sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
     }
-    // CVA and FVA
-    cva->cva = -sommaProdotto1*cva->credit.lgd/100;
-    cva->fva = -sommaProdotto2*cva->credit.lgd/100;
+    // CVA
+    cva->cva = sommaProdotto1 * cva->lgd;
+
+    //cva->cva = -sommaProdotto1*cva->credit.lgd/100;
+    //cva->fva = -sommaProdotto2*cva->credit.lgd/100;
 }
 
 ///////////////////////////////////
