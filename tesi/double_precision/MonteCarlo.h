@@ -13,10 +13,10 @@
 #include <math.h>
 #include <time.h>
 
-#define N 6
+#define N 3
 #define THREADS 2
 #define NTHREADS 128
-#define BLOCKS 256
+#define BLOCKS 512
 #define PATH 40
 
 /**
