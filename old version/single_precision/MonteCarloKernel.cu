@@ -194,7 +194,7 @@ void MonteCarlo(dev_MonteCarloData *data){
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int threads, int sims){
 	dev_MonteCarloData data;
 	    data.option = *option;
-	    data.numBlocks = imin(32,(SIMPB + threads-1)/threads);
+	    data.numBlocks = imax(32,(SIMPB + threads-1)/threads);
 	    data.numThreads = threads;
 	    data.numOpt = N;
 	    data.path = SIMPB;
@@ -239,7 +239,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int threads, int sims){
     // Option
     data.option = cva->opt;
     // Kernel parameters
-    data.numBlocks = imin(32,(SIMPB + threads-1)/threads);
+    data.numBlocks = imax(32,(SIMPB + threads-1)/threads);
     data.numThreads = threads;
     data.numOpt = N;
     data.path = SIMPB;
