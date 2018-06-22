@@ -17,7 +17,7 @@
 #define THREADS 1
 #define NTHREADS 512
 #define BLOCKS 256
-#define PATH 200
+#define PATH 1000
 #define SIMPB 131072
 
 /**
