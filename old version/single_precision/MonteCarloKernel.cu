@@ -8,7 +8,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 #include "MonteCarlo.h"
-#define imin(a,b) (a<b?a:b)
+#define imax(a,b) (a>b?a:b)
 
 // Struct for Monte Carlo methods
 typedef struct{
@@ -68,11 +68,10 @@ __device__ float blackScholes(float *bt){
 		st_sum += s[j] * OPTION.w[j];
 	// Fourth step: Option payoff
 	price = st_sum - OPTION.k;
-	return imin(0,price);
+	return imax(0,price);
 }
 
 __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_CallValue){
-    int i;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
@@ -220,7 +219,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int threads, int sims){
 
     dev_MonteCarloData data;
     data.option = option;
-    data.numBlocks = imin(32,(SIMPB + threads-1)/threads);
+    data.numBlocks = imax(32,(SIMPB + threads-1)/threads);
     data.numThreads = threads;
     data.numOpt = 1;
     data.path = SIMPB;
