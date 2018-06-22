@@ -205,7 +205,7 @@ void host_cvaEquityOption(CVA *cva, int sims){
     data.option = cva->opt;
     
     // Execution parameters
-    data.numOpt = N;
+    data.numOpt = cva->ns;
     data.path = sims;
     
     // Original option price

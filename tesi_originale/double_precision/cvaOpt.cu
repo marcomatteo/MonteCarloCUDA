@@ -39,7 +39,7 @@ int main(int argc, const char * argv[]) {
     printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti)\t", PATH, N);
     scanf(" %s",&risp);
     if(risp == 'b'){
-        printf("CVA of an European basket Option\n");
+        printf("CVA of an European basket Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
         cva.ns = N;
         double dw = (double)1 / N;
         //    Volatility
@@ -78,8 +78,7 @@ int main(int argc, const char * argv[]) {
         }
     }
     else{
-        printf("CVA of an European Call Option\n");
-        opt.v[0] = 0.2;
+        printf("CVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);        opt.v[0] = 0.2;
         opt.s[0] = 100;
         opt.w[0] = 1;
         opt.d[0] = 0;
