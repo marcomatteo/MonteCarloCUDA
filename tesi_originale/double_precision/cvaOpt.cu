@@ -35,7 +35,11 @@ int main(int argc, const char * argv[]) {
 
     // Option Data
     MultiOptionData opt;
-    if(N>1){
+    char risp;
+    printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti", PATH, N);
+    scanf("%c",&risp);
+    if(risp=='b'){
+        printf("CVA of an European Call Option\n");
         double dw = (double)1 / N;
         //    Volatility
         opt.v[0] = 0.2;
@@ -73,6 +77,7 @@ int main(int argc, const char * argv[]) {
         }
     }
     else{
+        printf("CVA of an European Call Option\n");
         opt.v[0] = 0.2;
         opt.s[0] = 100;
         opt.w[0] = 1;
@@ -88,8 +93,7 @@ int main(int argc, const char * argv[]) {
     int numBlocks, numThreads, i, j, SIMS;
     double difference, dt, cholRho[N][N];
     float GPU_timeSpent=0, CPU_timeSpent=0;
-
-    printf("Expected Exposures of an European Call Option\n");
+    
 	//	CUDA Parameters optimized
     numThreads = NTHREADS;
     numBlocks = BLOCKS;
