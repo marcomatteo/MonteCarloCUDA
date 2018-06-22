@@ -48,9 +48,7 @@ __device__ void brownianVect(double *bt, curandState threadState){
 	for(i=0;i<N_OPTION;i++){
 		double somma = 0;
 		for(j=0;j<N_OPTION;j++)
-	 		//somma += first->data[i][k]*second->data[k][j];
 			somma += OPTION.p[i][j] * g[j];
-	     	//result->data[i][j] = somma;
 		bt[i] = somma;
 	}
 	for(i=0;i<N_OPTION;i++)
@@ -60,8 +58,10 @@ __device__ void brownianVect(double *bt, curandState threadState){
 __device__ double blackScholes(double *bt){
 	int j;
 	double s[N], st_sum=0, price;
-	for(j=0;j<N_OPTION;j++)
-	     s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
+    for(j=0;j<N_OPTION;j++){
+        double geomBt = (OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t + OPTION.v[j] * bt[j] * sqrt(OPTION.t);
+	     s[j] = OPTION.s[j] * exp(geomBt);
+    }
 	// Third step: Mean price
 	for(j=0;j<N_OPTION;j++)
 		st_sum += s[j] * OPTION.w[j];

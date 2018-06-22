@@ -13,16 +13,8 @@ extern "C" OptionValue host_vanillaOpt(OptionData, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int, int);
 extern "C" void printOption( OptionData o);
 
-void Parameters(int *numBlocks, int *numThreads);
-void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
-void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
-
-////////////////////////////////////////////////////////////////////////////////////////
-//                                      MAIN
-////////////////////////////////////////////////////////////////////////////////////////
-
 int main(int argc, const char * argv[]) {
-    /*--------------------------- VARIABLES -----------------------------------*/
+    /*------------------------- VARIABLES ------------------------------*/
 	// Option Data
 	OptionData option;
 	option.v = 0.2;
@@ -38,14 +30,15 @@ int main(int argc, const char * argv[]) {
 	double bs_price, difference[THREADS];
 	cudaEvent_t d_start, d_stop;
 
-    /*--------------------------- START PROGRAM -----------------------------------*/
+    /*----------------------- START PROGRAM ----------------------------*/
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
-	Parameters(&numBlocks, numThreads);
+    numBlocks = BLOCKS;
+    numThreads[0] = NTHREADS;
     printf("Inserisci il numero di simulazioni (x131.072): ");
     scanf("%d",&SIMS);
-    SIMS *= 131072;
-	//printf("\nScenari di Monte Carlo: %d\n",SIMS);
+    SIMS *= SIMPB;
+	printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	printOption(option);
 	// Time instructions
@@ -98,56 +91,4 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventDestroy( d_start ));
     CudaCheck( cudaEventDestroy( d_stop ));
     return 0;
-}
-///////////////////////////////////
-//    ADJUST FUNCTIONS
-///////////////////////////////////
-
-void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
-    int maxGridSize = deviceProp->maxGridSize[0];
-    int maxBlockSize = deviceProp->maxThreadsPerBlock;
-    //    Replacing in case of wrong size
-    if(*numBlocks > maxGridSize){
-        *numBlocks = maxGridSize;
-        printf("Warning: maximum size of Grid is %d",*numBlocks);
-    }
-    if(*numThreads > maxBlockSize){
-        *numThreads = maxBlockSize;
-        printf("Warning: maximum size of Blocks is %d",*numThreads);
-    }
-}
-
-void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
-    size_t maxShared = deviceProp->sharedMemPerBlock;
-    size_t maxConstant = deviceProp->totalConstMem;
-    int sizeDouble = sizeof(double);
-    int numShared = sizeDouble * *numThreads * 2;
-    if(sizeof(MultiOptionData) > maxConstant){
-        printf("\nWarning: Excess use of constant memory: %zu\n",maxConstant);
-        printf("A double variable size is: %d\n",sizeDouble);
-        printf("In a MultiOptionData struct there's a consumption of %zu constant memory\n",sizeof(MultiOptionData));
-        printf("In this Basket Option there's %d stocks\n",N);
-        int maxDim = (int)maxConstant/(sizeDouble*5);
-        printf("The optimal number of dims should be: %d stocks\n",maxDim);
-    }
-    if(numShared > maxShared){
-        printf("\nWarning: Excess use of shared memory: %zu\n",maxShared);
-        printf("A double variable size is: %d\n",sizeDouble);
-        int maxThreads = (int)maxShared / (2*sizeDouble);
-        printf("The optimal number of thread should be: %d\n",maxThreads);
-    }
-}
-
-void Parameters(int *numBlocks, int *numThreads){
-    cudaDeviceProp deviceProp;
-    int i = 0;
-    CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    *numBlocks = BLOCKS;
-    for (i=0; i<THREADS; i++) {
-        printf("\nParametri Threads (max 1024):\n");
-        printf("Scegli il numero di Threads n^ %d: ",i);
-        scanf("%d",&numThreads[i]);
-        sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
-        memAdjust(&deviceProp, &numThreads[i]);
-    }
 }

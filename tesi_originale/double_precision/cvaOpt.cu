@@ -20,14 +20,6 @@ void getRandomSigma( double* std );
 void getRandomRho( double* rho );
 void pushVett( double* vet, double x );
 
-void Parameters(int *numBlocks, int *numThreads);
-void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
-void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
-
-////////////////////////////////////////////////////////////////////////////////////////
-//                                      MAIN
-////////////////////////////////////////////////////////////////////////////////////////
-
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
     CVA cva;
@@ -99,10 +91,11 @@ int main(int argc, const char * argv[]) {
     
     printf("Expected Exposures of an European Call Option\n");
 	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
-    Parameters(&numBlocks, &numThreads);
+    numThreads[0] = NTHREADS;
+    numBlocks = BLOCKS;
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
     scanf("%d",&SIMS);
-    SIMS *= 131072;
+    SIMS *= SIMPB;
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
 
 	//	Print Option details
@@ -225,51 +218,4 @@ void pushVett( double* vet, double x ){
     for(i=0;i<N;i++)
         vet[i] = x;
 }
-///////////////////////////////////
-//    ADJUST FUNCTIONS
-///////////////////////////////////
 
-void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
-    int maxGridSize = deviceProp->maxGridSize[0];
-    int maxBlockSize = deviceProp->maxThreadsPerBlock;
-    //    Replacing in case of wrong size
-    if(*numBlocks > maxGridSize){
-        *numBlocks = maxGridSize;
-        printf("Warning: maximum size of Grid is %d",*numBlocks);
-    }
-    if(*numThreads > maxBlockSize){
-        *numThreads = maxBlockSize;
-        printf("Warning: maximum size of Blocks is %d",*numThreads);
-    }
-}
-
-void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
-    size_t maxShared = deviceProp->sharedMemPerBlock;
-    size_t maxConstant = deviceProp->totalConstMem;
-    int sizeDouble = sizeof(double);
-    int numShared = sizeDouble * *numThreads * 2;
-    if(sizeof(MultiOptionData) > maxConstant){
-        printf("\nWarning: Excess use of constant memory: %zu\n",maxConstant);
-        printf("A double variable size is: %d\n",sizeDouble);
-        printf("In a MultiOptionData struct there's a consumption of %zu constant memory\n",sizeof(MultiOptionData));
-        printf("In this Basket Option there's %d stocks\n",N);
-        int maxDim = (int)maxConstant/(sizeDouble*5);
-        printf("The optimal number of dims should be: %d stocks\n",maxDim);
-    }
-    if(numShared > maxShared){
-        printf("\nWarning: Excess use of shared memory: %zu\n",maxShared);
-        printf("A double variable size is: %d\n",sizeDouble);
-        int maxThreads = (int)maxShared / (2*sizeDouble);
-        printf("The optimal number of thread should be: %d\n",maxThreads);
-    }
-    printf("\n");
-}
-
-void Parameters(int *numBlocks, int *numThreads){
-    cudaDeviceProp deviceProp;
-    CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    *numThreads = NTHREADS;
-    *numBlocks = BLOCKS;
-    sizeAdjust(&deviceProp,numBlocks, numThreads);
-    memAdjust(&deviceProp, numThreads);
-}

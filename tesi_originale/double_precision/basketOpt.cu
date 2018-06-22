@@ -18,10 +18,6 @@ void getRandomSigma( double* std );
 void getRandomRho( double* rho );
 void pushVett( double* vet, double x );
 
-void Parameters(int *numBlocks, int *numThreads);
-void memAdjust(cudaDeviceProp *deviceProp, int *numThreads);
-void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
-
 int main(int argc, const char * argv[]) {
     /*--------------------------- VARIABLES -----------------------------------*/
 	double dw = (double)1 / N;
@@ -71,17 +67,16 @@ int main(int argc, const char * argv[]) {
 	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
 	double cholRho[N][N], difference[THREADS];
 	// Timer
-	// clock_t h_start, h_stop;
 	cudaEvent_t d_start, d_stop;
 
-	/*--------------------------- START PROGRAM -----------------------------------*/
+	/*--------------------- START PROGRAM ------------------------------*/
 	printf("Basket Option Pricing\n");
 	//	CUDA parameters for parallel execution
-	Parameters(&numBlocks, numThreads);
+    numBlocks = BLOCKS;
+    numThreads = NTHREADS;
     printf("Inserisci il numero simulazioni (x131.072): ");
     scanf("%d",&SIMS);
-    SIMS *= 131072;
-	//SIMS = numBlocks*PATH;
+    SIMS *= SIMPB;
 	printf("\nScenari di Monte Carlo: %d\n",SIMS);
 	//	Print Option details
 	if(N<7)
@@ -98,12 +93,8 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_stop ));
     /* CPU Monte Carlo */
     printf("\nMonte Carlo execution on CPU:\n");
-    //printf("N^ simulations: %d\n",SIMS);
-    //h_start = clock();
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_basketOpt(&option, SIMS);
-    //h_stop = clock();
-    //CPU_timeSpent = ((double)(h_stop - h_start)) / CLOCKS_PER_SEC;
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
@@ -111,7 +102,6 @@ int main(int argc, const char * argv[]) {
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\n");
-    //printf("N^ simulations: %d\n",SIMS);
     for(i=0; i<THREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
        	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i], SIMS);
@@ -141,10 +131,6 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventDestroy( d_stop ));
     return 0;
 }
-
-//////////////////////////////////////////////////////
-//    FUNCTIONS
-//////////////////////////////////////////////////////////////
 
 //Simulation std, rho and covariance matrix
 void getRandomSigma( double* std ){

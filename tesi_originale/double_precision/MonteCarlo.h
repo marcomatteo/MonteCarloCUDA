@@ -13,11 +13,12 @@
 #include <math.h>
 #include <time.h>
 
-#define N 1
-#define THREADS 2
-#define NTHREADS 256
+#define N 3
+#define THREADS 1
+#define NTHREADS 512
 #define BLOCKS 256
 #define PATH 100
+#define SIMPB 131.072
 
 /**
  * This macro checks return value of the CUDA runtime call and exits
