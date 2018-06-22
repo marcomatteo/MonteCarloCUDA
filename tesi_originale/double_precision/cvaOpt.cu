@@ -103,10 +103,11 @@ int main(int argc, const char * argv[]) {
     SIMS *= SIMPB;
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
 
-	//	Print Option details
-    printMultiOpt(&opt);
+	
     
     if(risp == 'b'){
+        //    Print Option details
+        printMultiOpt(&opt);
         //    Cholevski factorization
         Chol(opt.p, cholRho);
         for(i=0;i<N;i++)
@@ -119,6 +120,7 @@ int main(int argc, const char * argv[]) {
         option.k = opt.k;
         option.r = opt.r;
         option.t = opt.t;
+        printOption(option);
         bs_price[0] = host_bsCall(option);
         for(i=1;i<cva.n+1;i++){
             if((opt.t -= dt)<0)
