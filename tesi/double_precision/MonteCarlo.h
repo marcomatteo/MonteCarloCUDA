@@ -13,9 +13,9 @@
 #include <math.h>
 #include <time.h>
 
-#define N 3
+#define N 6
 #define THREADS 2
-#define NTHREADS 256
+#define NTHREADS 128
 #define BLOCKS 256
 #define PATH 40
 
@@ -41,6 +41,12 @@ typedef struct {
     double t;    // time to maturity
 } OptionData;
 
+typedef struct {
+    double creditspread;    // credit spread
+    double fundingspread;   // funding spread
+    double lgd;    			// loss given default
+} CreditData;
+
 // Static MultiOptionData
 typedef struct{
     double s[N];  	//Stock vector
@@ -58,26 +64,19 @@ typedef struct {
     double Confidence;    // confidence intervall
 } OptionValue;
 
-/* typedef struct {
- float creditspread;    // credit spread
- float fundingspread;   // funding spread
- float lgd;                // loss given default
- } CreditData; */
-
 typedef struct{
-    // Expected Exposures
-    OptionValue *ee;
-    // Default probabilities
-    double *dp, defInt, lgd;
-    // double *fp; // Founding probabilities
-    // Option data
-    MultiOptionData opt;
-    // CVA
-    double cva;
-    // FVA
-    //double fva;
-    // Num of simulations
-    int n;
+	// Expected Exposures
+	OptionValue *ee;
+	// Default probabilities
+	double *dp,*fp;
+	// Credit spreads
+	CreditData credit;
+	// Option data
+	MultiOptionData opt;
+	// CVA, FVA
+	double cva, fva;
+	// Num of simulations
+	int n;
 }CVA;
 
 // Struct for Monte Carlo methods

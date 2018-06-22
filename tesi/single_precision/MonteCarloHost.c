@@ -213,9 +213,8 @@ void host_cvaEquityOption(CVA *cva, int sims){
     cva->ee[0] = data.callValue;
     
     // Expected Exposures (ee), Default probabilities (dp,fp)
-    float sommaProdotto1=0;
-    //float sommaProdotto2=0;
-    for( i=1; i < cva->n; i++){
+    float sommaProdotto1=0,sommaProdotto2=0;
+    for( i=1; i<(cva->n+1); i++){
         if((data.option.t -= (dt))<0){
             cva->ee[i].Confidence = 0;
             cva->ee[i].Expected = 0;
@@ -224,14 +223,16 @@ void host_cvaEquityOption(CVA *cva, int sims){
             MonteCarlo(&data);
             cva->ee[i] = data.callValue;
         }
-        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
-        //cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd)- exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
+        cva->dp[i] = exp(-(dt)*(i-1) * cva->credit.creditspread / 100 / cva->credit.lgd)
+        - exp(-(dt*i) * cva->credit.creditspread / 100 / cva->credit.lgd );
+        cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd)
+        - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
         sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
-        //sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
+        sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
     }
     // CVA and FVA
-    cva->cva = sommaProdotto1 * cva->lgd;
-    //cva->fva = -sommaProdotto2*cva->credit.lgd/100;
+    cva->cva = -sommaProdotto1*cva->credit.lgd/100;
+    cva->fva = -sommaProdotto2*cva->credit.lgd/100;
 }
 
 ///////////////////////////////////
@@ -279,7 +280,7 @@ void printMultiOpt( MultiOptionData *o){
     printVect(o->w, N);
     printf("Correlation matrix:\n");
     printMat(&o->p[0][0], N, N);
-    printf("Strike price:\t\t € %.2f\n", o->k);
+    printf("Strike price:\t € %.2f\n", o->k);
     printf("Risk free interest rate: %.2f \n", o->r);
     printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
 }

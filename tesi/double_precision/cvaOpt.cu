@@ -31,15 +31,13 @@ void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
     CVA cva;
-    //cva.credit.creditspread=180;
-    //cva.credit.fundingspread=75;
-    cva.defInt = 0.03;
-    cva.lgd = 1 - 0.4;
+    cva.credit.creditspread=150;
+    cva.credit.fundingspread=75;
+    cva.credit.lgd=60;
     cva.n = PATH;
     cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
-    //cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
-    
-    // Vector of EE, dim n+1 because starts in 0
+    cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
+    // Puntatore al vettore di prezzi simulati, n+1 perché il primo prezzo è quello originale
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
     int numBlocks, numThreads, i, j, SIMS;
     double difference, dt, cholRho[N][N],
@@ -85,7 +83,7 @@ int main(int argc, const char * argv[]) {
         }
     }
     else{
-        opt.v[0] = 0.2;
+        opt.v[0] = 0.25;
         opt.s[0] = 100;
         opt.w[0] = 1;
         opt.d[0] = 0;
@@ -93,14 +91,15 @@ int main(int argc, const char * argv[]) {
     }
     
     opt.k= 100.f;
-    opt.r= 0.05;
+    opt.r= 0.04879;
     opt.t= 1.f;
     cva.opt = opt;
 	
-    float GPU_timeSpent=0, CPU_timeSpent=0, speedup;
+	//double CPU_timeSpent=0, speedup;
+    float GPU_timeSpent=0, CPU_timeSpent=0;
     
     printf("Expected Exposures of an Equity Option\n");
-    //  CUDA parameters
+	//	Definizione dei parametri CUDA per l'esecuzione in parallelo
     Parameters(&numBlocks, &numThreads);
     printf("Inserisci il numero di simulazioni Monte Carlo(x131072): ");
     scanf("%d",&SIMS);
@@ -140,7 +139,7 @@ int main(int argc, const char * argv[]) {
     dt = opt.t/(double)cva.n;
     
 
-    //	Original Time to mat
+    //	Ripristino valore originale del Time to mat
     opt.t= 1.f;
     
     // CPU Monte Carlo
@@ -159,9 +158,7 @@ int main(int argc, const char * argv[]) {
             printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
         }
     
-    // printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
-    printf("\nCVA: %f\n\n",cva.cva);
-
+    printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
     printf("\nTotal execution time: %f s\n\n", CPU_timeSpent);
     printf("--------------------------------------------------\n");
     // GPU Monte Carlo
@@ -172,9 +169,8 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     GPU_timeSpent /= 1000;
-    speedup = CPU_timeSpent/GPU_timeSpent;
-    printf("\nTotal execution time: %f s\n", GPU_timeSpent);
-    printf("SpeedUp: %f\n\n", speedup);
+
+    printf("\nTotal execution time: %f s\n\n", GPU_timeSpent);
 
     printf("\nPrezzi Simulati:\n");
    	printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
@@ -182,11 +178,10 @@ int main(int argc, const char * argv[]) {
    		difference = abs(cva.ee[i].Expected - bs_price[i]);
    		printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
    	}
-   	//printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
-    printf("\nCVA: %f\n\n",cva.cva);
+   	printf("\nCVA: %f\nFVA: %f\nTotal: %f\n\n",cva.cva,cva.fva,(cva.cva+cva.fva));
 
    	free(cva.dp);
-   	// free(cva.fp);
+   	free(cva.fp);
    	free(cva.ee);
    	free(bs_price);
     return 0;
