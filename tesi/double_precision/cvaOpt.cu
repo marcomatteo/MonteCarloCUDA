@@ -31,7 +31,7 @@ void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads);
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
     CVA cva;
-    cva.credit.creditspread=1,8;
+    cva.credit.creditspread=180;
     cva.credit.fundingspread=75;
     cva.credit.lgd=60;
     cva.n = PATH;
