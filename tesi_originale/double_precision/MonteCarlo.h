@@ -18,7 +18,7 @@
 #define NTHREADS 512
 #define BLOCKS 256
 #define PATH 100
-#define SIMPB 131.072
+#define SIMPB 131072
 
 /**
  * This macro checks return value of the CUDA runtime call and exits
