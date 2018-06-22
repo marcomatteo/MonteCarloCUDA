@@ -237,7 +237,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
     dev_MonteCarloData data;
     data.option = option;
-    data.numBlocks = numBlocks;
+    data.numBlocks = (sims + (numThreads*100)-1)/(numThreads*100);
     data.numThreads = numThreads;
     data.numOpt = 1;
     data.path = sims;
