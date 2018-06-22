@@ -31,7 +31,7 @@ int main(int argc, const char * argv[]) {
 
     // n+1 because it starts from 1
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
-    *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
+    double *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
 
     // Option Data
     MultiOptionData opt;
@@ -86,8 +86,7 @@ int main(int argc, const char * argv[]) {
 	
     cudaEvent_t d_start, d_stop;
     int numBlocks, numThreads, i, j, SIMS;
-    double difference, dt, cholRho[N][N],
-	//double CPU_timeSpent=0, speedup;
+    double difference, dt, cholRho[N][N];
     float GPU_timeSpent=0, CPU_timeSpent=0;
 
     printf("Expected Exposures of an European Call Option\n");
