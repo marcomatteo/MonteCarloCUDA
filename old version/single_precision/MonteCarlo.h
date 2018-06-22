@@ -14,7 +14,7 @@
 #include <time.h>
 
 #define N 1
-#define NTHREADS 2
+#define NTHREADS 4
 #define SIMPB 10240
 #define PATH 100
 
