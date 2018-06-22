@@ -86,7 +86,7 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
 
     OptionValue sum = {0, 0};
 
-    while(i<N_PATH){
+    while(tid < N_PATH){
     	float price=0.0f, bt[N];
     	// Random Number Generation
    		brownianVect(bt,threadState);
