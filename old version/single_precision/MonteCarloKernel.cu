@@ -180,7 +180,7 @@ void MonteCarlo(dev_MonteCarloData *data){
 
 	// Closing Monte Carlo
 	float sum=0, sum2=0, price, empstd;
-    long int nSim = data->numBlocks * data->path;
+    long int nSim = data->path;
     for ( i = 0; i < data->numBlocks; i++ ){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
