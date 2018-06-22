@@ -15,7 +15,7 @@
 
 #define N 1
 #define NTHREADS 4
-#define SIMPB 10240
+#define SIMPB 20480
 #define PATH 100
 
 /**
