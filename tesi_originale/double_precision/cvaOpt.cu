@@ -38,12 +38,13 @@ int main(int argc, const char * argv[]) {
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
     double *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
 
-    // Option Data
-    MultiOptionData opt;
+
     char risp;
     printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti)\t", PATH, N);
     scanf(" %s",&risp);
     if(risp == 'b'){
+        // Option Data
+        MultiOptionData opt;
         printf("\nCVA of an European basket Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
         cva.ns = N;
         double dw = (double)1 / N;
@@ -74,6 +75,10 @@ int main(int argc, const char * argv[]) {
         opt.d[1] = 0;
         opt.d[2] = 0;
         
+        opt.k= 100.f;
+        opt.r= 0.05;
+        opt.t= 1.f;
+        
         if(N!=3){
             getRandomSigma(opt.v);
             getRandomRho(&opt.p[0][0]);
@@ -81,20 +86,17 @@ int main(int argc, const char * argv[]) {
             pushVett(opt.w,dw);
             pushVett(opt.d,0);
         }
+        cva.opt = opt;
     }
     else{
-        printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);        opt.v[0] = 0.2;
-        opt.s[0] = 100;
-        opt.w[0] = 1;
-        opt.d[0] = 0;
-        opt.p[0][0] = 1;
+        OptionData opt;
+        printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
+        opt.v = 0.2;
+        opt.s = 100;
         cva.ns = 1;
+        cva.option = opt;
     }
-    opt.k= 100.f;
-    opt.r= 0.05;
-    opt.t= 1.f;
-    cva.opt = opt;
-	
+    
     cudaEvent_t d_start, d_stop;
     int i, j, SIMS;
     double difference, dt, cholRho[N][N];
@@ -115,19 +117,13 @@ int main(int argc, const char * argv[]) {
             for(j=0;j<N;j++)
                 cva.opt.p[i][j]=cholRho[i][j];
     }else{
-        OptionData option;
-        option.v = opt.v[0];
-        option.s = opt.s[0];
-        option.k = opt.k;
-        option.r = opt.r;
-        option.t = opt.t;
-        printOption(option);
-        bs_price[0] = host_bsCall(option);
+        printOption(opt);
+        bs_price[0] = host_bsCall(opt);
         for(i=1;i<cva.n+1;i++){
             if((opt.t -= dt)<0)
                 bs_price[i] = 0;
             else
-                bs_price[i] = host_bsCall(option);
+                bs_price[i] = host_bsCall(opt);
         }
     }
 
