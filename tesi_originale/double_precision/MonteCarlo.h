@@ -13,6 +13,8 @@
 #include <math.h>
 #include <time.h>
 
+#define N 3
+
 /**
  * This macro checks return value of the CUDA runtime call and exits
  * the application if the call failed.
@@ -45,7 +47,7 @@ typedef struct {
 typedef struct{
     double *s;  	//Stock vector
     double *v;  	//Volatility vector
-    double *p; //Correlation matrix
+    double *p;      //Correlation matrix
     double *d;  	//Drift vector
     double *w;  	//Weight vector
     double k;

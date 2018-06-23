@@ -32,14 +32,14 @@ void prodMat(
 }
 
 // Algoritmo Golub e Van Loan
-void Chol( double c[N][N], double a[N][N] ){
+void Chol( double *c, double a[N][N] ){
     int i = 0, j = 0, k = 0;
     double v[N];
     for( j=0; j<N; j++){
         for( i=0; i<N; i++ ){
             a[i][j] = 0;
             if( i>=j){
-                v[i]=c[i][j];
+                v[i]=c[i*N+j];
                 for(k=0; k<=(j-1); k++)
                     v[i] -= a[j][k] * a[i][k];
                 if(v[j]>0)
@@ -107,9 +107,7 @@ static void simGaussVect(double *drift, double *volatility, double *result){
 
 // Call payoff
 static double callPayoff( OptionData option ){
-    double value = option.s * exp(
-                                  (option.r-0.5*option.v*option.v)*option.t+gaussian(0,1)*sqrt(option.t)*option.v)
-    - option.k;
+    double value = option.s * exp((option.r-0.5*option.v*option.v) * option.t + gaussian(0,1) * sqrt(option.t) * option.v) - option.k;
     return (value>0) ? (value):(0);
 }
 
@@ -149,7 +147,7 @@ void MonteCarlo(MonteCarloData *data){
         for(i=0; i<data->path; i++){
             st_sum = 0;
             //Simulation of stock prices
-            simGaussVect(data->option.d, &data->option.p[0][0], bt);
+            simGaussVect(data->option.d, data->option.p, bt);
             multiStockValue(data->option.s, data->option.v, bt, data->option.t, data->option.r, N, s);
             for(j=0;j<N;j++)
                 st_sum += s[j]*data->option.w[j];

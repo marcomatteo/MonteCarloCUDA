@@ -48,7 +48,7 @@ __device__ void brownianVect(double *bt, curandState threadState){
 	for(i=0;i<N_OPTION;i++){
 		double somma = 0;
 		for(j=0;j<N_OPTION;j++)
-			somma += OPTION.p[i][j] * g[j];
+			somma += OPTION.p[i*N_OPTION+j] * g[j];
 		bt[i] = somma;
 	}
 	for(i=0;i<N_OPTION;i++)
@@ -213,7 +213,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 	MultiOptionData option;
 		option.w[0] = 1;
 		option.d[0] = 0;
-		option.p[0][0] = 1;
+		option.p[0] = 1;
 		option.s[0] = opt->s;
 		option.v[0] = opt->v;
 		option.k = opt->k;
