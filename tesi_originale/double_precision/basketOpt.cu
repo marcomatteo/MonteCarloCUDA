@@ -80,7 +80,7 @@ int main(int argc, const char * argv[]) {
     numBlocks = BLOCKS;
     numThreads[0] = THREADS;
     numThreads[1] = 128;
-    numThreads[2] = 256;
+    numThreads[2] = 1024;
     numThreads[3] = 512;
     printf("Inserisci il numero simulazioni (x131.072): ");
     scanf("%d",&SIMS);
