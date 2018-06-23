@@ -8,6 +8,11 @@
 
 #include "MonteCarlo.h"
 
+#define NTHREADS 4
+#define THREADS 256
+#define BLOCKS 512
+#define SIMPB 131072
+
 extern "C" double host_bsCall ( OptionData );
 extern "C" OptionValue host_vanillaOpt(OptionData, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int, int);
@@ -23,18 +28,21 @@ int main(int argc, const char * argv[]) {
 	option.r= 0.048790164;
 	option.t= 1.f;
 	// Simulation
-	int numBlocks, numThreads[THREADS], i;
+	int numBlocks, numThreads[NTHREADS], i;
 	int SIMS;
-	OptionValue CPU_sim, GPU_sim[THREADS];
-	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
-	double bs_price, difference[THREADS];
+	OptionValue CPU_sim, GPU_sim[NTHREADS];
+	float CPU_timeSpent=0, GPU_timeSpent[NTHREADS], speedup[NTHREADS];
+	double bs_price, difference[NTHREADS];
 	cudaEvent_t d_start, d_stop;
 
     /*----------------------- START PROGRAM ----------------------------*/
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
     numBlocks = BLOCKS;
-    numThreads[0] = NTHREADS;
+    numThreads[0] = THREADS;
+    numThreads[1] = 128;
+    numThreads[2] = 512;
+    numThreads[3] = 1024;
     printf("Inserisci il numero di simulazioni (x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= SIMPB;
@@ -61,7 +69,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\n");
     printf("(NumBlocks, NumSimulations): ( %d ; %d )\n",BLOCKS,SIMS/BLOCKS);
-    for(i=0; i<THREADS; i++){
+    for(i=0; i<NTHREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
     	GPU_sim[i] = dev_vanillaOpt(&option, numBlocks, numThreads[i],SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
@@ -78,7 +86,7 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the option with GPU:\n");
     printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
-    for(i=0; i<THREADS; i++){
+    for(i=0; i<NTHREADS; i++){
     	printf("%d \n",numThreads[i]);
     	printf("%f \n",GPU_sim[i].Expected);
     	printf("%f \n",GPU_sim[i].Confidence);

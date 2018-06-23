@@ -8,6 +8,12 @@
 
 #include "MonteCarlo.h"
 
+#define N 3
+#define THREADS 256
+#define BLOCKS 512
+#define PATH 40
+#define SIMPB 131072
+
 extern "C" double host_bsCall ( OptionData );
 extern "C" void host_cvaEquityOption(CVA *, int);
 extern "C" void dev_cvaEquityOption(CVA *, int , int , int );
@@ -91,13 +97,11 @@ int main(int argc, const char * argv[]) {
     cva.opt = opt;
 	
     cudaEvent_t d_start, d_stop;
-    int numBlocks, numThreads, i, j, SIMS;
+    int i, j, SIMS;
     double difference, dt, cholRho[N][N];
     float GPU_timeSpent=0, CPU_timeSpent=0;
     
 	//	CUDA Parameters optimized
-    numThreads = NTHREADS;
-    numBlocks = BLOCKS;
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= SIMPB;
@@ -161,7 +165,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nCVA execution on GPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(&cva, numBlocks, numThreads, SIMS);
+    dev_cvaEquityOption(&cva, BLOCKS, THREADS, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));

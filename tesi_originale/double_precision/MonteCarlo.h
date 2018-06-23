@@ -13,13 +13,6 @@
 #include <math.h>
 #include <time.h>
 
-#define N 3
-#define THREADS 1
-#define NTHREADS 512
-#define BLOCKS 256
-#define PATH 40
-#define SIMPB 131072
-
 /**
  * This macro checks return value of the CUDA runtime call and exits
  * the application if the call failed.
@@ -48,13 +41,13 @@ typedef struct {
     double lgd;    			// loss given default
 } CreditData;
 
-// Static MultiOptionData
+// MultiOptionData
 typedef struct{
-    double s[N];  	//Stock vector
-    double v[N];  	//Volatility vector
-    double p[N][N]; //Correlation matrix
-    double d[N];  	//Drift vector
-    double w[N];  	//Weight vector
+    double *s;  	//Stock vector
+    double *v;  	//Volatility vector
+    double *p; //Correlation matrix
+    double *d;  	//Drift vector
+    double *w;  	//Weight vector
     double k;
     double t;
     double r;
