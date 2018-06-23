@@ -107,9 +107,7 @@ static void simGaussVect(double *drift, double *volatility, double *result){
 
 // Call payoff
 static double callPayoff( OptionData option ){
-    double value = option.s * exp(
-                                  (option.r-0.5*option.v*option.v)*option.t+gaussian(0,1)*sqrt(option.t)*option.v)
-    - option.k;
+    double value = option.s * exp((option.r-0.5*option.v*option.v) * option.t + gaussian(0,1) * sqrt(option.t) * option.v) - option.k;
     return (value>0) ? (value):(0);
 }
 
@@ -128,15 +126,12 @@ void MonteCarlo(MonteCarloData *data){
     int i;
     sum = var_sum = 0.0f;
     srand((unsigned)time(NULL));
+    double r, t;
     if(data->numOpt == 1){
-        OptionData opt;
-        opt.s = data->option.s[0];
-        opt.k = data->option.k;
-        opt.v = data->option.v[0];
-        opt.t = data->option.t;
-        opt.r = data->option.r;
+        r = data->sopt.r;
+        t = data->sopt.t;
         for( i=0; i<data->path; i++){
-            price = callPayoff(opt);
+            price = callPayoff(data->sopt);
             sum += price;
             var_sum += price * price;
         }
@@ -146,14 +141,16 @@ void MonteCarlo(MonteCarloData *data){
         double bt[N], s[N];
         double st_sum;
         int j;
+        r = data->mopt.r;
+        t = data->mopt.t;
         for(i=0; i<data->path; i++){
             st_sum = 0;
             //Simulation of stock prices
-            simGaussVect(data->option.d, &data->option.p[0][0], bt);
-            multiStockValue(data->option.s, data->option.v, bt, data->option.t, data->option.r, N, s);
+            simGaussVect(data->mopt.d, &data->mopt.p[0][0], bt);
+            multiStockValue(data->mopt.s, data->mopt.v, bt, data->mopt.t, data->mopt.r, N, s);
             for(j=0;j<N;j++)
-                st_sum += s[j]*data->option.w[j];
-            price = (double)st_sum - data->option.k;
+                st_sum += s[j]*data->mopt.w[j];
+            price = (double)st_sum - data->mopt.k;
             if(price<0)
                 price = 0.0f;
             sum += price;
@@ -161,7 +158,7 @@ void MonteCarlo(MonteCarloData *data){
         }
     }
     
-    price = exp(-data->option.r*data->option.t) * (sum/(double)data->path);
+    price = exp(-r*t) * (sum/(double)data->path);
     emp_stdev = sqrt(
                      ((double)data->path * var_sum - sum * sum)
                      /
@@ -175,11 +172,7 @@ void MonteCarlo(MonteCarloData *data){
 // Monte Carlo simulation on the CPU
 OptionValue host_vanillaOpt( OptionData option, int path){
     MonteCarloData data;
-    data.option.s[0] = option.s;
-    data.option.v[0] = option.v;
-    data.option.k = option.k;
-    data.option.t = option.t;
-    data.option.r = option.r;
+    data.sopt = option;
     data.numOpt = 1;
     data.path = path;
     
@@ -201,8 +194,12 @@ void host_cvaEquityOption(CVA *cva, int sims){
     int i;
     double dt = cva->opt.t / (double)cva->n;
     MonteCarloData data;
+    
     // Option
-    data.option = cva->opt;
+    if(cva->ns ==1)
+        data.sopt = cva->option;
+    else
+        data.mopt = cva->opt;
     
     // Execution parameters
     data.numOpt = cva->ns;

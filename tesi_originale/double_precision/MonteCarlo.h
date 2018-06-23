@@ -80,7 +80,8 @@ typedef struct{
 // Struct for Monte Carlo methods
 typedef struct{
 	OptionValue callValue;
-	MultiOptionData option;
+	MultiOptionData mopt;
+    OptionData sopt;
     int numOpt, path;
 } MonteCarloData;
 
