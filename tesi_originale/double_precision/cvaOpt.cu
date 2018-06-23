@@ -109,7 +109,7 @@ int main(int argc, const char * argv[]) {
     
     cudaEvent_t d_start, d_stop;
     int i, j, SIMS;
-    double difference, cholRho[N][N];
+    double difference, dt, cholRho[N][N];
     float GPU_timeSpent=0, CPU_timeSpent=0;
     
 	//	CUDA Parameters optimized
@@ -130,7 +130,7 @@ int main(int argc, const char * argv[]) {
         printOption(cva.option);
         bs_price[0] = host_bsCall(cva.option);
         int n = cva.option.t;
-        double dt = cva.option.t/(double)cva.n;
+        dt = cva.option.t/(double)cva.n;
         for(i=1;i<cva.n+1;i++){
             if((n -= dt)<0)
                 bs_price[i] = 0;
