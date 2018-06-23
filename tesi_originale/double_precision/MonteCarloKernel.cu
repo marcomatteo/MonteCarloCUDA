@@ -221,17 +221,22 @@ void MonteCarlo_free(dev_MonteCarloData *data){
 }
 
 void MonteCarlo(dev_MonteCarloData *data){
+    double r,t;
 	/*----------------- SHARED MEMORY -------------------*/
 	int i, numShared = sizeof(double) * data->numThreads * 2;
     
     /*--------------- CONSTANT MEMORY ----------------*/
     if( data->numOpt == 1){
+        r = data->sopt.r;
+        t = data->sopt.t;
         CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
         vanillaOptMonteCarlo<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
         cuda_error_check("\Errore nel lancio vanillaOptMonteCarlo: ","\n");
 
     }
     else{
+        r = data->mopt.r;
+        t = data->mopt.t;
         CudaCheck(cudaMemcpyToSymbol(MOPTION,&data->mopt,sizeof(MultiOptionData)));
         basketOptMonteCarlo<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
         cuda_error_check("\Errore nel lancio basketOptMonteCarlo: ","\n");
@@ -247,7 +252,7 @@ void MonteCarlo(dev_MonteCarloData *data){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
 	}
-	price = exp(-(data->option.r*data->option.t)) * (sum/(double)nSim);
+	price = exp(-(r*t)) * (sum/(double)nSim);
     empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
     data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
     data->callValue.Expected = price;
@@ -286,14 +291,20 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     int i;
-    double dt = cva->opt.t / (double)cva->n;
+    double dt, time;
 
     dev_MonteCarloData data;
     // Option
-    if(cva->ns ==1)
+    if(cva->ns ==1){
         data.sopt = cva->option;
-    else
+        dt = cva->option.t / (double)cva->n;
+        time = cva->option.t;
+    }
+    else{
         data.mopt = cva->opt;
+        dt = cva->opt.t / (double)cva->n;
+        time = cva->opt.t;
+    }
     // Kernel parameters
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
@@ -310,7 +321,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     double sommaProdotto1=0;
     //double sommaProdotto2=0;
 	for( i=1; i < (cva->n+1); i++){
-		if((data.option.t -= (dt))<0){
+		if((time -= (dt))<0){
 			cva->ee[i].Confidence = 0;
 			cva->ee[i].Expected = 0;
 		}
