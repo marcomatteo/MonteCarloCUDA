@@ -18,15 +18,21 @@ extern "C" OptionValue host_vanillaOpt(OptionData, int);
 extern "C" OptionValue dev_vanillaOpt(OptionData *, int, int, int);
 extern "C" void printOption( OptionData o);
 
+const double S = 100;
+const double K = 100;
+const double R = 0.05;
+const double V = 0.2;
+const double T = 1.f;
+
 int main(int argc, const char * argv[]) {
     /*------------------------- VARIABLES ------------------------------*/
 	// Option Data
 	OptionData option;
-	option.v = 0.2;
-	option.s = 100;
-	option.k= 100.f;
-	option.r= 0.048790164;
-	option.t= 1.f;
+	option.v = V;
+	option.s = S;
+	option.k= K;
+	option.r= R;
+	option.t= T;
 	// Simulation
 	int numBlocks, numThreads[NTHREADS], i;
 	int SIMS;

@@ -25,11 +25,19 @@ void getRandomSigma( double* std );
 void getRandomRho( double* rho );
 void pushVett( double* vet, double x );
 
+const double defInt = 0.03;
+const double recoveryRate = 0.4;
+const double S = 100;
+const double K = 100;
+const double R = 0.05;
+const double V = 0.2;
+const double T = 1.f;
+
 int main(int argc, const char * argv[]) {
     /*--------------------------- DATA INSTRUCTION -----------------------------------*/
     CVA cva;
-    cva.defInt = 0.03;
-    cva.lgd = (1 - 0.4);
+    cva.defInt = defInt;
+    cva.lgd = (1 - recoveryRate);
     cva.n = PATH;
     cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
     //cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
@@ -37,7 +45,6 @@ int main(int argc, const char * argv[]) {
     // n+1 because it starts from 1
     cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
     double *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
-
 
     char risp;
     printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti)\t", PATH, N);
@@ -91,15 +98,18 @@ int main(int argc, const char * argv[]) {
     else{
         OptionData opt;
         printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
-        opt.v = 0.2;
-        opt.s = 100;
+        opt.v = V;
+        opt.s = S;
+        opt.t = T;
+        opt.r = R;
+        opt.k = K;
         cva.ns = 1;
         cva.option = opt;
     }
     
     cudaEvent_t d_start, d_stop;
     int i, j, SIMS;
-    double difference, dt, cholRho[N][N];
+    double difference, cholRho[N][N];
     float GPU_timeSpent=0, CPU_timeSpent=0;
     
 	//	CUDA Parameters optimized
@@ -116,25 +126,22 @@ int main(int argc, const char * argv[]) {
         for(i=0;i<N;i++)
             for(j=0;j<N;j++)
                 cva.opt.p[i][j]=cholRho[i][j];
-        dt = cva.opt.t/(double)cva.n;
     }else{
         printOption(cva.option);
         bs_price[0] = host_bsCall(cva.option);
+        int n = cva.option.t;
+        double dt = cva.option.t/(double)cva.n;
         for(i=1;i<cva.n+1;i++){
-            if((opt.t -= dt)<0)
+            if((n -= dt)<0)
                 bs_price[i] = 0;
             else
                 bs_price[i] = host_bsCall(cva.option);
         }
-        dt = cva.option.t/(double)cva.n;
     }
 
 	// Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
-
-    //	Restore original Time to mat
-    opt.t= 1.f;
     
     // CPU Monte Carlo
     printf("\nCVA execution on CPU:\n");
