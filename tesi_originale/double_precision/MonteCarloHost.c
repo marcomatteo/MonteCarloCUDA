@@ -182,7 +182,7 @@ OptionValue host_vanillaOpt( OptionData option, int path){
 
 OptionValue host_basketOpt(MultiOptionData *option, int sim){
     MonteCarloData data;
-    data.option = *option;
+    data.mopt = *option;
     data.numOpt = N;
     data.path = sim;
     
@@ -192,14 +192,20 @@ OptionValue host_basketOpt(MultiOptionData *option, int sim){
 
 void host_cvaEquityOption(CVA *cva, int sims){
     int i;
-    double dt = cva->opt.t / (double)cva->n;
+    double dt, time;
     MonteCarloData data;
     
     // Option
-    if(cva->ns ==1)
+    if(cva->ns ==1){
         data.sopt = cva->option;
-    else
+        dt = cva->option.t / (double)cva->n;
+        time = cva->option.t;
+    }
+    else{
         data.mopt = cva->opt;
+        dt = cva->opt.t / (double)cva->n;
+        time = cva->opt.t;
+    }
     
     // Execution parameters
     data.numOpt = cva->ns;
@@ -213,7 +219,7 @@ void host_cvaEquityOption(CVA *cva, int sims){
     double sommaProdotto1=0;
     //double sommaProdotto2=0;
     for( i=1; i < cva->n; i++){
-        if((data.option.t -= (dt))<0){
+        if((time -= (dt))<0){
             cva->ee[i].Confidence = 0;
             cva->ee[i].Expected = 0;
         }
