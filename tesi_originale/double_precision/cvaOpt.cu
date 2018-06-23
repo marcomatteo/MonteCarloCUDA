@@ -110,30 +110,28 @@ int main(int argc, const char * argv[]) {
     
     if(risp == 'b'){
         //    Print Option details
-        printMultiOpt(&opt);
+        printMultiOpt(&cva.opt);
         //    Cholevski factorization
-        Chol(opt.p, cholRho);
+        Chol(cva.opt.p, cholRho);
         for(i=0;i<N;i++)
             for(j=0;j<N;j++)
                 cva.opt.p[i][j]=cholRho[i][j];
+        dt = cva.opt.t/(double)cva.n;
     }else{
-        printOption(opt);
-        bs_price[0] = host_bsCall(opt);
+        printOption(cva.option);
+        bs_price[0] = host_bsCall(cva.option);
         for(i=1;i<cva.n+1;i++){
             if((opt.t -= dt)<0)
                 bs_price[i] = 0;
             else
-                bs_price[i] = host_bsCall(opt);
+                bs_price[i] = host_bsCall(cva.option);
         }
+        dt = cva.option.t/(double)cva.n;
     }
 
 	// Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
-
-    //	Black & Scholes price
-    dt = opt.t/(double)cva.n;
-    
 
     //	Restore original Time to mat
     opt.t= 1.f;
