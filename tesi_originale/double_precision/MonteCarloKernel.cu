@@ -48,7 +48,7 @@ __device__ void brownianVect(double *bt, curandState threadState){
 	for(i=0;i<N_OPTION;i++){
 		double somma = 0;
 		for(j=0;j<N_OPTION;j++)
-			somma += OPTION.p[i*N_OPTION+j] * g[j];
+			somma += OPTION.p[i][j] * g[j];
 		bt[i] = somma;
 	}
 	for(i=0;i<N_OPTION;i++)
