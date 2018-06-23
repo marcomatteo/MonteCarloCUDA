@@ -15,7 +15,7 @@
 
 extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
 extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int,int);
-extern "C" void Chol( double *c, double a[N][N] );
+extern "C" void Chol( double c[N][N], double a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
 extern "C" double randMinMax(double min, double max);
 
@@ -95,7 +95,7 @@ int main(int argc, const char * argv[]) {
     Chol(option.p, cholRho);
     for(i=0;i<N;i++)
     	for(j=0;j<N;j++)
-           	option.p[i*N+j]=cholRho[i][j];
+           	option.p[i][j]=cholRho[i][j];
     // Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
