@@ -213,7 +213,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 	MultiOptionData option;
 		option.w[0] = 1;
 		option.d[0] = 0;
-		option.p[0] = 1;
+		option.p[0][0] = 1;
 		option.s[0] = opt->s;
 		option.v[0] = opt->v;
 		option.k = opt->k;

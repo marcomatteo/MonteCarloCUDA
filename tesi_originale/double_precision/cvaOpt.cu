@@ -8,7 +8,6 @@
 
 #include "MonteCarlo.h"
 
-#define NUM 1
 #define THREADS 256
 #define BLOCKS 512
 #define PATH 40
@@ -18,7 +17,7 @@ extern "C" double host_bsCall ( OptionData );
 extern "C" void host_cvaEquityOption(CVA *, int);
 extern "C" void dev_cvaEquityOption(CVA *, int , int , int );
 extern "C" void printOption( OptionData o);
-extern "C" void Chol( double *c, double a[NUM][NUM] );
+extern "C" void Chol( double c[N][N], double a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
 extern "C" double randMinMax(double min, double max);
 
@@ -42,17 +41,12 @@ int main(int argc, const char * argv[]) {
     // Option Data
     MultiOptionData opt;
     char risp;
-    printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti)\t", PATH, NUM);
+    printf("CVA: %d periodi \nScelta del sottostante:\n(v = opzione call Eu; b = opzione basket con %d sottostanti)\t", PATH, N);
     scanf(" %s",&risp);
     if(risp == 'b'){
         printf("\nCVA of an European basket Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
-        cva.ns = NUM;
-        opt.v = (double*)malloc(NUM*sizeof(double));
-        opt.s = (double*)malloc(NUM*sizeof(double));
-        opt.w = (double*)malloc(NUM*sizeof(double));
-        opt.p = (double*)malloc(NUM*NUM*sizeof(double));
-        opt.d = (double*)malloc(NUM*sizeof(double));
-        double dw = (double)1 / NUM;
+        cva.ns = N;
+        double dw = (double)1 / N;
         //    Volatility
         opt.v[0] = 0.2;
         opt.v[1] = 0.3;
@@ -66,35 +60,34 @@ int main(int argc, const char * argv[]) {
         opt.w[1] = dw;
         opt.w[2] = dw;
         //    Correlations
-        opt.p[0] = 1;
-        opt.p[1] = -0.5;
-        opt.p[2] = -0.5;
-        opt.p[3] = -0.5;
-        opt.p[4] = 1;
-        opt.p[5] = -0.5;
-        opt.p[6] = -0.5;
-        opt.p[7] = -0.5;
-        opt.p[8] = 1;
+        opt.p[0][0] = 1;
+        opt.p[0][1] = -0.5;
+        opt.p[0][2] = -0.5;
+        opt.p[1][0] = -0.5;
+        opt.p[1][1] = 1;
+        opt.p[1][2] = -0.5;
+        opt.p[2][0] = -0.5;
+        opt.p[2][1] = -0.5;
+        opt.p[2][2] = 1;
         //    Drift vectors for the brownians
         opt.d[0] = 0;
         opt.d[1] = 0;
         opt.d[2] = 0;
         
-        if(NUM!=3){
+        if(N!=3){
             getRandomSigma(opt.v);
-            getRandomRho(opt.p);
+            getRandomRho(&opt.p[0][0]);
             pushVett(opt.s,100);
             pushVett(opt.w,dw);
             pushVett(opt.d,0);
         }
     }
     else{
-        printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
-        opt.v[0] = 0.2;
+        printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);        opt.v[0] = 0.2;
         opt.s[0] = 100;
         opt.w[0] = 1;
         opt.d[0] = 0;
-        opt.p[0] = 1;
+        opt.p[0][0] = 1;
         cva.ns = 1;
     }
     opt.k= 100.f;
@@ -104,7 +97,7 @@ int main(int argc, const char * argv[]) {
 	
     cudaEvent_t d_start, d_stop;
     int i, j, SIMS;
-    double difference, dt, cholRho[NUM][NUM];
+    double difference, dt, cholRho[N][N];
     float GPU_timeSpent=0, CPU_timeSpent=0;
     
 	//	CUDA Parameters optimized
@@ -118,9 +111,9 @@ int main(int argc, const char * argv[]) {
         printMultiOpt(&opt);
         //    Cholevski factorization
         Chol(opt.p, cholRho);
-        for(i=0;i<NUM;i++)
-            for(j=0;j<NUM;j++)
-                cva.opt.p[i*NUM+j]=cholRho[i*NUM+j];
+        for(i=0;i<N;i++)
+            for(j=0;j<N;j++)
+                cva.opt.p[i][j]=cholRho[i][j];
     }else{
         OptionData option;
         option.v = opt.v[0];
@@ -197,7 +190,7 @@ int main(int argc, const char * argv[]) {
 //Simulation std, rho and covariance matrix
 void getRandomSigma( double* std ){
     int i,j=0;
-    for(i=0;i<NUM;i++){
+    for(i=0;i<N;i++){
         if(j==0){
             std[i]=0.3;
             j=1;
@@ -211,8 +204,8 @@ void getRandomSigma( double* std ){
 void getRandomRho( double* rho ){
     int i,j;
     //creating the vectors of rhos
-    for(i=0;i<NUM;i++){
-        for(j=i;j<NUM;j++){
+    for(i=0;i<N;i++){
+        for(j=i;j<N;j++){
             double r;
             if(i==j)
                 r=1;
@@ -221,14 +214,14 @@ void getRandomRho( double* rho ){
                     r = 0.5;
                 else
                     r= -0.5;
-            rho[j+i*NUM] = r;
-            rho[i+j*NUM] = r;
+            rho[j+i*N] = r;
+            rho[i+j*N] = r;
         }
     }
 }
 void pushVett( double* vet, double x ){
     int i;
-    for(i=0;i<NUM;i++)
+    for(i=0;i<N;i++)
         vet[i] = x;
 }
 

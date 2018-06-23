@@ -37,19 +37,21 @@ typedef struct {
     double t;    // time to maturity
 } OptionData;
 
+/*
 typedef struct {
     double creditspread;    // credit spread
     double fundingspread;   // funding spread
     double lgd;    			// loss given default
 } CreditData;
+*/
 
 // MultiOptionData
 typedef struct{
-    double *s;  	//Stock vector
-    double *v;  	//Volatility vector
-    double *p;      //Correlation matrix
-    double *d;  	//Drift vector
-    double *w;  	//Weight vector
+    double s[N];  	//Stock vector
+    double v[N];  	//Volatility vector
+    double p[N][N]; //Correlation matrix
+    double d[N];  	//Drift vector
+    double w[N];  	//Weight vector
     double k;
     double t;
     double r;
