@@ -275,7 +275,6 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
 
 extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
-    data.option = option;
     data.sopt = *opt;
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
