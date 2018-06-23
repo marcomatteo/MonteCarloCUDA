@@ -111,11 +111,10 @@ __global__ void MultiMCBasketOptKernel(curandState * randseed, OptionValue *d_Ca
         if ( sumIndex < halfblock ){
             s_Sum[sumIndex] += s_Sum[sumIndex+halfblock];
             s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
-            __syncthreads();
         }
+        __syncthreads();
         halfblock /= 2;
     }while ( halfblock != 0 );
-    __syncthreads();
     // Keeping the first element for each block using one thread
     if (sumIndex == 0){
     		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
