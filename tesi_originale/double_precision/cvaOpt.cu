@@ -18,7 +18,7 @@ extern "C" double host_bsCall ( OptionData );
 extern "C" void host_cvaEquityOption(CVA *, int);
 extern "C" void dev_cvaEquityOption(CVA *, int , int , int );
 extern "C" void printOption( OptionData o);
-extern "C" void Chol( double c[NUM][NUM], double a[NUM][NUM] );
+extern "C" void Chol( double *c, double a[NUM][NUM] );
 extern "C" void printMultiOpt( MultiOptionData *o);
 extern "C" double randMinMax(double min, double max);
 
@@ -94,7 +94,7 @@ int main(int argc, const char * argv[]) {
         opt.s[0] = 100;
         opt.w[0] = 1;
         opt.d[0] = 0;
-        opt.p[0][0] = 1;
+        opt.p[0] = 1;
         cva.ns = 1;
     }
     opt.k= 100.f;
