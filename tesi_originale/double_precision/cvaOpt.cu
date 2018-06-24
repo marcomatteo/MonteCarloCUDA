@@ -132,11 +132,12 @@ int main(int argc, const char * argv[]) {
         int n = cva.option.t;
         dt = cva.option.t/(double)cva.n;
         for(i=1;i<cva.n+1;i++){
-            if((n -= dt)<0)
+            if((cva.option.t -= dt)<0)
                 bs_price[i] = 0;
             else
                 bs_price[i] = host_bsCall(cva.option);
         }
+        cva.option.t = n;
     }
 
 	// Timer init
