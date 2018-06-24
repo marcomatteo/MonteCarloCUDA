@@ -35,6 +35,19 @@ void cuda_error_check(const char * prefix, const char * postfix){
 	}
 }
 
+// Metodo di Box-Muller per generare una v.a. gaussiana con media mu e varianza sigma
+static double gaussian( double mu, double sigma ){
+    double x = (double)rand()/(double)(RAND_MAX);
+    double y = (double)rand()/(double)(RAND_MAX);
+    return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
+}
+
+double geomB( OptionData opt ){
+    double z = gaussian(0,1);
+    double x = (opt.r - 0.5 * opt.v * opt.v) * opt.t + opt.v * sqrt(opt.t) * z;
+    return *s * exp(x);
+}
+
 // Inizializzazione per Monte Carlo da svolgere una volta sola
 void MonteCarlo_init(dev_MonteCarloData *data);
 // Liberazione della memoria da svolgere una volta sola
@@ -379,12 +392,15 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     int i;
-    double dt, time;
+    double dt, time, ee1, ee2;
+    srand((unsigned)time(NULL));
 
     dev_MonteCarloData data;
     // Option
     if(cva->ns ==1){
         data.sopt = cva->option;
+        ee1[0] = cva->option.s;
+        ee2[0] = ee1[0];
         dt = cva->option.t / (double)cva->n;
         time = cva->option.t;
     }
@@ -414,12 +430,16 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 			cva->ee[i].Expected = 0;
 		}
 		else{
-            if(cva->ns ==1)
+            if(cva->ns ==1){
                 data.sopt.t = time;
+                ee1=geomB(data.sopt);
+                ee2=geomB(data.sopt);
+                data.sopt.s = (ee1 + ee2)/2;
+            }
             else
                 data.mopt.t = time;
 			MonteCarlo(&data);
-			cva->ee[i] = data.callValue;
+			cva->ee[i] = (data.callValue + ee[i-1])/2;
 		}
         cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
 		//cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
@@ -457,3 +477,5 @@ extern "C" OptionValue dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numT
     
     return data.callValue;
 }
+
+
