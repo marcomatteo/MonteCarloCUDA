@@ -181,7 +181,7 @@ int main(int argc, const char * argv[]) {
    		printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
    	}
     printf("\nCVA: %f\n\n",cva.cva);
-
+    printf("Speed up: %f\n\n",CPU_timeSpent/GPU_timeSpent);
    	free(cva.dp);
    	//free(cva.fp);
    	free(cva.ee);
