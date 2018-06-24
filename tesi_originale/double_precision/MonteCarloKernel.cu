@@ -78,8 +78,7 @@ __device__ double basketPayoff(double *bt){
 }
 
 __device__ double callPayoff(curandState *threadState){
-    double s, geomBt, bt = curand_normal(threadState) * OPTION.t;
-    geomBt = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(bt);
+    double s, geomBt = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * curand_normal(threadState) * sqrt(OPTION.t);
     s = OPTION.s * exp(geomBt);
     return max(s - OPTION.k,0);
 }
