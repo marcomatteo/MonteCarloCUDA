@@ -387,8 +387,6 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     // Option
     if(cva->ns ==1){
         data.sopt = cva->option;
-        ee1 = cva->option.s;
-        ee2 = ee1;
         dt = cva->option.t / (double)cva->n;
         t = cva->option.t;
     }
