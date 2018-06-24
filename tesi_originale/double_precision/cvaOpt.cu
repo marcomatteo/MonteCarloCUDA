@@ -16,6 +16,7 @@
 extern "C" double host_bsCall ( OptionData );
 extern "C" void host_cvaEquityOption(CVA *, int);
 extern "C" void dev_cvaEquityOption(CVA *, int , int , int );
+extern "C" OptionValue dev_cvaEquityOption_opt(CVA *, int, int, int);
 extern "C" void printOption( OptionData o);
 extern "C" void Chol( double c[N][N], double a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
@@ -111,6 +112,7 @@ int main(int argc, const char * argv[]) {
     int i, j, SIMS;
     double difference, dt, cholRho[N][N];
     float GPU_timeSpent=0, CPU_timeSpent=0;
+    OptionValue stima;
     
 	//	CUDA Parameters optimized
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
@@ -165,7 +167,7 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nCVA execution on GPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(&cva, BLOCKS, THREADS, SIMS);
+    stima = dev_cvaEquityOption_opt(&cva, BLOCKS, THREADS, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
@@ -173,13 +175,7 @@ int main(int argc, const char * argv[]) {
 
     printf("\nTotal execution time: %f s\n\n", GPU_timeSpent);
 
-    printf("\nPrezzi Simulati:\n");
-   	printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
-   	for(i=0;i<cva.n+1;i++){
-   		difference = abs(cva.ee[i].Expected - bs_price[i]);
-   		printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
-   	}
-    printf("\nCVA: %f\n\n",cva.cva);
+    printf("\nCVA: %f, I.C. %f\n\n",stima.Expected, stima.Confidence);
 
    	free(cva.dp);
    	//free(cva.fp);

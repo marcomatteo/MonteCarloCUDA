@@ -38,13 +38,14 @@ void cuda_error_check(const char * prefix, const char * postfix){
 // Inizializzazione per Monte Carlo da svolgere una volta sola
 void MonteCarlo_init(dev_MonteCarloData *data);
 // Liberazione della memoria da svolgere una volta sola
-void MonteCarlo_free(dev_MonteCarloData *data);
+void MonteCarlo_closing(dev_MonteCarloData *data);
 // Metodo Monte Carlo
 void MonteCarlo(dev_MonteCarloData *data);
 
 __device__ __constant__ MultiOptionData MOPTION;
 __device__ __constant__ OptionData OPTION;
-__device__ __constant__ int N_OPTION, N_PATH;
+__device__ __constant__ int N_OPTION, N_PATH, N_GRID;
+__device__ __constant__ float INTDEF, LGD;
 
 __device__ void brownianVect(double *bt, curandState *threadState){
 	int i,j;
@@ -77,10 +78,14 @@ __device__ double basketPayoff(double *bt){
     return max(price,0);
 }
 
+__device__ double geomBrownian( double *s, double *z ){
+    double x = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(OPTION.t) * *z;
+    return *s * exp(x);
+}
+
 __device__ double callPayoff(curandState *threadState){
     double s, geomBt, z = curand_normal(threadState);
-    geomBt = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(OPTION.t) * z;
-    s = OPTION.s * exp(geomBt);
+    s = geomBrownian(OPTION.s, z);
     return max(s - OPTION.k,0);
 }
 
@@ -175,6 +180,58 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
     }
 }
 
+__global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
+    int i,j;
+    // Parameters for shared memory
+    int sumIndex = threadIdx.x;
+    int sum2Index = sumIndex + blockDim.x;
+    
+    /*------------------ SHARED MEMORY DICH ----------------*/
+    extern __shared__ double s_Sum[];
+    
+    // Global thread index
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    // Copy random number state to local memory
+    curandState threadState = randseed[tid];
+    // Monte Carlo core
+    OptionValue sum = {0, 0};
+    double dt = OPTION.t / N_GRID;
+    for( i=sumIndex; i<N_PATH; i+=blockDim.x){
+        double price=0.0f, mean_price = 0.0f;
+        double s[2];
+        s[0] = OPTION.s;
+        for(j=1; j<N_GRID; j++){
+            s[1] = geomBrownian(s[0], curand_normal(&threadState));
+            double ee = max((((s[1] + s[0])/2)-OPTION.k),0);
+            double dp = exp(-(dt*j-1) * (double)INTDEF) - exp(-(dt*j) * (double)INTDEF);
+            mean_price += ee * dp * exp(-(dt*i) * OPTION.r);
+            s[0] = s[1];
+        }
+        price = mean_price * LGD;
+        sum.Expected += price;
+        sum.Confidence += price*price;
+    }
+    // Copy to the shared memory
+    s_Sum[sumIndex] = sum.Expected;
+    s_Sum[sum2Index] = sum.Confidence;
+    __syncthreads();
+    // Reduce shared memory accumulators and write final result to global memory
+    int halfblock = blockDim.x/2;
+    // Reduction in log2(threadBlocks) steps, so threadBlock must be power of 2
+    do{
+        if ( sumIndex < halfblock ){
+            s_Sum[sumIndex] += s_Sum[sumIndex+halfblock];
+            s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
+        }
+        __syncthreads();
+        halfblock /= 2;
+    }while ( halfblock != 0 );
+    if (sumIndex == 0){
+        d_CallValue[blockIdx.x].Expected = s_Sum[sumIndex];
+        d_CallValue[blockIdx.x].Confidence = s_Sum[sum2Index];
+    }
+}
+
 __global__ void randomSetup( curandState *randSeed ){
     // Global thread index
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -218,7 +275,7 @@ void MonteCarlo_init(dev_MonteCarloData *data){
     CudaCheck( cudaEventDestroy( stop ));
 }
 
-void MonteCarlo_free(dev_MonteCarloData *data){
+void MonteCarlo_closing(dev_MonteCarloData *data){
 	//Free memory space
 	CudaCheck(cudaFree(data->RNG));
     CudaCheck(cudaFreeHost(data->h_CallValue));
@@ -263,6 +320,32 @@ void MonteCarlo(dev_MonteCarloData *data){
     data->callValue.Expected = price;
 }
 
+void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd){
+    /*----------------- SHARED MEMORY -------------------*/
+    int i, numShared = sizeof(double) * data->numThreads * 2;
+    if( data->numOpt == 1){
+         /*--------------- CONSTANT MEMORY ----------------*/
+        CudaCheck(cudaMemcpyToSymbol(INTDEF,&intdef,sizeof(float)));
+        CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(float)));
+        CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
+        cvaCallOptMC<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
+        cuda_error_check("\Errore nel lancio cvaCallOptMC: ","\n");
+    }
+    //MEMORY CPY: prices per block
+    CudaCheck(cudaMemcpy(data->h_CallValue, data->d_CallValue, data->numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
+    // Closing Monte Carlo
+    long double sum=0, sum2=0, price, empstd;
+    long int nSim = data->numBlocks * data->path;
+    for ( i = 0; i < data->numBlocks; i++ ){
+        sum += data->h_CallValue[i].Expected;
+        sum2 += data->h_CallValue[i].Confidence;
+    }
+    price = (sum/(double)nSim);
+    empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
+    data->callValue.Expected = price;
+}
+
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
 	dev_MonteCarloData data;
     data.mopt = *option;
@@ -273,8 +356,8 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
-    MonteCarlo_free(&data);
-
+    MonteCarlo_closing(&data);
+    
     return data.callValue;
 }
 
@@ -288,7 +371,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
     MonteCarlo_init(&data);
     MonteCarlo(&data);
-    MonteCarlo_free(&data);
+    MonteCarlo_closing(&data);
 
     return data.callValue;
 }
@@ -343,10 +426,10 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 	//cva->fva = -sommaProdotto2*cva->credit.lgd;
 
 	// Closing
-	MonteCarlo_free(&data);
+	MonteCarlo_closing(&data);
 }
 
-extern "C" void dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numThreads, int sims){
+extern "C" OptionValue dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numThreads, int sims){
     int i;
     double dt, time;
     
@@ -369,32 +452,10 @@ extern "C" void dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numThreads,
     data.path = sims / numBlocks;
     
     MonteCarlo_init(&data);
-    
-    // Original option price
-    MonteCarlo(&data);
-    cva->ee[0] = data.callValue;
-    
-    // Expected Exposures (ee), Default probabilities (dp,fp)
-    double sommaProdotto1=0;
-    //double sommaProdotto2=0;
-    for( i=1; i < (cva->n+1); i++){
-        if((time -= (dt))<0){
-            cva->ee[i].Confidence = 0;
-            cva->ee[i].Expected = 0;
-        }
-        else{
-            MonteCarlo(&data);
-            cva->ee[i] = data.callValue;
-        }
-        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
-        //cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
-        sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
-        //sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
-    }
-    // CVA and FVA
-    cva->cva = sommaProdotto1 * cva->lgd;
-    //cva->fva = -sommaProdotto2*cva->credit.lgd;
+    cvaMonteCarlo(&data, (float)cva->defInt, (float)cva->lgd);
     
     // Closing
-    MonteCarlo_free(&data);
+    MonteCarlo_closing(&data);
+    
+    return data.callValue;
 }
