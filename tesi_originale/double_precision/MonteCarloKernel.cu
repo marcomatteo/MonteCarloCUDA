@@ -252,7 +252,7 @@ void MonteCarlo(dev_MonteCarloData *data){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
 	}
-	price = exp(-(r*t)) * (sum/(double)nSim);
+	price = exp(-r*t) * (sum/(double)nSim);
     empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
     data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
     data->callValue.Expected = price;
