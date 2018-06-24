@@ -35,19 +35,6 @@ void cuda_error_check(const char * prefix, const char * postfix){
 	}
 }
 
-// Metodo di Box-Muller per generare una v.a. gaussiana con media mu e varianza sigma
-static double gaussian( double mu, double sigma ){
-    double x = (double)rand()/(double)(RAND_MAX);
-    double y = (double)rand()/(double)(RAND_MAX);
-    return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
-}
-
-double geomB( OptionData opt ){
-    double z = gaussian(0,1);
-    double x = (opt.r - 0.5 * opt.v * opt.v) * opt.t + opt.v * sqrt(opt.t) * z;
-    return opt.s * exp(x);
-}
-
 // Inizializzazione per Monte Carlo da svolgere una volta sola
 void MonteCarlo_init(dev_MonteCarloData *data);
 // Liberazione della memoria da svolgere una volta sola
@@ -193,8 +180,9 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
     }
 }
 
+// Test di cva con simulazione percorso sottostante
 __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
-    int i,j;
+    int i,j,k;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
@@ -209,37 +197,39 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     // Monte Carlo core
     OptionValue sum = {0, 0};
     double dt = OPTION.t / N_GRID;
-    for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        double price=0.0f, mean_price = 0.0f;
-        double s[2];
-        s[0] = OPTION.s;
-        for(j=1; j<N_GRID; j++){
-            double z = curand_normal(&threadState);
-            s[1] = geomBrownian(&s[0], &z);
-            double ee = max((((s[1] + s[0])/2)-OPTION.k),0);
-            double dp = exp(-(dt*j-1) * (double)INTDEF) - exp(-(dt*j) * (double)INTDEF);
-            mean_price += ee * dp * exp(-(dt*i) * OPTION.r);
-            s[0] = s[1];
+    for(k=blockIdx.x; k<gridDim.x; k+=gridDim.x){
+        for( i=sumIndex; i<10000; i+=blockDim.x){
+            double price=0.0f, mean_price = 0.0f;
+            double s[2];
+            s[0] = OPTION.s;
+            for(j=1; j<N_GRID; j++){
+                double z = curand_normal(&threadState);
+                s[1] = geomBrownian(&s[0], &z);
+                double ee = max((((s[1] + s[0])/2)-OPTION.k),0);
+                double dp = exp(-(dt*j-1) * (double)INTDEF) - exp(-(dt*j) * (double)INTDEF);
+                mean_price += ee * dp * exp(-(dt*i) * OPTION.r);
+                s[0] = s[1];
+            }
+            price = mean_price * LGD;
+            sum.Expected += price;
+            sum.Confidence += price*price;
         }
-        price = mean_price * LGD;
-        sum.Expected += price;
-        sum.Confidence += price*price;
-    }
-    // Copy to the shared memory
-    s_Sum[sumIndex] = sum.Expected;
-    s_Sum[sum2Index] = sum.Confidence;
-    __syncthreads();
-    // Reduce shared memory accumulators and write final result to global memory
-    int halfblock = blockDim.x/2;
-    // Reduction in log2(threadBlocks) steps, so threadBlock must be power of 2
-    do{
-        if ( sumIndex < halfblock ){
-            s_Sum[sumIndex] += s_Sum[sumIndex+halfblock];
-            s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
-        }
+        // Copy to the shared memory
+        s_Sum[sumIndex] = sum.Expected;
+        s_Sum[sum2Index] = sum.Confidence;
         __syncthreads();
-        halfblock /= 2;
-    }while ( halfblock != 0 );
+        // Reduce shared memory accumulators and write final result to global memory
+        int halfblock = blockDim.x/2;
+        // Reduction in log2(threadBlocks) steps, so threadBlock must be power of 2
+        do{
+            if ( sumIndex < halfblock ){
+                s_Sum[sumIndex] += s_Sum[sumIndex+halfblock];
+                s_Sum[sum2Index] += s_Sum[sum2Index+halfblock];
+            }
+            __syncthreads();
+            halfblock /= 2;
+        }while ( halfblock != 0 );
+    }
     if (sumIndex == 0){
         d_CallValue[blockIdx.x].Expected = s_Sum[sumIndex];
         d_CallValue[blockIdx.x].Confidence = s_Sum[sum2Index];
@@ -392,9 +382,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     int i;
-    double dt, t, ee1, ee2;
-    srand((unsigned)time(NULL));
-
+    double dt, t;
     dev_MonteCarloData data;
     // Option
     if(cva->ns ==1){
@@ -430,12 +418,8 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 			cva->ee[i].Expected = 0;
 		}
 		else{
-            if(cva->ns ==1){
+            if(cva->ns ==1)
                 data.sopt.t = t;
-                ee1=geomB(data.sopt);
-                ee2=geomB(data.sopt);
-                data.sopt.s = (ee1 + ee2)/2;
-            }
             else
                 data.mopt.t = t;
 			MonteCarlo(&data);
@@ -455,6 +439,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 	MonteCarlo_closing(&data);
 }
 
+// Test cva con simulazione percorso sottostante
 extern "C" OptionValue dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
     // Option
