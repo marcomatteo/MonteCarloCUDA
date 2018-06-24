@@ -43,7 +43,7 @@ void Chol( float c[N][N], float a[N][N] ){
                 for(k=0; k<=(j-1); k++)
                     v[i] -= a[j][k] * a[i][k];
                 if(v[j]>0)
-                    a[i][j] = v[i] / sqrt( v[j] );
+                    a[i][j] = v[i] / sqrtf( v[j] );
             }
         }
     }
@@ -62,7 +62,7 @@ float randMinMax(float min, float max){
 static float gaussian( float mu, float sigma ){
     float x = randMinMax(0, 1);
     float y = randMinMax(0, 1);
-    return mu + sigma*(sqrt( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
+    return mu + sigma*(sqrtf( -2.0 * log(x) ) * cos( 2.0 * M_PI * y ));
 }
 
 // Approssimazione di Hastings della funzione cumulata di una v.a. gaussiana
@@ -74,7 +74,7 @@ static float cnd(float d){
     const float       A5 = 1.330274429;
     const float ONEOVER2PI = 0.39894228040143267793994605993438;
     float K = 1.0 / (1.0 + 0.2316419 * fabs(d));
-    float cnd = ONEOVER2PI * exp(- 0.5 * d * d) * (K * (A1 + K * (A2 + K * (A3 + K * (A4 + K * A5)))));
+    float cnd = ONEOVER2PI * expf(- 0.5 * d * d) * (K * (A1 + K * (A2 + K * (A3 + K * (A4 + K * A5)))));
     if (d > 0)
         cnd = 1.0 - cnd;
     return cnd;
@@ -82,9 +82,9 @@ static float cnd(float d){
 
 // Prezzo di una opzione call secondo la formula di Black & Scholes
 float host_bsCall ( OptionData option ){
-    float d1 = ( log(option.s / option.k) + (option.r + 0.5 * option.v * option.v) * option.t) / (option.v * sqrt(option.t));
-    float d2 = d1 - option.v * sqrt(option.t);
-    return option.s * cnd(d1) - option.k * exp(- option.r * option.t) * cnd(d2);
+    float d1 = ( log(option.s / option.k) + (option.r + 0.5 * option.v * option.v) * option.t) / (option.v * sqrtf(option.t));
+    float d2 = d1 - option.v * sqrtf(option.t);
+    return option.s * cnd(d1) - option.k * expf(- option.r * option.t) * cnd(d2);
 }
 
 //----------------------------------------------------
@@ -107,9 +107,7 @@ static void simGaussVect(float *drift, float *volatility, float *result){
 
 // Call payoff
 static float callPayoff( OptionData option ){
-    float value = option.s * exp(
-                                  (option.r-0.5*option.v*option.v)*option.t+gaussian(0,1)*sqrt(option.t)*option.v)
-    - option.k;
+    float value = option.s * expf((option.r-0.5*option.v*option.v) * option.t + gaussian(0,1) * sqrtf(option.t) * option.v) - option.k;
     return (value>0) ? (value):(0);
 }
 
@@ -118,8 +116,8 @@ static void multiStockValue(float *s, float *v, float *g, float t, float r, int 
     int i;
     for(i=0;i<n;i++){
         float mu = (r - 0.5 * v[i] * v[i])*t;
-        float si = v[i] * g[i] * sqrt(t);
-        values[i] = s[i] * exp(mu+si);
+        float si = v[i] * g[i] * sqrtf(t);
+        values[i] = s[i] * expf(mu+si);
     }
 }
 
@@ -128,15 +126,12 @@ void MonteCarlo(MonteCarloData *data){
     int i;
     sum = var_sum = 0.0f;
     srand((unsigned)time(NULL));
+    float r, t;
     if(data->numOpt == 1){
-        OptionData opt;
-        opt.s = data->option.s[0];
-        opt.k = data->option.k;
-        opt.v = data->option.v[0];
-        opt.t = data->option.t;
-        opt.r = data->option.r;
+        r = data->sopt.r;
+        t = data->sopt.t;
         for( i=0; i<data->path; i++){
-            price = callPayoff(opt);
+            price = callPayoff(data->sopt);
             sum += price;
             var_sum += price * price;
         }
@@ -146,14 +141,16 @@ void MonteCarlo(MonteCarloData *data){
         float bt[N], s[N];
         float st_sum;
         int j;
+        r = data->mopt.r;
+        t = data->mopt.t;
         for(i=0; i<data->path; i++){
             st_sum = 0;
             //Simulation of stock prices
-            simGaussVect(data->option.d, &data->option.p[0][0], bt);
-            multiStockValue(data->option.s, data->option.v, bt, data->option.t, data->option.r, N, s);
+            simGaussVect(data->mopt.d, &data->mopt.p[0][0], bt);
+            multiStockValue(data->mopt.s, data->mopt.v, bt, data->mopt.t, data->mopt.r, N, s);
             for(j=0;j<N;j++)
-                st_sum += s[j]*data->option.w[j];
-            price = (float)st_sum - data->option.k;
+                st_sum += s[j]*data->mopt.w[j];
+            price = (float)st_sum - data->mopt.k;
             if(price<0)
                 price = 0.0f;
             sum += price;
@@ -161,25 +158,21 @@ void MonteCarlo(MonteCarloData *data){
         }
     }
     
-    price = exp(-data->option.r*data->option.t) * (sum/(float)data->path);
-    emp_stdev = sqrt(
+    price = expf(-r*t) * (sum/(float)data->path);
+    emp_stdev = sqrtf(
                      ((float)data->path * var_sum - sum * sum)
                      /
                      ((float)data->path * (float)(data->path - 1))
                      );
     
-    data->callValue.Confidence = 1.96 * emp_stdev/sqrt(data->path);
+    data->callValue.Confidence = 1.96 * emp_stdev/sqrtf(data->path);
     data->callValue.Expected = price;
 }
 
 // Monte Carlo simulation on the CPU
 OptionValue host_vanillaOpt( OptionData option, int path){
     MonteCarloData data;
-    data.option.s[0] = option.s;
-    data.option.v[0] = option.v;
-    data.option.k = option.k;
-    data.option.t = option.t;
-    data.option.r = option.r;
+    data.sopt = option;
     data.numOpt = 1;
     data.path = path;
     
@@ -189,7 +182,7 @@ OptionValue host_vanillaOpt( OptionData option, int path){
 
 OptionValue host_basketOpt(MultiOptionData *option, int sim){
     MonteCarloData data;
-    data.option = *option;
+    data.mopt = *option;
     data.numOpt = N;
     data.path = sim;
     
@@ -199,10 +192,20 @@ OptionValue host_basketOpt(MultiOptionData *option, int sim){
 
 void host_cvaEquityOption(CVA *cva, int sims){
     int i;
-    float dt = cva->opt.t / (float)cva->n;
+    float dt, time;
     MonteCarloData data;
+    
     // Option
-    data.option = cva->opt;
+    if(cva->ns ==1){
+        data.sopt = cva->option;
+        dt = cva->option.t / (float)cva->n;
+        time = cva->option.t;
+    }
+    else{
+        data.mopt = cva->opt;
+        dt = cva->opt.t / (float)cva->n;
+        time = cva->opt.t;
+    }
     
     // Execution parameters
     data.numOpt = cva->ns;
@@ -216,16 +219,20 @@ void host_cvaEquityOption(CVA *cva, int sims){
     float sommaProdotto1=0;
     //float sommaProdotto2=0;
     for( i=1; i < cva->n; i++){
-        if((data.option.t -= (dt))<0){
+        if((time -= (dt))<0){
             cva->ee[i].Confidence = 0;
             cva->ee[i].Expected = 0;
         }
         else{
+            if(cva->ns ==1)
+                data.sopt.t = time;
+            else
+                data.mopt.t = time;
             MonteCarlo(&data);
             cva->ee[i] = data.callValue;
         }
-        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
-        //cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd)- exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
+        cva->dp[i] = expf(-(dt*i) * cva->defInt) - expf(-(dt*(i+1)) * cva->defInt);
+        //cva->fp[i] = expf(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd)- expf(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
         sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
         //sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
     }

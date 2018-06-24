@@ -8,6 +8,11 @@
 
 #include "MonteCarlo.h"
 
+#define NTHREADS 4
+#define THREADS 256
+#define BLOCKS 512
+#define SIMPB 131072
+
 extern "C" OptionValue host_basketOpt(MultiOptionData*, int);
 extern "C" OptionValue dev_basketOpt(MultiOptionData *, int, int,int);
 extern "C" void Chol( float c[N][N], float a[N][N] );
@@ -62,10 +67,10 @@ int main(int argc, const char * argv[]) {
 	}
 
 	// Simulation variables
-	int numBlocks, numThreads[THREADS], SIMS, i, j;
-	OptionValue CPU_sim, GPU_sim[THREADS];
-	float CPU_timeSpent=0, GPU_timeSpent[THREADS], speedup[THREADS];
-	float cholRho[N][N], difference[THREADS];
+	int numBlocks, numThreads[NTHREADS], SIMS, i, j;
+	OptionValue CPU_sim, GPU_sim[NTHREADS];
+	float CPU_timeSpent=0, GPU_timeSpent[NTHREADS], speedup[NTHREADS];
+	float cholRho[N][N], difference[NTHREADS];
 	// Timer
 	cudaEvent_t d_start, d_stop;
 
@@ -73,7 +78,10 @@ int main(int argc, const char * argv[]) {
 	printf("Basket Option Pricing\n");
 	//	CUDA parameters for parallel execution
     numBlocks = BLOCKS;
-    numThreads[0] = NTHREADS;
+    numThreads[0] = THREADS;
+    numThreads[1] = 128;
+    numThreads[2] = 1024;
+    numThreads[3] = 512;
     printf("Inserisci il numero simulazioni (x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= SIMPB;
@@ -102,7 +110,7 @@ int main(int argc, const char * argv[]) {
 
     // GPU Monte Carlo
     printf("\nMonte Carlo execution on GPU:\n");
-    for(i=0; i<THREADS; i++){
+    for(i=0; i<NTHREADS; i++){
     	CudaCheck( cudaEventRecord( d_start, 0 ));
        	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i], SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
@@ -118,7 +126,7 @@ int main(int argc, const char * argv[]) {
     printf("Simulated price for the option with GPU:\n");
     printf("  : NumThreads : Price : Confidence Interval : Difference from BS price :  Time : Speedup :");
     printf("\n");
-    for(i=0; i<THREADS; i++){
+    for(i=0; i<NTHREADS; i++){
         printf("%d \n",numThreads[i]);
         printf("%f \n",GPU_sim[i].Expected);
         printf("%f \n",GPU_sim[i].Confidence);
@@ -216,7 +224,7 @@ void Parameters(int *numBlocks, int *numThreads){
     int i = 0;
     CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
     *numBlocks = BLOCKS;
-    for (i=0; i<THREADS; i++) {
+    for (i=0; i<NTHREADS; i++) {
         printf("\nParametri Threads (max 1024):\n");
         printf("Scegli il numero di Threads n^ %d: ",i);
         scanf("%d",&numThreads[i]);
