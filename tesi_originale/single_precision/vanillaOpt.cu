@@ -20,7 +20,7 @@ extern "C" void printOption( OptionData o);
 
 const float S = 100;
 const float K = 100;
-const float R = 0.05;
+const float R = 0,048790;
 const float V = 0.2;
 const float T = 1.f;
 
