@@ -8,6 +8,10 @@
 #include <curand.h>
 #include <curand_kernel.h>
 #include "MonteCarlo.h"
+#define max(a,b) \
+({ __typeof__ (a) _a = (a); \
+__typeof__ (b) _b = (b); \
+_a > _b ? _a : _b; })
 
 // Struct for Monte Carlo methods
 typedef struct{
@@ -70,7 +74,7 @@ __device__ double blackScholes(double *bt){
 	// Fourth step: Option payoff
 	price = st_sum - MOPTION.k;
 
-    return (price>0)?(price):(0);
+    return max(price,0);
 }
 
 __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallValue){
@@ -146,7 +150,7 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
         geomBt = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(bt);
         s = OPTION.s * exp(geomBt);
         price = s - OPTION.k;
-        if(price < 0) price = 0;
+        price = max(price,0);
         sum.Expected += price;
         sum.Confidence += price*price;
     }
@@ -188,6 +192,9 @@ void MonteCarlo_init(dev_MonteCarloData *data){
     if( data->numOpt > 1){
         int n_option = data->numOpt;
         CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
+    }
+    else{
+        
     }
     int n_path = data->path;
     CudaCheck(cudaMemcpyToSymbol(N_PATH,&n_path,sizeof(int)));
