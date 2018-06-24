@@ -84,8 +84,8 @@ __device__ double geomBrownian( double *s, double *z ){
 }
 
 __device__ double callPayoff(curandState *threadState){
-    double s, geomBt, z = curand_normal(threadState);
-    s = geomBrownian(OPTION.s, z);
+    double s, z = curand_normal(threadState);
+    s = geomBrownian(&OPTION.s, &z);
     return max(s - OPTION.k,0);
 }
 
@@ -201,7 +201,8 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
         double s[2];
         s[0] = OPTION.s;
         for(j=1; j<N_GRID; j++){
-            s[1] = geomBrownian(s[0], curand_normal(&threadState));
+            double z = curand_normal(&threadState);
+            s[1] = geomBrownian(&s[0], &z);
             double ee = max((((s[1] + s[0])/2)-OPTION.k),0);
             double dp = exp(-(dt*j-1) * (double)INTDEF) - exp(-(dt*j) * (double)INTDEF);
             mean_price += ee * dp * exp(-(dt*i) * OPTION.r);
@@ -430,9 +431,6 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 }
 
 extern "C" OptionValue dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numThreads, int sims){
-    int i;
-    double dt, time;
-    
     dev_MonteCarloData data;
     // Option
     if(cva->ns ==1){
