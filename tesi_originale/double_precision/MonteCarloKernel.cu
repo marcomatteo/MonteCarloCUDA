@@ -432,17 +432,12 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 
 extern "C" OptionValue dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
-    double dt;
     // Option
     if(cva->ns ==1){
         data.sopt = cva->option;
-        dt = cva->option.t / (double)cva->n;
-        time = cva->option.t;
     }
     else{
         data.mopt = cva->opt;
-        dt = cva->opt.t / (double)cva->n;
-        time = cva->opt.t;
     }
     // Kernel parameters
     data.numBlocks = numBlocks;
