@@ -45,7 +45,7 @@ static double gaussian( double mu, double sigma ){
 double geomB( OptionData opt ){
     double z = gaussian(0,1);
     double x = (opt.r - 0.5 * opt.v * opt.v) * opt.t + opt.v * sqrt(opt.t) * z;
-    return *s * exp(x);
+    return opt.s * exp(x);
 }
 
 // Inizializzazione per Monte Carlo da svolgere una volta sola
@@ -392,22 +392,22 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
 extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     int i;
-    double dt, time, ee1, ee2;
+    double dt, t, ee1, ee2;
     srand((unsigned)time(NULL));
 
     dev_MonteCarloData data;
     // Option
     if(cva->ns ==1){
         data.sopt = cva->option;
-        ee1[0] = cva->option.s;
-        ee2[0] = ee1[0];
+        ee1 = cva->option.s;
+        ee2 = ee1;
         dt = cva->option.t / (double)cva->n;
-        time = cva->option.t;
+        t = cva->option.t;
     }
     else{
         data.mopt = cva->opt;
         dt = cva->opt.t / (double)cva->n;
-        time = cva->opt.t;
+        t = cva->opt.t;
     }
     // Kernel parameters
     data.numBlocks = numBlocks;
@@ -425,21 +425,21 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     double sommaProdotto1=0;
     //double sommaProdotto2=0;
 	for( i=1; i < (cva->n+1); i++){
-		if((time -= (dt))<0){
+		if((t -= (dt))<0){
 			cva->ee[i].Confidence = 0;
 			cva->ee[i].Expected = 0;
 		}
 		else{
             if(cva->ns ==1){
-                data.sopt.t = time;
+                data.sopt.t = t;
                 ee1=geomB(data.sopt);
                 ee2=geomB(data.sopt);
                 data.sopt.s = (ee1 + ee2)/2;
             }
             else
-                data.mopt.t = time;
+                data.mopt.t = t;
 			MonteCarlo(&data);
-			cva->ee[i] = (data.callValue + ee[i-1])/2;
+			cva->ee[i] = (data.callValue + cva->ee[i-1])/2;
 		}
         cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
 		//cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
