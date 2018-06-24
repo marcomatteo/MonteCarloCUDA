@@ -341,7 +341,7 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd){
         sum += data->h_CallValue[i].Expected;
         sum2 += data->h_CallValue[i].Confidence;
     }
-    price = (sum/(double)nSim);
+    price = sum/(double)nSim;
     empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
     data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
     data->callValue.Expected = price;
