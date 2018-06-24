@@ -414,6 +414,10 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 			cva->ee[i].Expected = 0;
 		}
 		else{
+            if(cva->ns ==1)
+                data.sopt.t = time;
+            else
+                data.mopt.t = time;
 			MonteCarlo(&data);
 			cva->ee[i] = data.callValue;
 		}
