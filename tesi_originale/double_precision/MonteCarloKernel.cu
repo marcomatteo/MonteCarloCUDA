@@ -78,10 +78,9 @@ __device__ double basketPayoff(double *bt){
 }
 
 __device__ double callPayoff(curandState *threadState){
-    double s, bt = curand_normal(threadState) * OPTION.t;
-    s = OPTION.s * exp(
-                       (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(bt)
-    );
+    double s, geomBt, bt = curand_normal(threadState) * OPTION.t;
+    geomBt = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(bt);
+    s = OPTION.s * exp(geomBt);
     return max(s - OPTION.k,0);
 }
 
@@ -90,8 +89,6 @@ __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallV
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
-    // Parameter for reduction
-    int blockIndex = blockIdx.x;
 
     /*------------------ SHARED MEMORY DICH ----------------*/
     extern __shared__ double s_Sum[];
@@ -129,8 +126,8 @@ __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallV
         halfblock /= 2;
     }while ( halfblock != 0 );
     if (sumIndex == 0){
-    		d_CallValue[blockIndex].Expected = s_Sum[sumIndex];
-    		d_CallValue[blockIndex].Confidence = s_Sum[sum2Index];
+    		d_CallValue[blockIdx.x].Expected = s_Sum[sumIndex];
+    		d_CallValue[blockIdx.x].Confidence = s_Sum[sum2Index];
     }
 }
 
@@ -196,9 +193,7 @@ void MonteCarlo_init(dev_MonteCarloData *data){
         int n_option = data->numOpt;
         CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
     }
-    else{
-        
-    }
+    
     int n_path = data->path;
     CudaCheck(cudaMemcpyToSymbol(N_PATH,&n_path,sizeof(int)));
 
