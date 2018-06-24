@@ -46,11 +46,11 @@ __device__ __constant__ MultiOptionData MOPTION;
 __device__ __constant__ OptionData OPTION;
 __device__ __constant__ int N_OPTION, N_PATH;
 
-__device__ void brownianVect(double *bt, curandState threadState){
+__device__ void brownianVect(double *bt, curandState *threadState){
 	int i,j;
 	double g[N];
 	for(i=0;i<N_OPTION;i++)
-		g[i]=curand_normal(&threadState);
+		g[i]=curand_normal(threadState);
 	for(i=0;i<N_OPTION;i++){
 		double somma = 0;
 		for(j=0;j<N_OPTION;j++)
@@ -61,7 +61,7 @@ __device__ void brownianVect(double *bt, curandState threadState){
 		bt[i] += MOPTION.d[i];
 }
 
-__device__ double blackScholes(double *bt){
+__device__ double basketPayoff(double *bt){
 	int j;
 	double s[N], st_sum=0, price;
     for(j=0;j<N_OPTION;j++){
@@ -75,6 +75,14 @@ __device__ double blackScholes(double *bt){
 	price = st_sum - MOPTION.k;
 
     return max(price,0);
+}
+
+__device__ double callPayoff(curandState *threadState){
+    double s, bt = curand_normal(threadState) * OPTION.t;
+    s = OPTION.s * exp(
+                       (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(bt)
+    );
+    return max(s - OPTION.k,0);
 }
 
 __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallValue){
@@ -98,10 +106,10 @@ __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallV
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
     	double price=0.0f, bt[N];
     	// Random Number Generation
-   		brownianVect(bt,threadState);
-   		// Price simulation with the Black&Scholes payoff function
-        price=blackScholes(bt);
-
+   		brownianVect(bt,&threadState);
+   		// Price simulation with the basket call option payoff function
+        price=basketPayoff(bt);
+        // Mean sum
         sum.Expected += price;
         sum.Confidence += price*price;
     }
@@ -143,14 +151,9 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
     OptionValue sum = {0, 0};
     
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        double price=0.0f, bt, s, geomBt;
-        // Random Number Generation
-        bt = curand_normal(&threadState) * OPTION.t;
-        // Price simulation with the Black&Scholes payoff function
-        geomBt = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(bt);
-        s = OPTION.s * exp(geomBt);
-        price = s - OPTION.k;
-        price = max(price,0);
+        double price=0.0f;
+        // Price simulation with the vanilla call option payoff function
+        price = callPayoff(&threadState);
         sum.Expected += price;
         sum.Confidence += price*price;
     }
@@ -346,4 +349,57 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 
 	// Closing
 	MonteCarlo_free(&data);
+}
+
+extern "C" void dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numThreads, int sims){
+    int i;
+    double dt, time;
+    
+    dev_MonteCarloData data;
+    // Option
+    if(cva->ns ==1){
+        data.sopt = cva->option;
+        dt = cva->option.t / (double)cva->n;
+        time = cva->option.t;
+    }
+    else{
+        data.mopt = cva->opt;
+        dt = cva->opt.t / (double)cva->n;
+        time = cva->opt.t;
+    }
+    // Kernel parameters
+    data.numBlocks = numBlocks;
+    data.numThreads = numThreads;
+    data.numOpt = cva->ns;
+    data.path = sims / numBlocks;
+    
+    MonteCarlo_init(&data);
+    
+    // Original option price
+    MonteCarlo(&data);
+    cva->ee[0] = data.callValue;
+    
+    // Expected Exposures (ee), Default probabilities (dp,fp)
+    double sommaProdotto1=0;
+    //double sommaProdotto2=0;
+    for( i=1; i < (cva->n+1); i++){
+        if((time -= (dt))<0){
+            cva->ee[i].Confidence = 0;
+            cva->ee[i].Expected = 0;
+        }
+        else{
+            MonteCarlo(&data);
+            cva->ee[i] = data.callValue;
+        }
+        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
+        //cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
+        sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
+        //sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
+    }
+    // CVA and FVA
+    cva->cva = sommaProdotto1 * cva->lgd;
+    //cva->fva = -sommaProdotto2*cva->credit.lgd;
+    
+    // Closing
+    MonteCarlo_free(&data);
 }
