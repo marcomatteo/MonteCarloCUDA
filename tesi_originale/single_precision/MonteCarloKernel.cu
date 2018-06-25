@@ -268,7 +268,7 @@ void MonteCarlo_init(dev_MonteCarloData *data){
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "RNG done in %f milliseconds\n", time);
+    printf( "RNG done in ms %f\n", time);
 
     //	Host Memory Allocation
     CudaCheck( cudaEventRecord( start, 0 ));
@@ -276,14 +276,14 @@ void MonteCarlo_init(dev_MonteCarloData *data){
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "Host memory allocation done in %f milliseconds\n", time);
+    printf( "Host memory allocation done in ms %f\n", time);
     //	Device Memory Allocation
     CudaCheck( cudaEventRecord( start, 0 ));
     CudaCheck(cudaMalloc(&data->d_CallValue, sizeof(OptionValue)*data->numBlocks));
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "Device memory allocation done in %f milliseconds\n", time);
+    printf( "Device memory allocation done in ms %f\n", time);
 
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
@@ -305,7 +305,7 @@ void MonteCarlo_closing(dev_MonteCarloData *data){
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "Free memory done in %f milliseconds\n", time);
+    printf( "Free memory done in ms %f\n", time);
     
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
@@ -332,7 +332,7 @@ void MonteCarlo(dev_MonteCarloData *data){
         CudaCheck( cudaEventRecord( stop, 0));
         CudaCheck( cudaEventSynchronize( stop ));
         CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-        printf( "Kernel done in %f milliseconds\n", time);
+        printf( "Kernel done in ms %f\n", time);
     }
     else{
         r = data->mopt.r;
@@ -345,7 +345,7 @@ void MonteCarlo(dev_MonteCarloData *data){
         CudaCheck( cudaEventRecord( stop, 0));
         CudaCheck( cudaEventSynchronize( stop ));
         CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-        printf( "Kernel done in %f milliseconds\n", time);
+        printf( "Kernel done in ms %f\n", time);
     }
 
 	//MEMORY CPY: prices per block
@@ -355,7 +355,7 @@ void MonteCarlo(dev_MonteCarloData *data){
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "Copy from device-to-host done in %f milliseconds\n", time);
+    printf( "Copy from device-to-host done in ms %f\n", time);
     
 	// Closing Monte Carlo
     float sum=0, sum2=0, price, empstd;
@@ -373,7 +373,7 @@ void MonteCarlo(dev_MonteCarloData *data){
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
     CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-    printf( "Call price done in %f milliseconds\n", time);
+    printf( "Call price done in ms %f\n", time);
     
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));

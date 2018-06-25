@@ -63,8 +63,7 @@ int main(int argc, const char * argv[]) {
     printf("\nPrezzo Black & Scholes: %f\n",bs_price);
 
     // CPU Monte Carlo
-    printf("\nMonte Carlo execution on CPU:\n");
-    printf("N^ simulations: %d\n",SIMS);
+    printf("\nMonte Carlo execution on CPU...\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_vanillaOpt(option, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
@@ -74,9 +73,9 @@ int main(int argc, const char * argv[]) {
     diff = abs(CPU_sim.Expected - bs_price);
 
     // GPU Monte Carlo
-    printf("\nMonte Carlo execution on GPU:\n");
-    printf("(NumBlocks, NumSimulations): ( %d ; %d )\n",BLOCKS,SIMS/BLOCKS);
+    printf("\nMonte Carlo execution on GPU...\n");
     for(i=0; i<NTHREADS; i++){
+        printf("(NumBlocks, NumSimulations) : (%d,%d) x %d simulations per thread\m", BLOCKS, THREADS, SIMS/BLOCKS/THREADS);
     	CudaCheck( cudaEventRecord( d_start, 0 ));
     	GPU_sim[i] = dev_vanillaOpt(&option, numBlocks, numThreads[i],SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));

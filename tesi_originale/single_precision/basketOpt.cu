@@ -100,7 +100,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
     /* CPU Monte Carlo */
-    printf("\nMonte Carlo execution on CPU:\n");
+    printf("\nMonte Carlo execution on CPU...\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_basketOpt(&option, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
@@ -109,8 +109,9 @@ int main(int argc, const char * argv[]) {
     CPU_timeSpent /= 1000;
 
     // GPU Monte Carlo
-    printf("\nMonte Carlo execution on GPU:\n");
+    printf("\nMonte Carlo execution on GPU...\n");
     for(i=0; i<NTHREADS; i++){
+        printf("Monte Carlo for (%d,%d) x %d simulations per thread\m", BLOCKS, THREADS, SIMS/BLOCKS/THREADS);
     	CudaCheck( cudaEventRecord( d_start, 0 ));
        	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i], SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
@@ -119,6 +120,7 @@ int main(int argc, const char * argv[]) {
         GPU_timeSpent[i] /= 1000;
         difference[i] = abs(GPU_sim[i].Expected - CPU_sim.Expected);
         speedup[i] = abs(CPU_timeSpent / GPU_timeSpent[i]);
+        printf("\n");
     }
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
