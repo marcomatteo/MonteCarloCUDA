@@ -34,8 +34,7 @@ int main(int argc, const char * argv[]) {
 	option.r= R;
 	option.t= T;
 	// Simulation
-	int numBlocks, numThreads[NTHREADS], i;
-	int SIMS;
+	unsigned int numBlocks, numThreads[NTHREADS], i, SIMS;
 	OptionValue CPU_sim, GPU_sim[NTHREADS];
 	float CPU_timeSpent=0, GPU_timeSpent[NTHREADS], speedup[NTHREADS];
 	float bs_price, difference[NTHREADS], diff;

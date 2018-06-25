@@ -6,6 +6,10 @@
  */
 
 #include "MonteCarlo.h"
+#define max(a,b) \
+({ __typeof__ (a) _a = (a); \
+__typeof__ (b) _b = (b); \
+_a > _b ? _a : _b; })
 
 void MonteCarlo(MonteCarloData *data);
 
@@ -123,7 +127,7 @@ static void multiStockValue(float *s, float *v, float *g, float t, float r, int 
 
 void MonteCarlo(MonteCarloData *data){
     float sum, var_sum, emp_stdev, price;
-    int i;
+    unsigned int i,j;
     sum = var_sum = 0.0f;
     srand((unsigned)time(NULL));
     float r, t;
@@ -140,7 +144,6 @@ void MonteCarlo(MonteCarloData *data){
         //vectors of brownian and ST
         float bt[N], s[N];
         float st_sum;
-        int j;
         r = data->mopt.r;
         t = data->mopt.t;
         for(i=0; i<data->path; i++){
@@ -150,9 +153,7 @@ void MonteCarlo(MonteCarloData *data){
             multiStockValue(data->mopt.s, data->mopt.v, bt, data->mopt.t, data->mopt.r, N, s);
             for(j=0;j<N;j++)
                 st_sum += s[j]*data->mopt.w[j];
-            price = (float)st_sum - data->mopt.k;
-            if(price<0)
-                price = 0.0f;
+            price = max((float)st_sum - data->mopt.k, 0);
             sum += price;
             var_sum += price*price;
         }
