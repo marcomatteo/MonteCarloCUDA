@@ -15,10 +15,9 @@ _a > _b ? _a : _b; })
 
 // Struct for Monte Carlo methods
 typedef struct{
-	OptionValue *h_CallValue, *d_CallValue;
-	OptionValue callValue;
-    OptionData sopt;
-	MultiOptionData mopt;
+    OptionValue *h_CallValue, *d_CallValue;
+    OptionValue callValue;
+    MultiOptionData option;
     curandState *RNG;
     int numBlocks, numThreads, numOpt, path;
 } dev_MonteCarloData;
@@ -42,40 +41,39 @@ void MonteCarlo_closing(dev_MonteCarloData *data);
 // Metodo Monte Carlo
 void MonteCarlo(dev_MonteCarloData *data);
 
-__device__ __constant__ MultiOptionData MOPTION;
-__device__ __constant__ OptionData OPTION;
+__device__ __constant__ MultiOptionData OPTION;
 __device__ __constant__ int N_OPTION, N_PATH, N_GRID;
 __device__ __constant__ float INTDEF, LGD;
 
-__device__ void brownianVect(float *bt, curandState *threadState){
+__device__ void brownianVect(float *bt, curandState threadState){
 	int i,j;
 	float g[N];
 	for(i=0;i<N_OPTION;i++)
-		g[i]=curand_normal(threadState);
+		g[i]=curand_normal(&threadState);
 	for(i=0;i<N_OPTION;i++){
 		float somma = 0;
 		for(j=0;j<N_OPTION;j++)
-			somma += MOPTION.p[i][j] * g[j];
+			somma += OPTION.p[i][j] * g[j];
 		bt[i] = somma;
 	}
 	for(i=0;i<N_OPTION;i++)
-		bt[i] += MOPTION.d[i];
+		bt[i] += OPTION.d[i];
 }
 
 __device__ float basketPayoff(float *bt){
 	int j;
 	float s[N], st_sum=0, price;
     for(j=0;j<N_OPTION;j++)
-        s[j] = MOPTION.s[j] * expf((MOPTION.r - 0.5 * MOPTION.v[j] * MOPTION.v[j])*MOPTION.t+MOPTION.v[j] * bt[j] * sqrtf(MOPTION.t));
+        s[j] = OPTION.s[j] * expf((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrtf(OPTION.t));
 	// Third step: Mean price
 	for(j=0;j<N_OPTION;j++)
-		st_sum += s[j] * MOPTION.w[j];
+		st_sum += s[j] * OPTION.w[j];
 	// Fourth step: Option payoff
-	price = st_sum - MOPTION.k;
+	price = st_sum - OPTION.k;
 
     return max(price,0);
 }
-
+/*
 __device__ float geomBrownian( float *s, float *z ){
     float x = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrtf(OPTION.t) * *z;
     return *s * expf(x);
@@ -86,6 +84,7 @@ __device__ float callPayoff(curandState *threadState){
     float s = OPTION.s * expf((OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrtf(OPTION.t) * z);
     return max(s - OPTION.k,0);
 }
+ */
 
 __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallValue){
     int i;
@@ -106,7 +105,7 @@ __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallV
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
     	float price=0.0f, bt[N];
     	// Random Number Generation
-   		brownianVect(bt,&threadState);
+   		brownianVect(bt,threadState);
    		// Price simulation with the basket call option payoff function
         price=basketPayoff(bt);
         // Mean sum
@@ -247,14 +246,13 @@ void MonteCarlo_init(dev_MonteCarloData *data){
     CudaCheck( cudaEventCreate( &stop ));
     float time;
 
-    /*--------------- CONSTANT MEMORY ----------------*/
-    if( data->numOpt > 1){
-        int n_option = data->numOpt;
-        CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
-    }
-    
+    int n_option = data->numOpt;
     int n_path = data->path;
+    
+    /*--------------- CONSTANT MEMORY ----------------*/
+    CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
     CudaCheck(cudaMemcpyToSymbol(N_PATH,&n_path,sizeof(int)));
+
 
 	// RANDOM NUMBER GENERATION KERNEL
 	//Allocate states for pseudo random number generators
@@ -313,38 +311,18 @@ void MonteCarlo(dev_MonteCarloData *data){
     cudaEvent_t start, stop;
     CudaCheck( cudaEventCreate( &start ));
     CudaCheck( cudaEventCreate( &stop ));
-    float time, r,t;
+    float time;
     
 	/*----------------- SHARED MEMORY -------------------*/
 	int i, numShared = sizeof(float) * data->numThreads * 2;
     
-    /*--------------- CONSTANT MEMORY ----------------*/
-    if( data->numOpt == 1){
-        r = data->sopt.r;
-        t = data->sopt.t;
-        CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
-        // Time
-        CudaCheck( cudaEventRecord( start, 0 ));
-        vanillaOptMonteCarlo<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
-        cuda_error_check("\Errore nel lancio vanillaOptMonteCarlo: ","\n");
-        CudaCheck( cudaEventRecord( stop, 0));
-        CudaCheck( cudaEventSynchronize( stop ));
-        CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-        printf( "Kernel done in ms %f\n", time);
-    }
-    else{
-        r = data->mopt.r;
-        t = data->mopt.t;
-        CudaCheck(cudaMemcpyToSymbol(MOPTION,&data->mopt,sizeof(MultiOptionData)));
-        // Time
-        CudaCheck( cudaEventRecord( start, 0 ));
-        basketOptMonteCarlo<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
-        cuda_error_check("\Errore nel lancio basketOptMonteCarlo: ","\n");
-        CudaCheck( cudaEventRecord( stop, 0));
-        CudaCheck( cudaEventSynchronize( stop ));
-        CudaCheck( cudaEventElapsedTime( &time, start, stop ));
-        printf( "Kernel done in ms %f\n", time);
-    }
+    CudaCheck( cudaEventRecord( start, 0 ));
+    MultiMCBasketOptKernel<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
+    cuda_error_check("\Errore nel lancio del Kernel: ","\n");
+    CudaCheck( cudaEventRecord( stop, 0));
+    CudaCheck( cudaEventSynchronize( stop ));
+    CudaCheck( cudaEventElapsedTime( &time, start, stop ));
+    printf( "Kernel done in ms %f\n", time);
 
 	//MEMORY CPY: prices per block
     // Time
@@ -364,7 +342,7 @@ void MonteCarlo(dev_MonteCarloData *data){
     	sum += data->h_CallValue[i].Expected;
 	    sum2 += data->h_CallValue[i].Confidence;
 	}
-	price = expf(-r*t) * (sum/(float)nSim);
+	price = expf(-data->option.r*data->option.t) * (sum/(float)nSim);
     empstd = sqrtf((float)((float)nSim * sum2 - sum * sum)/((float)nSim * (float)(nSim - 1)));
     data->callValue.Confidence = 1.96 * empstd / (float)sqrtf((float)nSim);
     data->callValue.Expected = price;
@@ -419,8 +397,18 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
 }
 
 extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThreads, int sims){
+    MultiOptionData option;
+    option.w[0] = 1;
+    option.d[0] = 0;
+    option.p[0][0] = 1;
+    option.s[0] = opt->s;
+    option.v[0] = opt->v;
+    option.k = opt->k;
+    option.r = opt->r;
+    option.t = opt->t;
+    
     dev_MonteCarloData data;
-    data.sopt = *opt;
+    data.option = option;
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
     data.numOpt = 1;
@@ -437,23 +425,27 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     int i;
     float dt, t;
     dev_MonteCarloData data;
+    MultiOptionData option;
+    option.w[0] = 1;
+    option.d[0] = 0;
+    option.p[0][0] = 1;
+    option.s[0] = cva->opt.s;
+    option.v[0] = cva->opt.v;
+    option.k = cva->opt.k;
+    option.r = cva->opt.r;
+    option.t = cva->opt.t;
+    
+    dt = cva->opt.t / (float)cva->n;
+    t = cva->opt.t;
     // Option
-    if(cva->ns ==1){
-        data.sopt = cva->option;
-        dt = cva->option.t / (float)cva->n;
-        t = cva->option.t;
-    }
-    else{
-        data.mopt = cva->opt;
-        dt = cva->opt.t / (float)cva->n;
-        t = cva->opt.t;
-    }
+    data.option = cva->opt;
+    
     // Kernel parameters
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
     data.numOpt = cva->ns;
     data.path = sims / numBlocks;
-
+    
     MonteCarlo_init(&data);
 
     // Original option price
