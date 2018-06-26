@@ -317,7 +317,7 @@ void MonteCarlo(dev_MonteCarloData *data){
 	int i, numShared = sizeof(float) * data->numThreads * 2;
     
     CudaCheck( cudaEventRecord( start, 0 ));
-    MultiMCBasketOptKernel<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
+    basketOptMonteCarlo<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
     cuda_error_check("\Errore nel lancio del Kernel: ","\n");
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
@@ -354,12 +354,12 @@ void MonteCarlo(dev_MonteCarloData *data){
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
 }
-
+/*
 void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd){
-    /*----------------- SHARED MEMORY -------------------*/
+    //----------------- SHARED MEMORY -------------------
     int i, numShared = sizeof(float) * data->numThreads * 2;
     if( data->numOpt == 1){
-         /*--------------- CONSTANT MEMORY ----------------*/
+         //--------------- CONSTANT MEMORY ----------------
         CudaCheck(cudaMemcpyToSymbol(INTDEF,&intdef,sizeof(float)));
         CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(float)));
         CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
@@ -380,7 +380,7 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd){
     data->callValue.Confidence = 1.96 * empstd / (float)sqrtf((float)nSim);
     data->callValue.Expected = price;
 }
-
+*/
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
 	dev_MonteCarloData data;
     data.mopt = *option;
