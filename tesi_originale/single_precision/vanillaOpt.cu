@@ -8,7 +8,7 @@
 
 #include "MonteCarlo.h"
 
-#define NTHREADS 1
+#define NTHREADS 2
 #define THREADS 256
 #define BLOCKS 512
 #define SIMPB 131072
@@ -44,7 +44,7 @@ int main(int argc, const char * argv[]) {
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
     numBlocks = BLOCKS;
-    //numThreads[0] = 128;
+    numThreads[1] = 1024;
     numThreads[0] = THREADS;
     //numThreads[2] = 512;
     //numThreads[3] = 1024;
