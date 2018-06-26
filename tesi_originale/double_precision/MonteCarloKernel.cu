@@ -134,14 +134,14 @@ __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallV
     		d_CallValue[blockIdx.x].Confidence = s_Sum[sum2Index];
     }
 }
-
+/*
 __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_CallValue){
     int i;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
     
-    /*------------------ SHARED MEMORY DICH ----------------*/
+    //------------------ SHARED MEMORY DICH ----------------
     extern __shared__ double s_Sum[];
     
     // Global thread index
@@ -186,7 +186,7 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
     
-    /*------------------ SHARED MEMORY DICH ----------------*/
+    //------------------ SHARED MEMORY DICH ----------------
     extern __shared__ double s_Sum[];
     
     // Global thread index
@@ -234,7 +234,7 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
         d_CallValue[blockIdx.x].Confidence = s_Sum[sum2Index];
     }
 }
-
+*/
 __global__ void randomSetup( curandState *randSeed ){
     // Global thread index
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
