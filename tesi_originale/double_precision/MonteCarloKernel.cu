@@ -65,10 +65,8 @@ __device__ void brownianVect(double *bt, curandState *threadState){
 __device__ double basketPayoff(double *bt){
 	int j;
 	double s[N], st_sum=0, price;
-    for(j=0;j<N_OPTION;j++){
-        double geomBt = (MOPTION.r - 0.5 * MOPTION.v[j] * MOPTION.v[j])*MOPTION.t + MOPTION.v[j] * bt[j] * sqrt(MOPTION.t);
-	     s[j] = MOPTION.s[j] * exp(geomBt);
-    }
+    for(j=0;j<N_OPTION;j++)
+        s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
 	// Third step: Mean price
 	for(j=0;j<N_OPTION;j++)
 		st_sum += s[j] * MOPTION.w[j];
@@ -153,9 +151,13 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
     OptionValue sum = {0, 0};
     
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        double price=0.0f;
+        double price=0.0f, bt[N];
+        // Random Number Generation
+        brownianVect(bt,&threadState);
+        // Price simulation with the basket call option payoff function
+        price=basketPayoff(bt);
         // Price simulation with the vanilla call option payoff function
-        price = callPayoff(&threadState);
+        // price = callPayoff(&threadState);
         sum.Expected += price;
         sum.Confidence += price*price;
     }
