@@ -301,11 +301,11 @@ void MonteCarlo(dev_MonteCarloData *data){
         option.w[0] = 1;
         option.d[0] = 0;
         option.p[0][0] = 1;
-        option.s[0] = sopt->s;
-        option.v[0] = sopt->v;
-        option.k = sopt->k;
-        option.r = sopt->r;
-        option.t = sopt->t;
+        option.s[0] = data->sopt.s;
+        option.v[0] = data->sopt.v;
+        option.k = data->sopt.k;
+        option.r = data->sopt.r;
+        option.t = data->sopt.t;
         r = data->sopt.r;
         t = data->sopt.t;
         //CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
