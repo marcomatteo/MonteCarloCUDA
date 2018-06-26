@@ -44,7 +44,7 @@ int main(int argc, const char * argv[]) {
 	printf("Vanilla Option Pricing\n");
 	// CUDA parameters for parallel execution
     numBlocks = BLOCKS;
-    numThreads[1] = 1024;
+    numThreads[1] = 128;
     numThreads[0] = THREADS;
     //numThreads[2] = 512;
     //numThreads[3] = 1024;
