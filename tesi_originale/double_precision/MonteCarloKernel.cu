@@ -83,8 +83,9 @@ __device__ double geomBrownian( double *s, double *z ){
 
 __device__ double callPayoff(curandState *threadState){
     double z = curand_normal(threadState);
-    double s = OPTION.s * exp((OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(OPTION.t) * z);
-    return max(s - OPTION.k,0);
+    double sT = OPTION.s * exp((OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(OPTION.t) * z);
+    double c = sT - OPTION.k;
+    return max( c, 0);
 }
 
 __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallValue){
@@ -158,6 +159,7 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
         sum.Confidence += price*price;
     }
     // Copy to the shared memory
+    __syncthreads();
     s_Sum[sumIndex] = sum.Expected;
     s_Sum[sum2Index] = sum.Confidence;
     __syncthreads();
