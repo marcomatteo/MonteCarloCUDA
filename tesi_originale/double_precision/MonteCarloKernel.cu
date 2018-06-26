@@ -85,7 +85,9 @@ __device__ double callPayoff(curandState *threadState){
     double z = curand_normal(threadState);
     double sT = OPTION.s * exp((OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(OPTION.t) * z);
     double c = sT - OPTION.k;
-    return max( c, 0);
+    if(c<0)
+        c = 0.0f;
+    return c;
 }
 
 __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallValue){
