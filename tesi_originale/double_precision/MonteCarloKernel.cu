@@ -305,9 +305,11 @@ void MonteCarlo(dev_MonteCarloData *data){
         option.v[0] = data->sopt.v;
         option.k = data->sopt.k;
         option.r = data->sopt.r;
-        option.t = data->sopt.t;
+        option.t = data->sopt->t;
         r = data->sopt.r;
         t = data->sopt.t;
+        int n_option = 1;
+        CudaCheck(cudaMemcpyToSymbol(N_OPTION,&n_option,sizeof(int)));
         //CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
         CudaCheck(cudaMemcpyToSymbol(MOPTION,&option,sizeof(MultiOptionData)));
         vanillaOptMonteCarlo<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
