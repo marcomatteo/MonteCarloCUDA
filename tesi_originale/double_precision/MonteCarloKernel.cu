@@ -152,9 +152,13 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
     OptionValue sum = {0, 0};
     
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        double price=0.0f;
+        double price=0.0f, bt[N];
+        // Random Number Generation
+        brownianVect(bt,&threadState);
+        // Price simulation with the basket call option payoff function
+        price=basketPayoff(bt);
         // Price simulation with the vanilla call option payoff function
-        price = callPayoff(&threadState);
+        // price = callPayoff(&threadState);
         sum.Expected += price;
         sum.Confidence += price*price;
     }
@@ -293,9 +297,19 @@ void MonteCarlo(dev_MonteCarloData *data){
     
     /*--------------- CONSTANT MEMORY ----------------*/
     if( data->numOpt == 1){
+        MultiOptionData option;
+        option.w[0] = 1;
+        option.d[0] = 0;
+        option.p[0][0] = 1;
+        option.s[0] = sopt->s;
+        option.v[0] = sopt->v;
+        option.k = sopt->k;
+        option.r = sopt->r;
+        option.t = sopt->t;
         r = data->sopt.r;
         t = data->sopt.t;
-        CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
+        //CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
+        CudaCheck(cudaMemcpyToSymbol(MOPTION,&option,sizeof(MultiOptionData)));
         vanillaOptMonteCarlo<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
         cuda_error_check("\Errore nel lancio vanillaOptMonteCarlo: ","\n");
 
