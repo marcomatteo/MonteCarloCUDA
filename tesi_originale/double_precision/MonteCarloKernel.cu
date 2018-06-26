@@ -151,13 +151,9 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
     OptionValue sum = {0, 0};
     
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        double price=0.0f, bt[N];
-        // Random Number Generation
-        brownianVect(bt,&threadState);
-        // Price simulation with the basket call option payoff function
-        price=basketPayoff(bt);
+        double price=0.0f;
         // Price simulation with the vanilla call option payoff function
-        // price = callPayoff(&threadState);
+        price = callPayoff(&threadState);
         sum.Expected += price;
         sum.Confidence += price*price;
     }
