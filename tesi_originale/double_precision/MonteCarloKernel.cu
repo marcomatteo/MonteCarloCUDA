@@ -82,8 +82,8 @@ __device__ double geomBrownian( double *s, double *z ){
 }
 
 __device__ double callPayoff(curandState *threadState){
-    double s, z = curand_normal(threadState);
-    s = geomBrownian(&OPTION.s, &z);
+    double z = curand_normal(threadState);
+    double s = OPTION.s * exp((OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(OPTION.t) * z);
     return max(s - OPTION.k,0);
 }
 
