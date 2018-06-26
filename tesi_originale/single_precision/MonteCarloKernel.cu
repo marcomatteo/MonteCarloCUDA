@@ -66,7 +66,7 @@ __device__ float basketPayoff(float *bt){
 	int j;
 	float s[N], st_sum=0, price;
     for(j=0;j<N_OPTION;j++)
-        s[j] = OPTION.s[j] * exp((OPTION.r - 0.5 * OPTION.v[j] * OPTION.v[j])*OPTION.t+OPTION.v[j] * bt[j] * sqrt(OPTION.t));
+        s[j] = MOPTION.s[j] * exp((MOPTION.r - 0.5 * MOPTION.v[j] * MOPTION.v[j])*MOPTION.t+MOPTION.v[j] * bt[j] * sqrt(MOPTION.t));
 	// Third step: Mean price
 	for(j=0;j<N_OPTION;j++)
 		st_sum += s[j] * MOPTION.w[j];
