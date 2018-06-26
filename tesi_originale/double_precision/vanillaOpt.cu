@@ -8,8 +8,8 @@
 
 #include "MonteCarlo.h"
 
-#define NTHREADS 2
-#define THREADS 256
+#define NTHREADS 1
+#define THREADS 128
 #define BLOCKS 512
 #define SIMPB 131072
 
@@ -46,7 +46,7 @@ int main(int argc, const char * argv[]) {
 	// CUDA parameters for parallel execution
     numBlocks = BLOCKS;
     numThreads[0] = THREADS;
-    numThreads[1] = 1024;
+    //numThreads[1] = 1024;
     printf("Inserisci il numero di simulazioni (x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= SIMPB;

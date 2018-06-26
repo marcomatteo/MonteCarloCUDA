@@ -9,7 +9,7 @@
 #include "MonteCarlo.h"
 
 #define NTHREADS 1
-#define THREADS 512
+#define THREADS 128
 #define BLOCKS 512
 #define SIMPB 131072
 
