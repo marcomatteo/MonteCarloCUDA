@@ -383,7 +383,7 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd){
 */
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
 	dev_MonteCarloData data;
-    data.mopt = *option;
+    data.option = *option;
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
     data.numOpt = N;
@@ -429,8 +429,8 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     option.w[0] = 1;
     option.d[0] = 0;
     option.p[0][0] = 1;
-    option.s[0] = cva->opt.s;
-    option.v[0] = cva->opt.v;
+    option.s[0] = *cva->opt.s;
+    option.v[0] = *cva->opt.v;
     option.k = cva->opt.k;
     option.r = cva->opt.r;
     option.t = cva->opt.t;
@@ -461,10 +461,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 			cva->ee[i].Expected = 0;
 		}
 		else{
-            if(cva->ns ==1)
-                data.sopt.t = t;
-            else
-                data.mopt.t = t;
+            data.option.t = t;
 			MonteCarlo(&data);
             //data.callValue.Expected = (data.callValue.Expected + cva->ee[i-1].Expected)/2;
 			cva->ee[i] = data.callValue;
@@ -483,6 +480,7 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
 }
 
 // Test cva con simulazione percorso sottostante
+/*
 extern "C" OptionValue dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
     // Option
@@ -506,5 +504,5 @@ extern "C" OptionValue dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numT
     
     return data.callValue;
 }
-
+*/
 
