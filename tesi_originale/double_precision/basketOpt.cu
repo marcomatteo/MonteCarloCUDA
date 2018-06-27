@@ -8,8 +8,8 @@
 
 #include "MonteCarlo.h"
 
-#define NTHREADS 4
-#define THREADS 256
+#define NTHREADS 1
+#define THREADS 128
 #define BLOCKS 512
 #define SIMPB 131072
 
@@ -79,9 +79,9 @@ int main(int argc, const char * argv[]) {
 	//	CUDA parameters for parallel execution
     numBlocks = BLOCKS;
     numThreads[0] = THREADS;
-    numThreads[1] = 128;
-    numThreads[2] = 1024;
-    numThreads[3] = 512;
+    //numThreads[1] = 128;
+    //numThreads[2] = 1024;
+    //numThreads[3] = 512;
     printf("Inserisci il numero simulazioni (x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= SIMPB;
@@ -100,7 +100,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
     /* CPU Monte Carlo */
-    printf("\nMonte Carlo execution on CPU:\n");
+    printf("\nMonte Carlo execution on CPU...\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
     CPU_sim=host_basketOpt(&option, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
@@ -109,8 +109,9 @@ int main(int argc, const char * argv[]) {
     //CPU_timeSpent /= 1000;
 
     // GPU Monte Carlo
-    printf("\nMonte Carlo execution on GPU:\n");
+    printf("\nMonte Carlo execution on GPU...\n");
     for(i=0; i<NTHREADS; i++){
+        printf("Monte Carlo for (%d,%d) x %d simulations per thread\n", BLOCKS, numThreads[i], SIMS/BLOCKS/numThreads[i]);
     	CudaCheck( cudaEventRecord( d_start, 0 ));
        	GPU_sim[i] = dev_basketOpt(&option, numBlocks, numThreads[i], SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
@@ -119,6 +120,7 @@ int main(int argc, const char * argv[]) {
         //GPU_timeSpent[i] /= 1000;
         difference[i] = abs(GPU_sim[i].Expected - CPU_sim.Expected);
         speedup[i] = abs(CPU_timeSpent / GPU_timeSpent[i]);
+        printf("\n");
     }
     // Comparing time spent with the two methods
     printf( "\n-\tResults:\t-\n");
@@ -153,7 +155,6 @@ void getRandomSigma( double* std ){
             j=0;
         }
     }
-        //std[i] = randMinMax(0, 1);
 }
 void getRandomRho( double* rho ){
     int i,j;
@@ -168,7 +169,6 @@ void getRandomRho( double* rho ){
                     r = 0.5;
                 else
                     r= -0.5;
-               // r=randMinMax(-1, 1);
             rho[j+i*N] = r;
             rho[i+j*N] = r;
         }
@@ -216,7 +216,6 @@ void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
         int maxThreads = (int)maxShared / (2*sizeDouble);
         printf("The optimal number of thread should be: %d\n",maxThreads);
     }
-    //printf("\n");
 }
 
 void Parameters(int *numBlocks, int *numThreads){

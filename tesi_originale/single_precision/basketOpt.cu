@@ -8,8 +8,8 @@
 
 #include "MonteCarlo.h"
 
-#define NTHREADS 4
-#define THREADS 256
+#define NTHREADS 1
+#define THREADS 128
 #define BLOCKS 512
 #define SIMPB 131072
 
@@ -79,9 +79,9 @@ int main(int argc, const char * argv[]) {
 	//	CUDA parameters for parallel execution
     numBlocks = BLOCKS;
     numThreads[0] = THREADS;
-    numThreads[1] = 128;
-    numThreads[2] = 1024;
-    numThreads[3] = 512;
+    //numThreads[1] = 128;
+    //numThreads[2] = 1024;
+    //numThreads[3] = 512;
     printf("Inserisci il numero simulazioni (x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= SIMPB;
@@ -155,7 +155,6 @@ void getRandomSigma( float* std ){
             j=0;
         }
     }
-        //std[i] = randMinMax(0, 1);
 }
 void getRandomRho( float* rho ){
     int i,j;
@@ -170,7 +169,6 @@ void getRandomRho( float* rho ){
                     r = 0.5;
                 else
                     r= -0.5;
-               // r=randMinMax(-1, 1);
             rho[j+i*N] = r;
             rho[i+j*N] = r;
         }
