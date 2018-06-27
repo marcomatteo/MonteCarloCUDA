@@ -225,17 +225,18 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     OptionValue sum = {0, 0};
     float mean_price = 0;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        float s[2], t;
+        float s[2], c[2], t;
         mean_price = 0;
         s[0] = OPTION.s;
         t = OPTION.t;
-        for(j=1; j < N_GRID; j++){
+        c[0] = device_bsCall(s[0],t);
+        for(j=1; j <= N_GRID; j++){
             t -= dt;
             float z = curand_normal(&threadState);
             s[1] = geomBrownian(&s[0], &dt, &z);
-            float ee = device_bsCall(s[1],t);
+            c[1] = device_bsCall(s[1],t);
             float dp = expf(-t * INTDEF) - expf(-(t-dt) * INTDEF);
-            mean_price += expf(-t * OPTION.r) * ee * dp * LGD;
+            mean_price += expf(-t * OPTION.r) * ((c[0]+c[1])/2) * dp * LGD;
             s[0] = s[1];
         }
         sum.Expected += mean_price;
@@ -407,6 +408,11 @@ void MonteCarlo(dev_MonteCarloData *data){
 }
 
 void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid){
+    cudaEvent_t start, stop;
+    CudaCheck( cudaEventCreate( &start ));
+    CudaCheck( cudaEventCreate( &stop ));
+    float time;
+    
     /*----------------- SHARED MEMORY -------------------*/
     int i, numShared = sizeof(float) * data->numThreads * 2;
     /*--------------- CONSTANT MEMORY ----------------*/
@@ -414,8 +420,14 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid
     CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(float)));
     CudaCheck(cudaMemcpyToSymbol(N_GRID,&n_grid,sizeof(int)));
     CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
+    //Time
+    CudaCheck( cudaEventRecord( start, 0 ));
     cvaCallOptMC<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
     cuda_error_check("\Errore nel lancio cvaCallOptMC: ","\n");
+    CudaCheck( cudaEventRecord( stop, 0));
+    CudaCheck( cudaEventSynchronize( stop ));
+    CudaCheck( cudaEventElapsedTime( &time, start, stop ));
+    printf( "Kernel done in ms %f\n", time);
     
     //MEMORY CPY: prices per block
     CudaCheck(cudaMemcpy(data->h_CallValue, data->d_CallValue, data->numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
@@ -431,6 +443,13 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid
     empstd = sqrtf((float)((float)nSim * sum2 - sum * sum)/((float)nSim * (float)(nSim - 1)));
     data->callValue.Confidence = 1.96 * empstd / (float)sqrtf((float)nSim);
     data->callValue.Expected = price;
+    CudaCheck( cudaEventRecord( stop, 0));
+    CudaCheck( cudaEventSynchronize( stop ));
+    CudaCheck( cudaEventElapsedTime( &time, start, stop ));
+    printf( "CVA price done in ms %f\n", time);
+    
+    CudaCheck( cudaEventDestroy( start ));
+    CudaCheck( cudaEventDestroy( stop ));
 }
 
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
