@@ -405,7 +405,7 @@ void MonteCarlo(dev_MonteCarloData *data){
     CudaCheck( cudaEventDestroy( stop ));
 }
 
-void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, float n_grid){
+void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid){
     /*----------------- SHARED MEMORY -------------------*/
     int i, numShared = sizeof(float) * data->numThreads * 2;
     /*--------------- CONSTANT MEMORY ----------------*/
@@ -480,7 +480,7 @@ extern "C" OptionValue dev_cvaEquityOption(CVA *cva, int numBlocks, int numThrea
     data.path = sims / numBlocks;
     
     MonteCarlo_init(&data);
-    cvaMonteCarlo(&data, (float)cva->defInt, (float)cva->lgd, (float)cva->n);
+    cvaMonteCarlo(&data, (float)cva->defInt, (float)cva->lgd, cva->n);
     
     // Closing
     MonteCarlo_closing(&data);
