@@ -116,7 +116,7 @@ static void multiStockValue(double *s, double *v, double *g, double t, double r,
     int i;
     for(i=0;i<n;i++){
         double mu = (r - 0.5 * v[i] * v[i])*t;
-        double si = v[i] * g[i] * sqrt(t);
+        double si = g[i] * sqrt(t);
         values[i] = s[i] * exp(mu+si);
     }
 }
