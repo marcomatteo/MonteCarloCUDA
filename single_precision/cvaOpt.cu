@@ -8,9 +8,9 @@
 
 #include "MonteCarlo.h"
 
-#define THREADS 256
+#define THREADS 128
 #define BLOCKS 512
-#define PATH 40
+#define PATH 100
 #define SIMPB 131072
 
 extern "C" float host_bsCall ( OptionData );
@@ -112,7 +112,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     //GPU_timeSpent /= 1000;
 
-    printf("\nTotal execution time: %f s\n\n", GPU_timeSpent);
+    printf("\nTotal execution time: %f ms\n\n", GPU_timeSpent);
     printf("\nCVA: %f\n\n",result.Expected);
     //printf("Speed up: %f\n\n",CPU_timeSpent/GPU_timeSpent);
    	free(cva.dp);
