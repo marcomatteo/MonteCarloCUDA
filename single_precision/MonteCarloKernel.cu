@@ -459,65 +459,8 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
-    int i;
-    float dt, t;
-    dev_MonteCarloData data;
-    // Option
-    if(cva->ns ==1){
-        data.sopt = cva->option;
-        dt = cva->option.t / (float)cva->n;
-        t = cva->option.t;
-    }
-    else{
-        data.mopt = cva->opt;
-        dt = cva->opt.t / (float)cva->n;
-        t = cva->opt.t;
-    }
-    // Kernel parameters
-    data.numBlocks = numBlocks;
-    data.numThreads = numThreads;
-    data.numOpt = cva->ns;
-    data.path = sims / numBlocks;
-
-    MonteCarlo_init(&data);
-
-    // Original option price
-    MonteCarlo(&data);
-    cva->ee[0] = data.callValue;
-
-    // Expected Exposures (ee), Default probabilities (dp,fp)
-    float sommaProdotto1=0;
-    //float sommaProdotto2=0;
-	for( i=1; i < (cva->n+1); i++){
-		if((t -= (dt))<0){
-			cva->ee[i].Confidence = 0;
-			cva->ee[i].Expected = 0;
-		}
-		else{
-            if(cva->ns ==1)
-                data.sopt.t = t;
-            else
-                data.mopt.t = t;
-			MonteCarlo(&data);
-            //data.callValue.Expected = (data.callValue.Expected + cva->ee[i-1].Expected)/2;
-			cva->ee[i] = data.callValue;
-		}
-        cva->dp[i] = expf(-(dt*i) * cva->defInt) - expf(-(dt*(i+1)) * cva->defInt);
-		//cva->fp[i] = expf(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - expf(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
-        sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
-		//sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
-	}
-	// CVA and FVA
-	cva->cva = sommaProdotto1 * cva->lgd;
-	//cva->fva = -sommaProdotto2*cva->credit.lgd;
-
-	// Closing
-	MonteCarlo_closing(&data);
-}
-
 // Test cva con simulazione percorso sottostante
-extern "C" OptionValue dev_cvaEquityOption_opt(CVA *cva, int numBlocks, int numThreads, int sims){
+extern "C" OptionValue dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
     // Option
     data.sopt = cva->option;

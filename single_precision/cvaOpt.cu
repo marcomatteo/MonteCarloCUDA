@@ -57,8 +57,8 @@ int main(int argc, const char * argv[]) {
     cva.option = opt;
     
     cudaEvent_t d_start, d_stop;
-    int i, j, SIMS;
-    float difference, dt, cholRho[N][N];
+    int i, SIMS;
+    float difference, dt;
     float GPU_timeSpent=0, CPU_timeSpent=0;
     
 	//	CUDA Parameters optimized
