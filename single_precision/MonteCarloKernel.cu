@@ -235,7 +235,7 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
             s[1] = geomBrownian(&s[0], &dt, &z);
             float ee = device_bsCall(s[1],t);
             float dp = expf(-t * INTDEF) - expf(-(t-dt) * INTDEF);
-            mean_price += ee * dp * expf(-(dt*i) * OPTION.r) * LGD;
+            mean_price += expf(-t * OPTION.r) * ee * dp * LGD;
             s[0] = s[1];
         }
         sum.Expected += mean_price;
