@@ -215,17 +215,18 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     // Copy random number state to local memory
     curandState threadState = randseed[tid];
-    // Monte Carlo core
-    OptionValue sum = {0, 0};
+    
     float dt = OPTION.t / N_GRID;
     // Idea originaria: ogni blocco calcola un CVA
     // Invece, il problema dev'essere suddiviso in:
     // Step 1: simulare traiettoria sottostante, ad ogni istante dt calcolare prezzo opzione attualizzato con B&S
     // Step 2: calcolo CVA per ogni traiettoria e sommarlo alla variabile mean_price
     // Step 3: salvare nella memoria condivisa i CVA calcolati
-    
+    OptionValue sum = {0, 0};
+    float mean_price = 0;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        float mean_price = 0.0f, s[2], t;
+        float s[2], t;
+        mean_price = 0;
         s[0] = OPTION.s;
         t = OPTION.t;
         for(j=1; j < N_GRID; j++){
@@ -233,7 +234,7 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
             float z = curand_normal(&threadState);
             s[1] = geomBrownian(&s[0], &dt, &z);
             float ee = device_bsCall(s[1],t);
-            float dp = expf(-t * (float)INTDEF) - expf(-(t-dt) * (float)INTDEF);
+            float dp = expf(-t * INTDEF) - expf(-(t-dt) * INTDEF);
             mean_price += ee * dp * expf(-(dt*i) * OPTION.r) * LGD;
             s[0] = s[1];
         }
@@ -410,20 +411,15 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid
     int i, numShared = sizeof(float) * data->numThreads * 2;
     /*--------------- CONSTANT MEMORY ----------------*/
     CudaCheck(cudaMemcpyToSymbol(INTDEF,&intdef,sizeof(float)));
-    printf("Intensita di default: %f\n",intdef);
-
     CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(float)));
-    printf("Lgd: %f\n",lgd);
-
     CudaCheck(cudaMemcpyToSymbol(N_GRID,&n_grid,sizeof(int)));
-    printf("Numero di percorsi per sottostanti: %d\n",n_grid);
-
     CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
     cvaCallOptMC<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
     cuda_error_check("\Errore nel lancio cvaCallOptMC: ","\n");
     
     //MEMORY CPY: prices per block
     CudaCheck(cudaMemcpy(data->h_CallValue, data->d_CallValue, data->numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
+    
     // Closing Monte Carlo
     float sum=0, sum2=0, price, empstd;
     long int nSim = data->numBlocks * data->path;

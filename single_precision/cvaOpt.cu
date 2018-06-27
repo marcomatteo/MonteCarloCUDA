@@ -47,6 +47,7 @@ int main(int argc, const char * argv[]) {
     float *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
     
     OptionData opt;
+    OptionValue result;
     printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
     opt.v = V;
     opt.s = S;
@@ -105,22 +106,15 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nCVA execution on GPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(&cva, BLOCKS, THREADS, SIMS);
+    result = dev_cvaEquityOption(&cva, BLOCKS, THREADS, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
     //GPU_timeSpent /= 1000;
 
     printf("\nTotal execution time: %f s\n\n", GPU_timeSpent);
-
-    printf("\nPrezzi Simulati:\n");
-   	printf("|\ti\t\t|\tPrezzi BS\t| Differenza Prezzi\t|\tPrezzi\t\t|\tDefault Prob\t|\n");
-   	for(i=0;i<cva.n+1;i++){
-   		difference = abs(cva.ee[i].Expected - bs_price[i]);
-   		printf("|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\t%f\t|\n",dt*i,bs_price[i],difference,cva.ee[i].Expected,cva.dp[i]);
-   	}
-    printf("\nCVA: %f\n\n",cva.cva);
-    printf("Speed up: %f\n\n",CPU_timeSpent/GPU_timeSpent);
+    printf("\nCVA: %f\n\n",result.Expected);
+    //printf("Speed up: %f\n\n",CPU_timeSpent/GPU_timeSpent);
    	free(cva.dp);
    	//free(cva.fp);
    	free(cva.ee);
