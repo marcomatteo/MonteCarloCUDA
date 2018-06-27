@@ -281,6 +281,7 @@ void MonteCarlo_init(dev_MonteCarloData *data){
     }
     
     int n_path = data->path;
+    printf("Numero di simulazioni per blocco: %d\n",n_path);
     CudaCheck(cudaMemcpyToSymbol(N_PATH,&n_path,sizeof(int)));
 
 	// RANDOM NUMBER GENERATION KERNEL
@@ -409,8 +410,14 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, float n_gr
     int i, numShared = sizeof(float) * data->numThreads * 2;
     /*--------------- CONSTANT MEMORY ----------------*/
     CudaCheck(cudaMemcpyToSymbol(INTDEF,&intdef,sizeof(float)));
+    printf("Intensita di default: %f\n",intdef);
+
     CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(float)));
+    printf("Lgd: %f\n",lgd);
+
     CudaCheck(cudaMemcpyToSymbol(N_GRID,&n_grid,sizeof(float)));
+    printf("Numero di percorsi per sottostanti: %d\n",n_grid);
+
     CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
     cvaCallOptMC<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
     cuda_error_check("\Errore nel lancio cvaCallOptMC: ","\n");
