@@ -13,11 +13,7 @@
 #include <math.h>
 #include <time.h>
 
-#define N 3
-#define THREADS 2
-#define NTHREADS 256
-#define BLOCKS 512
-#define PATH 40
+#define N 12
 
 /**
  * This macro checks return value of the CUDA runtime call and exits
@@ -41,13 +37,15 @@ typedef struct {
     float t;    // time to maturity
 } OptionData;
 
+/*
 typedef struct {
     float creditspread;    // credit spread
     float fundingspread;   // funding spread
     float lgd;    			// loss given default
 } CreditData;
+*/
 
-// Static MultiOptionData
+// MultiOptionData
 typedef struct{
     float s[N];  	//Stock vector
     float v[N];  	//Volatility vector
@@ -65,24 +63,25 @@ typedef struct {
 } OptionValue;
 
 typedef struct{
-	// Expected Exposures
-	OptionValue *ee;
-	// Default probabilities
-	float *dp,*fp;
-	// Credit spreads
-	CreditData credit;
-	// Option data
-	MultiOptionData opt;
-	// CVA, FVA
-	float cva, fva;
-	// Num of simulations
-	int n;
+    // Expected Exposures
+    OptionValue *ee;
+    // Default probabilities
+    float defInt, lgd, *dp;
+    // Option data
+    int ns; 
+    MultiOptionData opt;
+    OptionData option;
+    // CVA
+    float cva;
+    // Num of simulations
+    int n;
 }CVA;
 
 // Struct for Monte Carlo methods
 typedef struct{
 	OptionValue callValue;
-	MultiOptionData option;
+	MultiOptionData mopt;
+    OptionData sopt;
     int numOpt, path;
 } MonteCarloData;
 
