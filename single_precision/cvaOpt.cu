@@ -82,7 +82,7 @@ int main(int argc, const char * argv[]) {
 	// Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
-    
+    /*
     // CPU Monte Carlo
     printf("\nCVA execution on CPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
@@ -101,6 +101,7 @@ int main(int argc, const char * argv[]) {
     printf("\nCVA: %f\n\n",cva.cva);
     printf("\nTotal execution time: %f s\n\n", CPU_timeSpent);
     printf("--------------------------------------------------\n");
+     */
     // GPU Monte Carlo
     printf("\nCVA execution on GPU:\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));

@@ -190,57 +190,25 @@ OptionValue host_basketOpt(MultiOptionData *option, int sim){
     MonteCarlo(&data);
     return data.callValue;
 }
-
+// da completare
+/*
 void host_cvaEquityOption(CVA *cva, int sims){
     int i;
     float dt, time;
-    MonteCarloData data;
+
     
-    // Option
-    if(cva->ns ==1){
-        data.sopt = cva->option;
-        dt = cva->option.t / (float)cva->n;
-        time = cva->option.t;
-    }
-    else{
-        data.mopt = cva->opt;
-        dt = cva->opt.t / (float)cva->n;
-        time = cva->opt.t;
-    }
     
-    // Execution parameters
-    data.numOpt = cva->ns;
-    data.path = sims;
+    price = sum/(float)data->path;
+    emp_stdev = sqrtf(
+                      ((float)data->path * var_sum - sum * sum)
+                      /
+                      ((float)data->path * (float)(data->path - 1))
+                      );
     
-    // Original option price
-    MonteCarlo(&data);
-    cva->ee[0] = data.callValue;
-    
-    // Expected Exposures (ee), Default probabilities (dp,fp)
-    float sommaProdotto1=0;
-    //float sommaProdotto2=0;
-    for( i=1; i < cva->n; i++){
-        if((time -= (dt))<0){
-            cva->ee[i].Confidence = 0;
-            cva->ee[i].Expected = 0;
-        }
-        else{
-            if(cva->ns ==1)
-                data.sopt.t = time;
-            else
-                data.mopt.t = time;
-            MonteCarlo(&data);
-            cva->ee[i] = data.callValue;
-        }
-        cva->dp[i] = expf(-(dt*i) * cva->defInt) - expf(-(dt*(i+1)) * cva->defInt);
-        //cva->fp[i] = expf(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd)- expf(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
-        sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
-        //sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
-    }
-    // CVA and FVA
-    cva->cva = sommaProdotto1 * cva->lgd;
-    //cva->fva = -sommaProdotto2*cva->credit.lgd/100;
+    data->callValue.Confidence = 1.96 * emp_stdev/sqrtf(data->path);
+    data->callValue.Expected = price;
 }
+*/
 
 ///////////////////////////////////
 //    PRINT FUNCTIONS
