@@ -69,7 +69,6 @@ typedef struct{
     float defInt, lgd, *dp;
     // Option data
     int ns; 
-    MultiOptionData opt;
     OptionData option;
     // CVA
     float cva;
