@@ -65,8 +65,9 @@ __device__ void brownianVect(double *bt, curandState *threadState){
 __device__ double basketPayoff(double *bt){
 	int j;
 	double s[N], st_sum=0, price;
+    // tolto MOPTION.v[j]
     for(j=0;j<N_OPTION;j++)
-        s[j] = MOPTION.s[j] * exp((MOPTION.r - 0.5 * MOPTION.v[j] * MOPTION.v[j])*MOPTION.t+MOPTION.v[j] * bt[j] * sqrt(MOPTION.t));
+        s[j] = MOPTION.s[j] * exp((MOPTION.r - 0.5 * MOPTION.v[j] * MOPTION.v[j])*MOPTION.t+ bt[j] * sqrt(MOPTION.t));
 	// Third step: Mean price
 	for(j=0;j<N_OPTION;j++)
 		st_sum += s[j] * MOPTION.w[j];
