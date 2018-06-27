@@ -223,16 +223,17 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     // Step 1: simulare traiettoria sottostante, ad ogni istante dt calcolare prezzo opzione attualizzato con B&S
     // Step 2: calcolo CVA per ogni traiettoria e sommarlo alla variabile mean_price
     // Step 3: salvare nella memoria condivisa i CVA calcolati
-    float s[2];
-    s[0] = OPTION.s;
+    
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        float mean_price = 0.0f;
-        for(j=1; j<N_GRID; j++){
+        float mean_price = 0.0f, s[2], t;
+        s[0] = OPTION.s;
+        t = OPTION.t;
+        for(j=1; j < N_GRID; j++){
+            t -= dt;
             float z = curand_normal(&threadState);
             s[1] = geomBrownian(&s[0], &dt, &z);
-            float t = OPTION.t - (dt * j);
             float ee = device_bsCall(s[1],t);
-            float dp = expf(-(dt*j-1) * (float)INTDEF) - expf(-(dt*j) * (float)INTDEF);
+            float dp = expf(-t * (float)INTDEF) - expf(-(t-dt) * (float)INTDEF);
             mean_price += ee * dp * expf(-(dt*i) * OPTION.r) * LGD;
             s[0] = s[1];
         }
