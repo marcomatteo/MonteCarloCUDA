@@ -230,7 +230,7 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
         s[0] = OPTION.s;
         t = OPTION.t;
         c[0] = device_bsCall(s[0],t);
-        for(j=1; j <= N_GRID; j++){
+        for(j=1; j < N_GRID+1; j++){
             t -= dt;
             float z = curand_normal(&threadState);
             s[1] = geomBrownian(&s[0], &dt, &z);
@@ -435,6 +435,7 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid
     // Closing Monte Carlo
     float sum=0, sum2=0, price, empstd;
     long int nSim = data->numBlocks * data->path;
+    CudaCheck( cudaEventRecord( start, 0 ));
     for ( i = 0; i < data->numBlocks; i++ ){
         sum += data->h_CallValue[i].Expected;
         sum2 += data->h_CallValue[i].Confidence;
