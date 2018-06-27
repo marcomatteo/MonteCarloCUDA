@@ -15,7 +15,7 @@
 
 extern "C" float host_bsCall ( OptionData );
 extern "C" void host_cvaEquityOption(CVA *, int);
-extern "C" void dev_cvaEquityOption(CVA *, int , int , int );
+extern "C" OptionValue dev_cvaEquityOption(CVA *, int, int, int);
 extern "C" void printOption( OptionData o);
 extern "C" void Chol( float c[N][N], float a[N][N] );
 extern "C" void printMultiOpt( MultiOptionData *o);
