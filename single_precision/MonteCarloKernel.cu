@@ -415,7 +415,7 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, float n_gr
     CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(float)));
     printf("Lgd: %f\n",lgd);
 
-    CudaCheck(cudaMemcpyToSymbol(N_GRID,&n_grid,sizeof(float)));
+    CudaCheck(cudaMemcpyToSymbol(N_GRID,&n_grid,sizeof(int)));
     printf("Numero di percorsi per sottostanti: %d\n",n_grid);
 
     CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
