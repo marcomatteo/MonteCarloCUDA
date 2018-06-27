@@ -238,6 +238,7 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
             float dp = expf(-t * INTDEF) - expf(-(t+dt) * INTDEF);
             mean_price += expf(-t * OPTION.r) * ((c[0]+c[1])/2) * dp * LGD;
             s[0] = s[1];
+            c[0] = c[1];
         }
         sum.Expected += mean_price;
         sum.Confidence += mean_price * mean_price;
