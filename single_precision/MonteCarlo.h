@@ -13,7 +13,7 @@
 #include <math.h>
 #include <time.h>
 
-#define N 25
+#define N 30
 
 /**
  * This macro checks return value of the CUDA runtime call and exits
