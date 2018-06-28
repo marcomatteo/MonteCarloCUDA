@@ -76,9 +76,9 @@ __device__ float basketPayoff(float *bt){
     return max(price,0);
 }
 
-__device__ float geomBrownian( float *s, float *t, float *z ){
-    float x = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * *t + OPTION.v * sqrtf(*t) * *z;
-    return *s * expf(x);
+__device__ float geomBrownian( float s, float t, float z ){
+    float x = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * t + OPTION.v * sqrtf(t) * z;
+    return s * expf(x);
 }
 
 __device__ float callPayoff(curandState *threadState){
@@ -225,17 +225,16 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     OptionValue sum = {0, 0};
     float mean_price = 0;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        float s[2], c[2], t;
+        float s[2], c[2];
         mean_price = 0;
         s[0] = OPTION.s;
-        t = OPTION.t;
-        c[0] = device_bsCall(s[0],t);
+        c[0] = device_bsCall(s[0],OPTION.t);
         for(j=1; j < N_GRID+1; j++){
             t -= dt;
             float z = curand_normal(&threadState);
-            s[1] = geomBrownian(&s[0], &dt, &z);
-            c[1] = device_bsCall(s[1],t);
-            float dp = expf(-(t+dt) * INTDEF) - expf(-t * INTDEF);
+            s[1] = geomBrownian(s[0], dt, z);
+            c[1] = device_bsCall(s[1],(OPTION.t - (j*dt)));
+            float dp = expf(-(dt*j) * INTDEF) - expf(-(dt*(j+1)) * INTDEF);
             mean_price += ((c[0]+c[1])/2) * dp * LGD;
             s[0] = s[1];
             c[0] = c[1];
