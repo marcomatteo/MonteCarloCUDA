@@ -230,11 +230,10 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
         s[0] = OPTION.s;
         c[0] = device_bsCall(s[0],OPTION.t);
         for(j=1; j < N_GRID+1; j++){
-            t -= dt;
             float z = curand_normal(&threadState);
+            float dp = expf(-(dt*j) * INTDEF) - expf(-(dt*(j+1)) * INTDEF);
             s[1] = geomBrownian(s[0], dt, z);
             c[1] = device_bsCall(s[1],(OPTION.t - (j*dt)));
-            float dp = expf(-(dt*j) * INTDEF) - expf(-(dt*(j+1)) * INTDEF);
             mean_price += ((c[0]+c[1])/2) * dp * LGD;
             s[0] = s[1];
             c[0] = c[1];
