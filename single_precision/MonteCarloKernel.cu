@@ -234,7 +234,7 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
             float dp = expf(-(dt*(j-1)) * INTDEF) - expf(-(dt*j) * INTDEF);
             s[1] = geomBrownian(s[0], dt, z);
             c[1] = device_bsCall(s[1],(OPTION.t - (j*dt)));
-            mean_price += dp* c[1]; //((c[0]+c[1])/2);
+            mean_price += dp * c[1]; //((c[0]+c[1])/2);
             s[0] = s[1];
             c[0] = c[1];
         }
@@ -440,7 +440,7 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid
         sum += data->h_CallValue[i].Expected;
         sum2 += data->h_CallValue[i].Confidence;
     }
-    price = expf(-data->sopt.r * data->sopt.t) * sum/(float)nSim;
+    price = sum/(float)nSim;
     empstd = sqrtf((float)((float)nSim * sum2 - sum * sum)/((float)nSim * (float)(nSim - 1)));
     data->callValue.Confidence = 1.96 * empstd / (float)sqrtf((float)nSim);
     data->callValue.Expected = price;
