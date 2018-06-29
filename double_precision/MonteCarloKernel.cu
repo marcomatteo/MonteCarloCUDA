@@ -231,15 +231,16 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     // Step 2: calcolo CVA per ogni traiettoria e sommarlo alla variabile mean_price
     // Step 3: salvare nella memoria condivisa i CVA calcolati
     OptionValue sum = {0, 0};
-    for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        double s[2], ee, mean_price = 0;
-        s[0] = OPTION.s;
+    for( i=sumIndex; i < N_PATH; i+=blockDim.x){
+        double s, t, ee, mean_price = 0;
+        s = OPTION.s;
+        t = OPTION.t;
         for(j=1; j <= N_GRID; j++){
             double dp = exp(-(dt*(j-1)) * INTDEF) - exp(-(dt*j) * INTDEF);
-            s[1] = geomBrownian(s[0], dt, &threadState);
-            ee = device_bsCall(s[1],(OPTION.t - (j*dt)));
+            s = geomBrownian(s, dt, &threadState);
+            t -= dt;
+            ee = device_bsCall(s,t);
             mean_price += dp * ee;
-            s[0] = s[1];
         }
         mean_price *= LGD;
         sum.Expected += mean_price;

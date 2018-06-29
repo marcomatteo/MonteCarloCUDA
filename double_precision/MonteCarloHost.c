@@ -190,8 +190,10 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     
     dt = data->sopt.t / n_grid;
     for(i=0; i<data->path; i++){
-        double ee, mean_price = 0;
+        double ee, mean_price;
+        mean_price = 0;
         option.s = data->sopt.s;
+        option.t = data->sopt.t;
         for(j=0; j <= n_grid; j++){
             double dp = exp(-(dt*(j-1))*intdef)-exp(-(dt*j)*intdef);
             option.s = geomBrownian(option.s,dt,option.r,option.v);
@@ -205,7 +207,7 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     }
     
     // Closing Monte Carlo
-    price = (sum/(double)data->path);
+    price = sum/(double)data->path;
     emp_stdev = sqrt(((double)data->path * var_sum - sum * sum)
                      /
                      ((double)data->path * (double)(data->path - 1))
@@ -229,22 +231,22 @@ OptionValue host_vanillaOpt( OptionData option, int path){
     return data.callValue;
 }
 
-OptionValue host_basketOpt(MultiOptionData *option, int sim){
+OptionValue host_basketOpt(MultiOptionData *option, int path){
     MonteCarloData data;
     data.mopt = *option;
     data.numOpt = N;
-    data.path = sim;
+    data.path = path;
     
     MonteCarlo(&data);
     return data.callValue;
 }
 
-void host_cvaEquityOption(CVA *cva, int sims){
+void host_cvaEquityOption(CVA *cva, int path){
     MonteCarloData data;
     // Option
     data.sopt = cva->option;
     data.numOpt = 1;
-    data.path = sims;
+    data.path = path;
     
     cvaMonteCarlo(&data, cva->defInt, cva->lgd, cva->n);
     cva->cva = data.callValue.Expected;
