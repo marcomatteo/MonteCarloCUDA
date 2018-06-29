@@ -49,8 +49,7 @@ int main(int argc, const char * argv[]) {
     cva.ns = 1;
     
     cudaEvent_t d_start, d_stop;
-    int i, SIMS;
-    double dt;
+    int SIMS;
     float GPU_timeSpent=0, CPU_timeSpent=0;
     
 	//	CUDA Parameters optimized

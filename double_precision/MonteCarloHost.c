@@ -174,7 +174,7 @@ void MonteCarlo(MonteCarloData *data){
     data->callValue.Expected = price;
 }
 
-void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_grid){
+void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     double sum, var_sum, emp_stdev, price, dt;
     int i, j;
     OptionData option;
