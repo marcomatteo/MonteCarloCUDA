@@ -9,6 +9,56 @@
 
 void MonteCarlo(MonteCarloData *data);
 
+/////////////////////////////////////////
+////////    PRINT FUNCTIONS     /////////
+/////////////////////////////////////////
+void printVect( double *mat, int c ){
+    int i,j,r=1;
+    for(i=0; i<r; i++){
+        printf("\n!\t");
+        for(j=0; j<c; j++){
+            printf("\t%f\t",mat[j+i*c]);
+        }
+        printf("\t!");
+    }
+    printf("\n\n");
+}
+void printMat( double *mat, int r, int c ){
+    int i,j;
+    for(i=0; i<r; i++){
+        printf("\n!\t");
+        for(j=0; j<c; j++){
+            printf("\t%f\t",mat[j+i*c]);
+        }
+        printf("\t!");
+    }
+    printf("\n\n");
+}
+void printOption( OptionData o){
+    printf("\n-\tOption data\t-\n\n");
+    printf("Underlying asset price:\t € %.2f\n", o.s);
+    printf("Strike price:\t\t € %.2f\n", o.k);
+    printf("Risk free interest rate: %.2f %%\n", o.r * 100);
+    printf("Volatility:\t\t %.2f %%\n", o.v * 100);
+    printf("Time to maturity:\t %.2f %s\n", o.t, (o.t>1)?("years"):("year"));
+}
+
+void printMultiOpt( MultiOptionData *o){
+    printf("\n-\tBasket Option data\t-\n\n");
+    printf("Number of assets: %d\n",N);
+    printf("Underlying assets prices:\n");
+    printVect(o->s, N);
+    printf("Volatility:\n");
+    printVect(o->v, N);
+    printf("Weights:");
+    printVect(o->w, N);
+    printf("Correlation matrix:\n");
+    printMat(&o->p[0][0], N, N);
+    printf("Strike price:\t\t € %.2f\n", o->k);
+    printf("Risk free interest rate: %.2f \n", o->r);
+    printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
+}
+
 void prodMat(
              double *first,
              double *second,
@@ -255,52 +305,4 @@ OptionValue host_cvaEquityOption(CVA *cva, int path){
     return data.callValue;
 }
 
-/////////////////////////////////////////
-////////    PRINT FUNCTIONS     /////////
-/////////////////////////////////////////
-void printVect( double *mat, int c ){
-    int i,j,r=1;
-    for(i=0; i<r; i++){
-        printf("\n!\t");
-        for(j=0; j<c; j++){
-            printf("\t%f\t",mat[j+i*c]);
-        }
-        printf("\t!");
-    }
-    printf("\n\n");
-}
-void printMat( double *mat, int r, int c ){
-    int i,j;
-    for(i=0; i<r; i++){
-        printf("\n!\t");
-        for(j=0; j<c; j++){
-            printf("\t%f\t",mat[j+i*c]);
-        }
-        printf("\t!");
-    }
-    printf("\n\n");
-}
-void printOption( OptionData o){
-    printf("\n-\tOption data\t-\n\n");
-    printf("Underlying asset price:\t € %.2f\n", o.s);
-    printf("Strike price:\t\t € %.2f\n", o.k);
-    printf("Risk free interest rate: %.2f %%\n", o.r * 100);
-    printf("Volatility:\t\t %.2f %%\n", o.v * 100);
-    printf("Time to maturity:\t %.2f %s\n", o.t, (o.t>1)?("years"):("year"));
-}
 
-void printMultiOpt( MultiOptionData *o){
-    printf("\n-\tBasket Option data\t-\n\n");
-    printf("Number of assets: %d\n",N);
-    printf("Underlying assets prices:\n");
-    printVect(o->s, N);
-    printf("Volatility:\n");
-    printVect(o->v, N);
-    printf("Weights:");
-    printVect(o->w, N);
-    printf("Correlation matrix:\n");
-    printMat(&o->p[0][0], N, N);
-    printf("Strike price:\t\t € %.2f\n", o->k);
-    printf("Risk free interest rate: %.2f \n", o->r);
-    printf("Time to maturity:\t %.2f %s\n", o->t, (o->t>1)?("years"):("year"));
-}
