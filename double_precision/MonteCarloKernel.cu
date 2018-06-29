@@ -239,9 +239,9 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
         t = OPTION.t;
         ee = device_bsCall(s,t);
         for(j=1; j <= N_GRID; j++){
+            double dp = exp(-(dt*(j-1)) * INTDEF) - exp(-(dt*j) * INTDEF);
             if( (t -= dt)>=0 ){
                 double z = curand_normal(&threadState);
-                double dp = exp(-(dt*(j-1)) * INTDEF) - exp(-(dt*j) * INTDEF);
                 s = geomBrownian(s, dt, z);
                 ee = device_bsCall(s,t);
             }
