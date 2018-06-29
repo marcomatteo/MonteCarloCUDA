@@ -73,8 +73,8 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     
-    printf("\nCVA: %f\nConfidence Interval: %f\n\n",host_result.Expected, host_result.Confidence);
-    printf("\nTotal execution time: ms %f\n\n", CPU_timeSpent);
+    printf("\nCVA: \n%f \nConfidence Interval: \n%f \n\n",host_result.Expected, host_result.Confidence);
+    printf("\nTotal execution time: (ms)\n%f\n\n", CPU_timeSpent);
     printf("--------------------------------------------------\n");
     
     // GPU Monte Carlo
@@ -90,9 +90,9 @@ int main(int argc, const char * argv[]) {
         CudaCheck( cudaEventSynchronize( d_stop ));
         CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
         
-        printf("\nTotal execution time: %f ms\n\n", GPU_timeSpent);
-        printf("\nCVA: %f\nConfidence Interval: %f\n\n",dev_result.Expected, dev_result.Confidence);
-        printf("GPU speedup: %f\n\n",CPU_timeSpent/GPU_timeSpent);
+        printf("\nTotal execution time: (ms) \n%f \n\n", GPU_timeSpent);
+        printf("\nCVA: %f\nConfidence Interval: \n%f \n\n",dev_result.Expected, dev_result.Confidence);
+        printf("GPU speedup: \n%f \n\n",CPU_timeSpent/GPU_timeSpent);
     }
     return 0;
 }
