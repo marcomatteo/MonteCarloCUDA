@@ -201,7 +201,6 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
     }
 }
 
-// Test di cva con simulazione percorso sottostante
 __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     int i,j;
     // Parameters for shared memory

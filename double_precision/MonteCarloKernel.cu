@@ -210,7 +210,6 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
     }
 }
 
-// Test di cva con simulazione percorso sottostante
 __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     int i,j;
     // Parameters for shared memory
@@ -423,8 +422,11 @@ void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_gr
     int i, numShared = sizeof(double) * data->numThreads * 2;
     /*--------------- CONSTANT MEMORY ----------------*/
     CudaCheck(cudaMemcpyToSymbol(INTDEF, &intdef, sizeof(double)));
+    printf("Check parametri, intdef: %f\n", intdef);
     CudaCheck(cudaMemcpyToSymbol(LGD, &lgd, sizeof(double)));
+    printf("Check parametri, lgd: %f\n", intdef);
     CudaCheck(cudaMemcpyToSymbol(N_GRID, &n_grid, sizeof(int)));
+    printf("Check parametri, n_grid: %d\n", n_grid);
     CudaCheck(cudaMemcpyToSymbol(OPTION, &data->sopt, sizeof(OptionData)));
     //Time
     CudaCheck( cudaEventRecord( start, 0 ));
