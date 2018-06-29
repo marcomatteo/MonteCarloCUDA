@@ -44,7 +44,7 @@ int main(int argc, const char * argv[]) {
     cudaEvent_t d_start, d_stop;
     int SIMS;
     float GPU_timeSpent=0, CPU_timeSpent=0;
-    OptionValue dev_result, host_result;
+    OptionValue dev_result = {0,0}, host_result = {0,0};
     
 	//	CUDA Parameters optimized
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");

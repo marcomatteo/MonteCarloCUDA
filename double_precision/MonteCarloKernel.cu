@@ -422,11 +422,11 @@ void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_gr
     int i, numShared = sizeof(double) * data->numThreads * 2;
     /*--------------- CONSTANT MEMORY ----------------*/
     CudaCheck(cudaMemcpyToSymbol(INTDEF, &intdef, sizeof(double)));
-    printf("Check parametri, intdef: %f\n", intdef);
+    printf("\nCheck parametri, intdef: %f\n", intdef);
     CudaCheck(cudaMemcpyToSymbol(LGD, &lgd, sizeof(double)));
-    printf("Check parametri, lgd: %f\n", intdef);
+    printf("Check parametri, lgd: %f\n", lgd);
     CudaCheck(cudaMemcpyToSymbol(N_GRID, &n_grid, sizeof(int)));
-    printf("Check parametri, n_grid: %d\n", n_grid);
+    printf("Check parametri, n_grid: %d\n\n", n_grid);
     CudaCheck(cudaMemcpyToSymbol(OPTION, &data->sopt, sizeof(OptionData)));
     //Time
     CudaCheck( cudaEventRecord( start, 0 ));
