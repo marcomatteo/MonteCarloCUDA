@@ -256,7 +256,7 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
         }
         mean_price *= lgd;
         sum += mean_price;
-        var_sum = mean_price * mean_price;
+        var_sum += mean_price * mean_price;
     }
     
     // Closing Monte Carlo
