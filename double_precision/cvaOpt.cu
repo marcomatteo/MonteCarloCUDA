@@ -74,7 +74,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     
-    printf("\nCVA: \n%f \nConfidence Interval: \n%f\n\n",host_result.Expected, host_result.Confidence);
+    printf("\nCVA: \n%f \n\n",host_result.Expected, host_result.Confidence);
     printf("\nTotal execution time: (ms) \n%f \n\n", CPU_timeSpent);
     printf("--------------------------------------------------\n");
     
@@ -86,17 +86,16 @@ int main(int argc, const char * argv[]) {
         th = 2;
         for(j=0;j<(i+6);j++)
             th *= 2;
-        printf("\n %d BLOCKS\t%d THREADS\t%d SIMS\n",BLOCKS, th, SIMS);
+        printf("\n %d BLOCKS / %d THREADS / %d SIMS\n",th, THREADS, SIMS);
         CudaCheck( cudaEventRecord( d_start, 0 ));
-        dev_result = dev_cvaEquityOption(&cva, BLOCKS, th, SIMS);
+        dev_result = dev_cvaEquityOption(&cva, th, THREADS, SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
         CudaCheck( cudaEventSynchronize( d_stop ));
         CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
 
         printf("\nTotal execution time: (ms) \n%f \n", GPU_timeSpent);
-        printf("\nGPU speedup: \n%f \n\n",CPU_timeSpent/GPU_timeSpent);
+        printf("\nGPU speedup: \n%f \n",CPU_timeSpent/GPU_timeSpent);
         printf("\nCVA: \n%f \n",dev_result.Expected);
-        printf("-\n");
     }
     return 0;
 }
