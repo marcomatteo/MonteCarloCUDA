@@ -226,7 +226,7 @@ void MonteCarlo(MonteCarloData *data){
 
 void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     double sum, var_sum, dt;
-    int i, j;
+    int i, j, sims = data->path;
     OptionData option;
     
     sum = var_sum = 0.0f;
@@ -239,28 +239,34 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     option.k = data->sopt.k;
     
     dt = data->sopt.t / n_grid;
-    printf("\n\nDati cpu:\n ngrid %d, dt %f, lgd %f, intdef %f\n\n",n_grid,dt,lgd,intdef);
-    for(i=0; i<data->path; i++){
+   
+    for(i=0; i < sims; i++){
         double ee, mean_price, s;
         mean_price = 0;
         option.s = data->sopt.s;
         option.t = data->sopt.t;
         for(j=1; j <= n_grid; j++){
             double dp = exp(-(dt*(j-1))*intdef)-exp(-(dt*j)*intdef);
+            // debug
+            if(i==100)
+                printf("dp %f\n",dp);
             s = geomBrownian(option.s,dt,option.r,option.v);
             option.t -= dt;
             ee = host_bsCall(option);
+            //  debug
+            if(i==100)
+                printf("ee %f\n",ee);
             mean_price += dp * ee;
             option.s = s;
         }
-        printf("mean_price %f \noption.t %f \noption.s %f",mean_price, option.t, option.s);
+        //printf("mean_price %f \noption.t %f \noption.s %f\n\n",mean_price, option.t, option.s);
         mean_price *= lgd;
         sum += mean_price;
         var_sum += mean_price * mean_price;
     }
     
     // Closing Monte Carlo
-    int sims = data->path;
+    
     double emp_stdev, price;
     price = sum/(double)sims;
     emp_stdev = sqrt(((double)sims * var_sum - sum * sum)/((double)sims * (double)(sims - 1)));
