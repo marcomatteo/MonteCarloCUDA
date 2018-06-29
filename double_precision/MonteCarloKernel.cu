@@ -226,25 +226,29 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     curandState threadState = randseed[tid];
     
     double dt = OPTION.t / N_GRID;
-    // Idea originaria: ogni blocco calcola un CVA
-    // Invece, il problema dev'essere suddiviso in:
+    // Calcolo di un CVA
     // Step 1: simulare traiettoria sottostante, ad ogni istante dt calcolare prezzo opzione attualizzato con B&S
     // Step 2: calcolo CVA per ogni traiettoria e sommarlo alla variabile mean_price
     // Step 3: salvare nella memoria condivisa i CVA calcolati
     OptionValue sum = {0, 0};
     
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        double s[2], ee;
+        double s, ee, t;
         double mean_price = 0;
-        s[0] = OPTION.s;
-        ee = device_bsCall(s[0],OPTION.t);
+        s = OPTION.s;
+        t = OPTION.t;
+        ee = device_bsCall(s,t);
         for(j=1; j <= N_GRID; j++){
-            double z = curand_normal(&threadState);
-            double dp = exp(-(dt*(j-1)) * INTDEF) - exp(-(dt*j) * INTDEF);
-            s[1] = geomBrownian(s[0], dt, z);
-            ee = device_bsCall(s[1],(OPTION.t - (j*dt)));
+            if( (t -= dt)>=0 ){
+                double z = curand_normal(&threadState);
+                double dp = exp(-(dt*(j-1)) * INTDEF) - exp(-(dt*j) * INTDEF);
+                s = geomBrownian(s, dt, z);
+                ee = device_bsCall(s,t);
+            }
+            else{
+                ee = 0;
+            }
             mean_price += dp * ee;
-            s[0] = s[1];
         }
         mean_price *= LGD;
         sum.Expected += mean_price;

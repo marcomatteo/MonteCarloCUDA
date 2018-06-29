@@ -254,13 +254,6 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
                 ee = 0;
             else
                 ee = host_bsCall(option);
-            /*  debug
-            if(i==100){
-                printf("Path: %d \nTime %.2f\n\n",j,option.t);
-                printf("ee %f\n",ee);
-                printf("dp %f\n",dp);
-            }
-             */
             mean_price += dp * ee;
             option.s = s;
         }
