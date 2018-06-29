@@ -84,6 +84,7 @@ int main(int argc, const char * argv[]) {
         int j, th=2;
         for(j=0;j<i;j++)
             th *= 2;
+        printf("%d BLOCKS\t%d THREADS\t%d SIMS\n",BLOCKS, th, SIMS);
         CudaCheck( cudaEventRecord( d_start, 0 ));
         dev_result = dev_cvaEquityOption(&cva, BLOCKS, th, SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
