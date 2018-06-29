@@ -44,16 +44,14 @@ int main(int argc, const char * argv[]) {
     // n+1 because it starts from 1
     float *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
     
-    OptionData opt;
     OptionValue result;
     printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
-    opt.v = V;
-    opt.s = S;
-    opt.t = T;
-    opt.r = R;
-    opt.k = K;
+    cva.option.v = V;
+    cva.option.s = S;
+    cva.option.t = T;
+    cva.option.r = R;
+    cva.option.k = K;
     cva.ns = 1;
-    cva.option = opt;
     
     cudaEvent_t d_start, d_stop;
     int i, SIMS;
