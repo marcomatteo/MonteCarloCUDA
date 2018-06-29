@@ -190,16 +190,17 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     
     dt = data->sopt.t / n_grid;
     for(i=0; i<data->path; i++){
-        double ee, mean_price;
+        double ee, mean_price, s;
         mean_price = 0;
         option.s = data->sopt.s;
         option.t = data->sopt.t;
-        for(j=0; j <= n_grid; j++){
+        for(j=1; j <= n_grid; j++){
             double dp = exp(-(dt*(j-1))*intdef)-exp(-(dt*j)*intdef);
-            option.s = geomBrownian(option.s,dt,option.r,option.v);
+            s = geomBrownian(option.s,dt,option.r,option.v);
             option.t -= dt;
             ee = host_bsCall(option);
             mean_price += dp * ee;
+            option.s = s;
         }
         mean_price *= lgd;
         sum += mean_price;
@@ -252,9 +253,9 @@ OptionValue host_cvaEquityOption(CVA *cva, int path){
     return data.callValue;
 }
 
-///////////////////////////////////
-//    PRINT FUNCTIONS
-///////////////////////////////////
+/////////////////////////////////////////
+////////    PRINT FUNCTIONS     /////////
+/////////////////////////////////////////
 void printVect( double *mat, int c ){
     int i,j,r=1;
     for(i=0; i<r; i++){
