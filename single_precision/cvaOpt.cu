@@ -113,9 +113,6 @@ int main(int argc, const char * argv[]) {
     printf("\nTotal execution time: %f ms\n\n", GPU_timeSpent);
     printf("\nCVA: %f\n\n",result.Expected);
     //printf("Speed up: %f\n\n",CPU_timeSpent/GPU_timeSpent);
-   	free(cva.dp);
-   	//free(cva.fp);
-   	free(cva.ee);
    	free(bs_price);
     return 0;
 }

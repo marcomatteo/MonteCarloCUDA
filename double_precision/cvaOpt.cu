@@ -112,9 +112,6 @@ int main(int argc, const char * argv[]) {
 
     printf("\nCVA: %f\n\n",cva.cva);
     //printf("Speed up: %f\n\n",CPU_timeSpent/GPU_timeSpent);
-   	free(cva.dp);
-   	//free(cva.fp);
-   	free(cva.ee);
    	free(bs_price);
     return 0;
 }
