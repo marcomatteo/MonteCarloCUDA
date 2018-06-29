@@ -59,7 +59,6 @@ int main(int argc, const char * argv[]) {
     printf("\nMonte Carlo simulations: %d\n",SIMS);
     printf("CVA simulation path: %d\n",PATH);
     printf("Loop interactions: %d\n",PATH*SIMS);
-    printOption(cva.option);
 
 	// Timer init
     CudaCheck( cudaEventCreate( &d_start ));
