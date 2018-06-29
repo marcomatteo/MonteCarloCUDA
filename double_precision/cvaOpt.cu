@@ -95,7 +95,7 @@ int main(int argc, const char * argv[]) {
 
         printf("\nTotal execution time: (ms) \n%f \n", GPU_timeSpent);
         printf("\nGPU speedup: \n%f \n",CPU_timeSpent/GPU_timeSpent);
-        printf("\nCVA: \n%f \n",dev_result.Expected);
+        printf("\nCVA: \n%f \n\n",dev_result.Expected);
     }
     return 0;
 }
