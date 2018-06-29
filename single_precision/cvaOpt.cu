@@ -86,9 +86,9 @@ int main(int argc, const char * argv[]) {
         th = 2;
         for(j=0;j<(i+6);j++)
             th *= 2;
-        printf("\n%d BLOCKS \t%d THREADS \t%d SIMS\n",BLOCKS, th, SIMS);
+        printf("\n%d BLOCKS \t%d THREADS \t%d SIMS\n",th, THREADS, SIMS);
         CudaCheck( cudaEventRecord( d_start, 0 ));
-        dev_result = dev_cvaEquityOption(&cva, BLOCKS, th, SIMS);
+        dev_result = dev_cvaEquityOption(&cva, th, THREADS, SIMS);
         CudaCheck( cudaEventRecord( d_stop, 0));
         CudaCheck( cudaEventSynchronize( d_stop ));
         CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
