@@ -55,7 +55,7 @@ int main(int argc, const char * argv[]) {
     SIMS *= SIMPB;
     
     // Display
-    printf("Pricing:\n");
+    printf("\n \t Now running:\n");
     printf("\nMonte Carlo simulations: %d\n",SIMS);
     printf("CVA simulation path: %d\n",PATH);
     printf("Loop interactions: %d\n",PATH*SIMS);
@@ -81,10 +81,10 @@ int main(int argc, const char * argv[]) {
     // GPU Monte Carlo
     printf("\nCVA execution on GPU...\n");
     int i;
-    for(i=7; i<11; i++){
+    for(i=0; i<4; i++){
         int j, th;
         th = 2;
-        for(j=0;j<i;j++)
+        for(j=0;j<(i+6);j++)
             th *= 2;
         printf("\n %d BLOCKS\t%d THREADS\t%d SIMS\n",BLOCKS, th, SIMS);
         CudaCheck( cudaEventRecord( d_start, 0 ));
@@ -93,9 +93,10 @@ int main(int argc, const char * argv[]) {
         CudaCheck( cudaEventSynchronize( d_stop ));
         CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
 
-        printf("\nTotal execution time: (ms) \n%f \n\n", GPU_timeSpent);
-        printf("\nCVA: \n%f \nConfidence Interval: \n%f \n\n",dev_result.Expected, dev_result.Confidence);
-        printf("GPU speedup: \n%f \n\n",CPU_timeSpent/GPU_timeSpent);
+        printf("\nTotal execution time: (ms) \n%f \n", GPU_timeSpent);
+        printf("\nGPU speedup: \n%f \n\n",CPU_timeSpent/GPU_timeSpent);
+        printf("\nCVA: \n%f \n",dev_result.Expected);
+        printf("-\n");
     }
     return 0;
 }
