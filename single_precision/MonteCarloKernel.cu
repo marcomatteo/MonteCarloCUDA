@@ -41,11 +41,21 @@ void MonteCarlo_init(dev_MonteCarloData *data);
 void MonteCarlo_closing(dev_MonteCarloData *data);
 // Metodo Monte Carlo
 void MonteCarlo(dev_MonteCarloData *data);
+// Metodo Monte Carlo per il calcolo di un CVA
+void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid);
+
+////////////////////////////////////////////////////////////////
+////////////////    CONSTANT MEMORY     ////////////////////////
+////////////////////////////////////////////////////////////////
 
 __device__ __constant__ MultiOptionData MOPTION;
 __device__ __constant__ OptionData OPTION;
 __device__ __constant__ int N_OPTION, N_PATH, N_GRID;
 __device__ __constant__ float INTDEF, LGD;
+
+////////////////////////////////////////////////////////////////
+////////////////    KERNEL FUNCTIONS    ////////////////////////
+////////////////////////////////////////////////////////////////
 
 __device__ void brownianVect(float *bt, curandState *threadState){
 	int i,j;
@@ -268,6 +278,10 @@ __global__ void randomSetup( curandState *randSeed ){
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
 
+////////////////////////////////////////////////////////////////
+////////////////    HOST FUNCTIONS  ////////////////////////////
+////////////////////////////////////////////////////////////////
+
 void MonteCarlo_init(dev_MonteCarloData *data){
 	cudaEvent_t start, stop;
 	CudaCheck( cudaEventCreate( &start ));
@@ -450,6 +464,10 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
 }
+
+////////////////////////////////////////////////
+////////////////    WRAPPERS    ////////////////
+////////////////////////////////////////////////
 
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
 	dev_MonteCarloData data;
