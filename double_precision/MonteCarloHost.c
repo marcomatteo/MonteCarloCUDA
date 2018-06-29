@@ -239,7 +239,7 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     option.k = data->sopt.k;
     
     dt = data->sopt.t / n_grid;
-    printf("\n\nDati cpu:\n ngrid %d, dt %d, lgd %f, intdef %f\n\n",n_grid,dt,lgd,intdef);
+    printf("\n\nDati cpu:\n ngrid %d, dt %f, lgd %f, intdef %f\n\n",n_grid,dt,lgd,intdef);
     for(i=0; i<data->path; i++){
         double ee, mean_price, s;
         mean_price = 0;
@@ -253,6 +253,7 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
             mean_price += dp * ee;
             option.s = s;
         }
+        printf("mean_price %f \noption.t %f \noption.s %f",mean_price, option.t, option.s);
         mean_price *= lgd;
         sum += mean_price;
         var_sum += mean_price * mean_price;
