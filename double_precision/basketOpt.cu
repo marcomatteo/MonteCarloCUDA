@@ -95,7 +95,7 @@ int main(int argc, const char * argv[]) {
     Chol(option.p, cholRho);
     for(i=0;i<N;i++)
     	for(j=0;j<N;j++)
-           	option.p[i][j]=cholRho[i][j]*option.v[i];
+           	option.p[i][j]=cholRho[i][j];
     // Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
