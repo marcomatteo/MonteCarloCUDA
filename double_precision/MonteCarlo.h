@@ -64,12 +64,12 @@ typedef struct {
 
 typedef struct{
     // Default probabilities
-    float defInt, lgd;
+    double defInt, lgd;
     // Option data
     int ns;
     OptionData option;
     // CVA
-    float cva;
+    double cva;
     // Num of simulations
     int n;
 }CVA;

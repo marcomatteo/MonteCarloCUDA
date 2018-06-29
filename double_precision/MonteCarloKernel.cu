@@ -41,6 +41,12 @@ void MonteCarlo_init(dev_MonteCarloData *data);
 void MonteCarlo_closing(dev_MonteCarloData *data);
 // Metodo Monte Carlo
 void MonteCarlo(dev_MonteCarloData *data);
+// Metodo Monte Carlo per la valutazione di un CVA
+void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_grid);
+
+////////////////////////////////////////////////////////////////
+////////////////    KERNEL FUNCTIONS    ////////////////////////
+////////////////////////////////////////////////////////////////
 
 __device__ __constant__ MultiOptionData MOPTION;
 __device__ __constant__ OptionData OPTION;
@@ -77,8 +83,9 @@ __device__ double basketPayoff(double *bt){
     return max(price,0);
 }
 
-__device__ double geomBrownian( double s, double t, double z ){
-    double x = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * t + OPTION.v * sqrtf(t) * z;
+__device__ double geomBrownian( double s, double t, curandState *threadState ){
+    double z = curand_normal(threadState);
+    double x = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * t + OPTION.v * sqrt(t) * z;
     return s * exp(x);
 }
 
@@ -97,7 +104,7 @@ __device__ double cnd(double d){
     const double       A5 = 1.330274429;
     const double ONEOVER2PI = 0.39894228040143267793994605993438;
     double K = 1.0 / (1.0 + 0.2316419 * fabs(d));
-    double cnd = ONEOVER2PI * expf(- 0.5 * d * d) * (K * (A1 + K * (A2 + K * (A3 + K * (A4 + K * A5)))));
+    double cnd = ONEOVER2PI * sqrt(- 0.5 * d * d) * (K * (A1 + K * (A2 + K * (A3 + K * (A4 + K * A5)))));
     if (d > 0)
         return 1.0 - cnd;
     else
@@ -106,9 +113,9 @@ __device__ double cnd(double d){
 
 // Prezzo di una opzione call secondo la formula di Black & Scholes
 __device__ double device_bsCall ( double s, double t){
-    double d1 = ( logf(s / OPTION.k) + (OPTION.r + 0.5 * OPTION.v * OPTION.v) * t) / (OPTION.v * sqrtf(t));
-    double d2 = d1 - OPTION.v * sqrtf(t);
-    return s * cnd(d1) - OPTION.k * expf(- OPTION.r * t) * cnd(d2);
+    double d1 = ( logf(s / OPTION.k) + (OPTION.r + 0.5 * OPTION.v * OPTION.v) * t) / (OPTION.v * sqrt(t));
+    double d2 = d1 - OPTION.v * sqrt(t);
+    return s * cnd(d1) - OPTION.k * sqrt(- OPTION.r * t) * cnd(d2);
 }
 
 
@@ -219,26 +226,20 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     curandState threadState = randseed[tid];
     
     double dt = OPTION.t / N_GRID;
-    // Idea originaria: ogni blocco calcola un CVA
-    // Invece, il problema dev'essere suddiviso in:
+    // Calcolo un CVA
     // Step 1: simulare traiettoria sottostante, ad ogni istante dt calcolare prezzo opzione attualizzato con B&S
     // Step 2: calcolo CVA per ogni traiettoria e sommarlo alla variabile mean_price
     // Step 3: salvare nella memoria condivisa i CVA calcolati
     OptionValue sum = {0, 0};
-    double mean_price = 0;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
-        double s[2], c[2];
-        mean_price = 0;
+        double s[2], ee, mean_price = 0;
         s[0] = OPTION.s;
-        c[0] = device_bsCall(s[0],OPTION.t);
         for(j=1; j <= N_GRID; j++){
-            double z = curand_normal(&threadState);
             double dp = exp(-(dt*(j-1)) * INTDEF) - exp(-(dt*j) * INTDEF);
-            s[1] = geomBrownian(s[0], dt, z);
-            c[1] = device_bsCall(s[1],(OPTION.t - (j*dt)));
-            mean_price += dp * c[1]; //((c[0]+c[1])/2);
+            s[1] = geomBrownian(s[0], dt, &threadState);
+            ee = device_bsCall(s[1],(OPTION.t - (j*dt)));
+            mean_price += dp * ee;
             s[0] = s[1];
-            c[0] = c[1];
         }
         mean_price *= LGD;
         sum.Expected += mean_price;
@@ -271,6 +272,10 @@ __global__ void randomSetup( curandState *randSeed ){
     // Each thread block gets different seed, threads within a thread block get different sequence numbers
     curand_init(blockIdx.x + gridDim.x, threadIdx.x, 0, &randSeed[tid]);
 }
+
+////////////////////////////////////////////////////////////////
+////////////////    HOST FUNCTIONS  ////////////////////////////
+////////////////////////////////////////////////////////////////
 
 void MonteCarlo_init(dev_MonteCarloData *data){
 	cudaEvent_t start, stop;
@@ -443,8 +448,8 @@ void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_gr
         sum2 += data->h_CallValue[i].Confidence;
     }
     price = sum/(double)nSim;
-    empstd = sqrtf((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
-    data->callValue.Confidence = 1.96 * empstd / (double)sqrtf((double)nSim);
+    empstd = sqrt((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    data->callValue.Confidence = 1.96 * empstd / (double)sqrt((double)nSim);
     data->callValue.Expected = price;
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
@@ -454,6 +459,11 @@ void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_gr
     CudaCheck( cudaEventDestroy( start ));
     CudaCheck( cudaEventDestroy( stop ));
 }
+
+////////////////////////////////////////////////
+////////////////    WRAPPERS    ////////////////
+////////////////////////////////////////////////
+
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
 	dev_MonteCarloData data;
     data.mopt = *option;
@@ -484,8 +494,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-// Test cva con simulazione percorso sottostante
-extern "C" OptionValue dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
+extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
     // Option
     data.sopt = cva->option;
@@ -497,11 +506,10 @@ extern "C" OptionValue dev_cvaEquityOption(CVA *cva, int numBlocks, int numThrea
     data.path = sims / numBlocks;
     
     MonteCarlo_init(&data);
-    cvaMonteCarlo(&data, (double)cva->defInt, (double)cva->lgd, cva->n);
+    cvaMonteCarlo(&data, cva->defInt, cva->lgd, cva->n);
+    cva->cva = data.callValue.Expected;
     
     // Closing
     MonteCarlo_closing(&data);
-    
-    return data.callValue;
 }
 

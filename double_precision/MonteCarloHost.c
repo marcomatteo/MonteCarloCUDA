@@ -105,6 +105,11 @@ static void simGaussVect(double *drift, double *volatility, double *result){
     }
 }
 
+// Geometric Brownian path
+static double geomBrownian(double s, double t, double r, double v){
+    return s * exp((r - 0.5 * v * v) * t + gaussian(0,1) * sqrt(t) * v);
+}
+
 // Call payoff
 static double callPayoff( OptionData option ){
     double value = option.s * exp((option.r-0.5*option.v*option.v) * option.t + gaussian(0,1) * sqrt(option.t) * option.v) - option.k;
@@ -169,7 +174,51 @@ void MonteCarlo(MonteCarloData *data){
     data->callValue.Expected = price;
 }
 
-// Monte Carlo simulation on the CPU
+void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_grid){
+    double sum, var_sum, emp_stdev, price, dt;
+    int i, j;
+    OptionData option;
+    
+    sum = var_sum = 0.0f;
+    srand((unsigned)time(NULL));
+    
+    option.s = data->sopt.s;
+    option.t = data->sopt.t;
+    option.r = data->sopt.r;
+    option.v = data->sopt.v;
+    option.k = data->sopt.k;
+    
+    dt = data->sopt.t / n_grid;
+    for(i=0; i<data->path; i++){
+        double ee, mean_price = 0;
+        option.s = data->sopt.s;
+        for(j=0; j <= n_grid; j++){
+            double dp = exp(-(dt*(j-1))*intdef)-exp(-(dt*j)*intdef);
+            option.s = geomBrownian(option.s,dt,option.r,option.v);
+            option.t -= dt;
+            ee = host_bsCall(option);
+            mean_price += dp * ee;
+        }
+        mean_price *= lgd;
+        sum += mean_price;
+        var_sum = mean_price * mean_price;
+    }
+    
+    // Closing Monte Carlo
+    price = (sum/(double)data->path);
+    emp_stdev = sqrt(((double)data->path * var_sum - sum * sum)
+                     /
+                     ((double)data->path * (double)(data->path - 1))
+                     );
+    
+    data->callValue.Confidence = 1.96 * emp_stdev/sqrt(data->path);
+    data->callValue.Expected = price;
+}
+
+/////////////////////////////////////////////
+/////////////// WRAPPERS    /////////////////
+/////////////////////////////////////////////
+
 OptionValue host_vanillaOpt( OptionData option, int path){
     MonteCarloData data;
     data.sopt = option;
@@ -191,54 +240,14 @@ OptionValue host_basketOpt(MultiOptionData *option, int sim){
 }
 
 void host_cvaEquityOption(CVA *cva, int sims){
-    int i;
-    double dt, time;
     MonteCarloData data;
-    
     // Option
-    if(cva->ns ==1){
-        data.sopt = cva->option;
-        dt = cva->option.t / (double)cva->n;
-        time = cva->option.t;
-    }
-    else{
-        data.mopt = cva->opt;
-        dt = cva->opt.t / (double)cva->n;
-        time = cva->opt.t;
-    }
-    
-    // Execution parameters
-    data.numOpt = cva->ns;
+    data.sopt = cva->option;
+    data.numOpt = 1;
     data.path = sims;
     
-    // Original option price
-    MonteCarlo(&data);
-    cva->ee[0] = data.callValue;
-    
-    // Expected Exposures (ee), Default probabilities (dp,fp)
-    double sommaProdotto1=0;
-    //double sommaProdotto2=0;
-    for( i=1; i < cva->n; i++){
-        if((time -= (dt))<0){
-            cva->ee[i].Confidence = 0;
-            cva->ee[i].Expected = 0;
-        }
-        else{
-            if(cva->ns ==1)
-                data.sopt.t = time;
-            else
-                data.mopt.t = time;
-            MonteCarlo(&data);
-            cva->ee[i] = data.callValue;
-        }
-        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
-        //cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd)- exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
-        sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
-        //sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
-    }
-    // CVA and FVA
-    cva->cva = sommaProdotto1 * cva->lgd;
-    //cva->fva = -sommaProdotto2*cva->credit.lgd/100;
+    cvaMonteCarlo(&data, cva->defInt, cva->lgd, cva->n);
+    cva->cva = data.callValue.Expected;
 }
 
 ///////////////////////////////////
