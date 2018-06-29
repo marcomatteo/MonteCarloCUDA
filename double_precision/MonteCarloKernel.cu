@@ -45,7 +45,7 @@ void MonteCarlo(dev_MonteCarloData *data);
 __device__ __constant__ MultiOptionData MOPTION;
 __device__ __constant__ OptionData OPTION;
 __device__ __constant__ int N_OPTION, N_PATH, N_GRID;
-__device__ __constant__ float INTDEF, LGD;
+__device__ __constant__ double INTDEF, LGD;
 
 __device__ void brownianVect(double *bt, curandState *threadState){
 	int i,j;
@@ -409,17 +409,17 @@ void MonteCarlo(dev_MonteCarloData *data){
     CudaCheck( cudaEventDestroy( stop ));
 }
 
-void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid){
+void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_grid){
     cudaEvent_t start, stop;
     CudaCheck( cudaEventCreate( &start ));
     CudaCheck( cudaEventCreate( &stop ));
     float time;
     
     /*----------------- SHARED MEMORY -------------------*/
-    int i, numShared = sizeof(float) * data->numThreads * 2;
+    int i, numShared = sizeof(double) * data->numThreads * 2;
     /*--------------- CONSTANT MEMORY ----------------*/
-    CudaCheck(cudaMemcpyToSymbol(INTDEF,&intdef,sizeof(float)));
-    CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(float)));
+    CudaCheck(cudaMemcpyToSymbol(INTDEF,&intdef,sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(double)));
     CudaCheck(cudaMemcpyToSymbol(N_GRID,&n_grid,sizeof(int)));
     CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
     //Time
@@ -435,16 +435,16 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid
     CudaCheck(cudaMemcpy(data->h_CallValue, data->d_CallValue, data->numBlocks * sizeof(OptionValue), cudaMemcpyDeviceToHost));
     
     // Closing Monte Carlo
-    float sum=0, sum2=0, price, empstd;
+    long double sum=0, sum2=0, price, empstd;
     long int nSim = data->numBlocks * data->path;
     CudaCheck( cudaEventRecord( start, 0 ));
     for ( i = 0; i < data->numBlocks; i++ ){
         sum += data->h_CallValue[i].Expected;
         sum2 += data->h_CallValue[i].Confidence;
     }
-    price = sum/(float)nSim;
-    empstd = sqrtf((float)((float)nSim * sum2 - sum * sum)/((float)nSim * (float)(nSim - 1)));
-    data->callValue.Confidence = 1.96 * empstd / (float)sqrtf((float)nSim);
+    price = sum/(double)nSim;
+    empstd = sqrtf((double)((double)nSim * sum2 - sum * sum)/((double)nSim * (double)(nSim - 1)));
+    data->callValue.Confidence = 1.96 * empstd / (double)sqrtf((double)nSim);
     data->callValue.Expected = price;
     CudaCheck( cudaEventRecord( stop, 0));
     CudaCheck( cudaEventSynchronize( stop ));
@@ -497,7 +497,7 @@ extern "C" OptionValue dev_cvaEquityOption(CVA *cva, int numBlocks, int numThrea
     data.path = sims / numBlocks;
     
     MonteCarlo_init(&data);
-    cvaMonteCarlo(&data, (float)cva->defInt, (float)cva->lgd, cva->n);
+    cvaMonteCarlo(&data, (double)cva->defInt, (double)cva->lgd, cva->n);
     
     // Closing
     MonteCarlo_closing(&data);
