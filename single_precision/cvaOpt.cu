@@ -84,7 +84,7 @@ int main(int argc, const char * argv[]) {
     for(i=0; i<4; i++){
         int j, th;
         th = 2;
-        for(j=0;j<(i+6);j++)
+        for(j=0;j<(i+6);j++) 
             th *= 2;
         printf("\n%d BLOCKS / %d THREADS / %d SIMS\n",th, THREADS, SIMS);
         CudaCheck( cudaEventRecord( d_start, 0 ));
