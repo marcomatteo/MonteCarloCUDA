@@ -301,6 +301,7 @@ void MonteCarlo_init(dev_MonteCarloData *data){
     
     int n_path = data->path;
     printf("Numero di simulazioni per blocco: %d\n",n_path);
+    printf("Numero di simulazioni per processo: %d\n",n_path/data->numThreads);
     CudaCheck(cudaMemcpyToSymbol(N_PATH,&n_path,sizeof(int)));
 
 	// RANDOM NUMBER GENERATION KERNEL
