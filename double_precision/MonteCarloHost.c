@@ -225,7 +225,7 @@ void MonteCarlo(MonteCarloData *data){
 }
 
 void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
-    double sum, var_sum, emp_stdev, price, dt;
+    double sum, var_sum, dt;
     int i, j;
     OptionData option;
     
@@ -238,9 +238,8 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     option.v = data->sopt.v;
     option.k = data->sopt.k;
     
-    printOption(option);
-    
     dt = data->sopt.t / n_grid;
+    printf("\n\nDati cpu:\n ngrid %d, dt %d, lgd %f, intdef %f\n\n",n_grid,dt,lgd,intdef);
     for(i=0; i<data->path; i++){
         double ee, mean_price, s;
         mean_price = 0;
@@ -260,13 +259,12 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     }
     
     // Closing Monte Carlo
-    price = sum/(double)data->path;
-    emp_stdev = sqrt(((double)data->path * var_sum - sum * sum)
-                     /
-                     ((double)data->path * (double)(data->path - 1))
-                     );
+    int sims = data->path;
+    double emp_stdev, price;
+    price = sum/(double)sims;
+    emp_stdev = sqrt(((double)sims * var_sum - sum * sum)/((double)sims * (double)(sims - 1)));
     
-    data->callValue.Confidence = 1.96 * emp_stdev/sqrt(data->path);
+    data->callValue.Confidence = 1.96 * emp_stdev/sqrt(sims);
     data->callValue.Expected = price;
 }
 
