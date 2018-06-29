@@ -188,6 +188,8 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
     option.v = data->sopt.v;
     option.k = data->sopt.k;
     
+    printOption(option);
+    
     dt = data->sopt.t / n_grid;
     for(i=0; i<data->path; i++){
         double ee, mean_price, s;
