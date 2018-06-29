@@ -37,14 +37,6 @@ typedef struct {
     double t;    // time to maturity
 } OptionData;
 
-/*
-typedef struct {
-    double creditspread;    // credit spread
-    double fundingspread;   // funding spread
-    double lgd;    			// loss given default
-} CreditData;
-*/
-
 // MultiOptionData
 typedef struct{
     double s[N];  	//Stock vector

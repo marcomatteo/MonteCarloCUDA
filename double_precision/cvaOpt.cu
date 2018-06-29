@@ -8,9 +8,9 @@
 
 #include "MonteCarlo.h"
 
-#define THREADS 256
+#define THREADS 128
 #define BLOCKS 512
-#define PATH 40
+#define PATH 100
 #define SIMPB 131072
 
 extern "C" OptionValue host_cvaEquityOption(CVA *, int);
