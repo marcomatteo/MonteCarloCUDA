@@ -157,7 +157,8 @@ static void simGaussVect(double *drift, double *volatility, double *result){
 
 // Geometric Brownian path
 static double geomBrownian(double s, double t, double r, double v){
-    return s * exp((r - 0.5 * v * v) * t + gaussian(0,1) * sqrt(t) * v);
+    double x = (r - 0.5 * v * v) * t + gaussian(0,1) * sqrt(t) * v;
+    return s * exp(x);
 }
 
 // Call payoff
@@ -247,19 +248,22 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
         option.t = data->sopt.t;
         for(j=1; j <= n_grid; j++){
             double dp = exp(-(dt*(j-1))*intdef)-exp(-(dt*j)*intdef);
-            // debug
-            if(i==100)
-                printf("dp %f\n",dp);
             s = geomBrownian(option.s,dt,option.r,option.v);
             option.t -= dt;
-            ee = host_bsCall(option);
-            //  debug
-            if(i==100)
+            if( option.t == 0)
+                ee = 0;
+            else
+                ee = host_bsCall(option);
+            /*  debug
+            if(i==100){
+                printf("Path: %d \nTime %.2f)
                 printf("ee %f\n",ee);
+                printf("dp %f\n",dp);
+            }
+             */
             mean_price += dp * ee;
             option.s = s;
         }
-        //printf("mean_price %f \noption.t %f \noption.s %f\n\n",mean_price, option.t, option.s);
         mean_price *= lgd;
         sum += mean_price;
         var_sum += mean_price * mean_price;
