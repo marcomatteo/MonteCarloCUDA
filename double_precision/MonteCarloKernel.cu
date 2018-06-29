@@ -77,9 +77,9 @@ __device__ double basketPayoff(double *bt){
     return max(price,0);
 }
 
-__device__ double geomBrownian( double *s, double *z ){
-    double x = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(OPTION.t) * *z;
-    return *s * exp(x);
+__device__ double geomBrownian( double s, double t, double z ){
+    double x = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * t + OPTION.v * sqrtf(t) * z;
+    return s * exp(x);
 }
 
 __device__ double callPayoff(curandState *threadState){
@@ -482,63 +482,6 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     MonteCarlo_closing(&data);
 
     return data.callValue;
-}
-
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
-    int i;
-    double dt, t;
-    dev_MonteCarloData data;
-    // Option
-    if(cva->ns ==1){
-        data.sopt = cva->option;
-        dt = cva->option.t / (double)cva->n;
-        t = cva->option.t;
-    }
-    else{
-        data.mopt = cva->opt;
-        dt = cva->opt.t / (double)cva->n;
-        t = cva->opt.t;
-    }
-    // Kernel parameters
-    data.numBlocks = numBlocks;
-    data.numThreads = numThreads;
-    data.numOpt = cva->ns;
-    data.path = sims / numBlocks;
-
-    MonteCarlo_init(&data);
-
-    // Original option price
-    MonteCarlo(&data);
-    cva->ee[0] = data.callValue;
-
-    // Expected Exposures (ee), Default probabilities (dp,fp)
-    double sommaProdotto1=0;
-    //double sommaProdotto2=0;
-	for( i=1; i < (cva->n+1); i++){
-		if((t -= (dt))<0){
-			cva->ee[i].Confidence = 0;
-			cva->ee[i].Expected = 0;
-		}
-		else{
-            if(cva->ns ==1)
-                data.sopt.t = t;
-            else
-                data.mopt.t = t;
-			MonteCarlo(&data);
-            //data.callValue.Expected = (data.callValue.Expected + cva->ee[i-1].Expected)/2;
-			cva->ee[i] = data.callValue;
-		}
-        cva->dp[i] = exp(-(dt*i) * cva->defInt) - exp(-(dt*(i+1)) * cva->defInt);
-		//cva->fp[i] = exp(-(dt)*(i-1) * cva->credit.fundingspread / 100 / cva->credit.lgd) - exp(-(dt*i) * cva->credit.fundingspread / 100 / cva->credit.lgd );
-        sommaProdotto1 += cva->ee[i].Expected * cva->dp[i];
-		//sommaProdotto2 += cva->ee[i].Expected * cva->fp[i];
-	}
-	// CVA and FVA
-	cva->cva = sommaProdotto1 * cva->lgd;
-	//cva->fva = -sommaProdotto2*cva->credit.lgd;
-
-	// Closing
-	MonteCarlo_closing(&data);
 }
 
 // Test cva con simulazione percorso sottostante
