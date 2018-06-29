@@ -50,7 +50,7 @@ int main(int argc, const char * argv[]) {
     printOption(cva.option);
     
 	//	CUDA Parameters optimized
-    printf("Monte Carlo multiplier (x131.072): ");
+    printf("\nMonte Carlo multiplier (x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= SIMPB;
     
@@ -74,7 +74,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     
-    printf("\nCVA: \n%f \n\n",host_result.Expected, host_result.Confidence);
+    printf("\nCVA: \n%f \n",host_result.Expected);
     printf("\nTotal execution time: (ms) \n%f \n\n", CPU_timeSpent);
     printf("--------------------------------------------------\n");
     
