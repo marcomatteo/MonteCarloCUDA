@@ -45,11 +45,11 @@ int main(int argc, const char * argv[]) {
 
     OptionValue result;
     printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
-    cva.opt.v = V;
-    cva.opt.s = S;
-    cva.opt.t = T;
-    cva.opt.r = R;
-    cva.opt.k = K;
+    cva.option.v = V;
+    cva.option.s = S;
+    cva.option.t = T;
+    cva.option.r = R;
+    cva.option.k = K;
     cva.ns = 1;
     
     cudaEvent_t d_start, d_stop;
