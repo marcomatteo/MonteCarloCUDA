@@ -39,11 +39,8 @@ int main(int argc, const char * argv[]) {
     cva.defInt = defInt;
     cva.lgd = (1 - recoveryRate);
     cva.n = PATH;
-    cva.dp = (double*)malloc((cva.n+1)*sizeof(double));
-    //cva.fp = (double*)malloc((cva.n+1)*sizeof(double));
-
+    
     // n+1 because it starts from 1
-    cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
     double *bs_price = (double*)malloc(sizeof(double)*(cva.n+1));
 
     OptionValue result;
@@ -54,12 +51,11 @@ int main(int argc, const char * argv[]) {
     cva.opt.r = R;
     cva.opt.k = K;
     cva.ns = 1;
-    cva.option = opt;
     
     cudaEvent_t d_start, d_stop;
     int i, j, SIMS;
-    double difference, dt, cholRho[N][N];
-    float GPU_timeSpent=0, CPU_timeSpent=0;
+    double dt, cholRho[N][N];
+    float GPU_timeSpent=0;
     
 	//	CUDA Parameters optimized
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
@@ -67,27 +63,18 @@ int main(int argc, const char * argv[]) {
     SIMS *= SIMPB;
     printf("\nScenari di Monte Carlo: %d\n",SIMS);
     
-    if(risp == 'b'){
-        //    Print Option details
-        printMultiOpt(&cva.opt);
-        //    Cholevski factorization
-        Chol(cva.opt.p, cholRho);
-        for(i=0;i<N;i++)
-            for(j=0;j<N;j++)
-                cva.opt.p[i][j]=cholRho[i][j];
-    }else{
-        printOption(cva.option);
-        bs_price[0] = host_bsCall(cva.option);
-        int n = cva.option.t;
-        dt = cva.option.t/(double)cva.n;
-        for(i=1;i<cva.n+1;i++){
-            if((cva.option.t -= dt)<0)
-                bs_price[i] = 0;
-            else
-                bs_price[i] = host_bsCall(cva.option);
-        }
-        cva.option.t = n;
+    printOption(cva.option);
+    bs_price[0] = host_bsCall(cva.option);
+    int n = cva.option.t;
+    dt = cva.option.t/(double)cva.n;
+    for(i=1;i<cva.n+1;i++){
+        if((cva.option.t -= dt)<0)
+            bs_price[i] = 0;
+        else
+            bs_price[i] = host_bsCall(cva.option);
     }
+    cva.option.t = n;
+    
 
 	// Timer init
     CudaCheck( cudaEventCreate( &d_start ));

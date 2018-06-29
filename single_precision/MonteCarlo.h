@@ -63,10 +63,8 @@ typedef struct {
 } OptionValue;
 
 typedef struct{
-    // Expected Exposures
-    OptionValue *ee;
     // Default probabilities
-    float defInt, lgd, *dp;
+    float defInt, lgd;
     // Option data
     int ns; 
     OptionData option;

@@ -39,11 +39,9 @@ int main(int argc, const char * argv[]) {
     cva.defInt = defInt;
     cva.lgd = (1 - recoveryRate);
     cva.n = PATH;
-    cva.dp = (float*)malloc((cva.n+1)*sizeof(float));
     //cva.fp = (float*)malloc((cva.n+1)*sizeof(float));
 
     // n+1 because it starts from 1
-    cva.ee = (OptionValue *)malloc(sizeof(OptionValue)*(cva.n+1));
     float *bs_price = (float*)malloc(sizeof(float)*(cva.n+1));
     
     OptionData opt;

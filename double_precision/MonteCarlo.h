@@ -63,16 +63,13 @@ typedef struct {
 } OptionValue;
 
 typedef struct{
-    // Expected Exposures
-    OptionValue *ee;
     // Default probabilities
-    double defInt, lgd, *dp;
+    float defInt, lgd;
     // Option data
-    int ns; 
-    MultiOptionData opt;
+    int ns;
     OptionData option;
     // CVA
-    double cva;
+    float cva;
     // Num of simulations
     int n;
 }CVA;
