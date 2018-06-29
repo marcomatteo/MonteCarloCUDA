@@ -33,7 +33,7 @@ int main(int argc, const char * argv[]) {
     cva.lgd = (1 - recoveryRate);
     cva.n = PATH;
     
-    printf("\nCVA of an European call Option\nIntensita di default %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
+    printf("\nCVA of an European call Option\nDefault intensity %.2f, LGD %.2f\n",cva.defInt,cva.lgd);
     cva.option.v = V;
     cva.option.s = S;
     cva.option.t = T;
@@ -47,10 +47,10 @@ int main(int argc, const char * argv[]) {
     OptionValue dev_result = {0,0}, host_result = {0,0};
     
     //    CUDA Parameters optimized
-    printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
+    printf("Monte Carlo simulations (x131.072): ");
     scanf("%d",&SIMS);
     SIMS *= SIMPB;
-    printf("\nScenari di Monte Carlo: %d\n",SIMS);
+    printf("\nTotal Monte Carlo paths: %d\n",SIMS);
     
     printOption(cva.option);
     
