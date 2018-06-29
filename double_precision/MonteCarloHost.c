@@ -250,16 +250,17 @@ void cvaMonteCarlo(MonteCarloData *data, double intdef, double lgd, int n_grid){
             double dp = exp(-(dt*(j-1))*intdef)-exp(-(dt*j)*intdef);
             s = geomBrownian(option.s,dt,option.r,option.v);
             option.t -= dt;
-            if( option.t == 0)
+            if( option.t < 0)
                 ee = 0;
             else
                 ee = host_bsCall(option);
-            /*  debug   */
+            /*  debug
             if(i==100){
                 printf("Path: %d \nTime %.2f\n\n",j,option.t);
                 printf("ee %f\n",ee);
                 printf("dp %f\n",dp);
             }
+             */
             mean_price += dp * ee;
             option.s = s;
         }
