@@ -113,7 +113,7 @@ __device__ double cnd(double d){
 
 // Prezzo di una opzione call secondo la formula di Black & Scholes
 __device__ double device_bsCall ( double s, double t){
-    double d1 = ( logf(s / OPTION.k) + (OPTION.r + 0.5 * OPTION.v * OPTION.v) * t) / (OPTION.v * sqrt(t));
+    double d1 = ( log(s / OPTION.k) + (OPTION.r + 0.5 * OPTION.v * OPTION.v) * t) / (OPTION.v * sqrt(t));
     double d2 = d1 - OPTION.v * sqrt(t);
     return s * cnd(d1) - OPTION.k * sqrt(- OPTION.r * t) * cnd(d2);
 }
@@ -232,14 +232,12 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     // Step 3: salvare nella memoria condivisa i CVA calcolati
     OptionValue sum = {0, 0};
     for( i=sumIndex; i < N_PATH; i+=blockDim.x){
-        double s, t, ee, mean_price = 0;
+        double s, ee, mean_price = 0;
         s = OPTION.s;
-        t = OPTION.t;
         for(j=1; j <= N_GRID; j++){
             double dp = exp(-(dt*(j-1)) * INTDEF) - exp(-(dt*j) * INTDEF);
             s = geomBrownian(s, dt, &threadState);
-            t -= dt;
-            ee = device_bsCall(s,t);
+            ee = device_bsCall(s, OPTION.t - (dt*j));
             mean_price += dp * ee;
         }
         mean_price *= LGD;
@@ -424,10 +422,10 @@ void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_gr
     /*----------------- SHARED MEMORY -------------------*/
     int i, numShared = sizeof(double) * data->numThreads * 2;
     /*--------------- CONSTANT MEMORY ----------------*/
-    CudaCheck(cudaMemcpyToSymbol(INTDEF,&intdef,sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(double)));
-    CudaCheck(cudaMemcpyToSymbol(N_GRID,&n_grid,sizeof(int)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
+    CudaCheck(cudaMemcpyToSymbol(INTDEF, &intdef, sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(LGD, &lgd, sizeof(double)));
+    CudaCheck(cudaMemcpyToSymbol(N_GRID, &n_grid, sizeof(int)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION, &data->sopt, sizeof(OptionData)));
     //Time
     CudaCheck( cudaEventRecord( start, 0 ));
     cvaCallOptMC<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
@@ -495,7 +493,7 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
+extern "C" OptionValue dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
     // Option
     data.sopt = cva->option;
@@ -508,9 +506,10 @@ extern "C" void dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int
     
     MonteCarlo_init(&data);
     cvaMonteCarlo(&data, cva->defInt, cva->lgd, cva->n);
-    cva->cva = data.callValue.Expected;
     
     // Closing
     MonteCarlo_closing(&data);
+    
+    return data.callValue;
 }
 

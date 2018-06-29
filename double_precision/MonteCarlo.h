@@ -68,8 +68,6 @@ typedef struct{
     // Option data
     int ns;
     OptionData option;
-    // CVA
-    double cva;
     // Num of simulations
     int n;
 }CVA;

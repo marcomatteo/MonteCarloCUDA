@@ -241,7 +241,7 @@ OptionValue host_basketOpt(MultiOptionData *option, int path){
     return data.callValue;
 }
 
-void host_cvaEquityOption(CVA *cva, int path){
+OptionValue host_cvaEquityOption(CVA *cva, int path){
     MonteCarloData data;
     // Option
     data.sopt = cva->option;
@@ -249,7 +249,7 @@ void host_cvaEquityOption(CVA *cva, int path){
     data.path = path;
     
     cvaMonteCarlo(&data, cva->defInt, cva->lgd, cva->n);
-    cva->cva = data.callValue.Expected;
+    return data.callValue;
 }
 
 ///////////////////////////////////

@@ -415,10 +415,10 @@ void cvaMonteCarlo(dev_MonteCarloData *data, float intdef, float lgd, int n_grid
     /*----------------- SHARED MEMORY -------------------*/
     int i, numShared = sizeof(float) * data->numThreads * 2;
     /*--------------- CONSTANT MEMORY ----------------*/
-    CudaCheck(cudaMemcpyToSymbol(INTDEF,&intdef,sizeof(float)));
-    CudaCheck(cudaMemcpyToSymbol(LGD,&lgd,sizeof(float)));
-    CudaCheck(cudaMemcpyToSymbol(N_GRID,&n_grid,sizeof(int)));
-    CudaCheck(cudaMemcpyToSymbol(OPTION,&data->sopt,sizeof(OptionData)));
+    CudaCheck(cudaMemcpyToSymbol(INTDEF, &intdef, sizeof(float)));
+    CudaCheck(cudaMemcpyToSymbol(LGD, &lgd, sizeof(float)));
+    CudaCheck(cudaMemcpyToSymbol(N_GRID, &n_grid, sizeof(int)));
+    CudaCheck(cudaMemcpyToSymbol(OPTION, &data->sopt, sizeof(OptionData)));
     //Time
     CudaCheck( cudaEventRecord( start, 0 ));
     cvaCallOptMC<<<data->numBlocks, data->numThreads, numShared>>>(data->RNG,(OptionValue *)(data->d_CallValue));
@@ -482,7 +482,6 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
     return data.callValue;
 }
 
-// Test cva con simulazione percorso sottostante
 extern "C" OptionValue dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
     // Option

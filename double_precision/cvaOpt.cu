@@ -13,17 +13,10 @@
 #define PATH 40
 #define SIMPB 131072
 
-extern "C" double host_bsCall ( OptionData );
-extern "C" void host_cvaEquityOption(CVA *, int);
-extern "C" void dev_cvaEquityOption(CVA *, int, int, int);
-extern "C" void printOption( OptionData o);
-extern "C" void Chol( double c[N][N], double a[N][N] );
-extern "C" void printMultiOpt( MultiOptionData *o);
-extern "C" double randMinMax(double min, double max);
+extern "C" OptionValue host_cvaEquityOption(CVA *, int);
+extern "C" OptionValue dev_cvaEquityOption(CVA *, int, int, int);
 
-void getRandomSigma( double* std );
-void getRandomRho( double* rho );
-void pushVett( double* vet, double x );
+extern "C" void printOption(OptionData o);
 
 const double defInt = 0.03;
 const double recoveryRate = 0.4;
@@ -51,6 +44,7 @@ int main(int argc, const char * argv[]) {
     cudaEvent_t d_start, d_stop;
     int SIMS;
     float GPU_timeSpent=0, CPU_timeSpent=0;
+    OptionValue dev_result, host_result;
     
 	//	CUDA Parameters optimized
     printf("Inserisci il numero di simulazioni Monte Carlo(x131.072): ");
@@ -68,25 +62,25 @@ int main(int argc, const char * argv[]) {
     
     printf("\nCVA execution on CPU...\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    host_cvaEquityOption(&cva, SIMS);
+    host_result = host_cvaEquityOption(&cva, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
     
-    printf("\nCVA: %f\n\n",cva.cva);
+    printf("\nCVA: %f\nConfidence Interval: %f\n\n",host_result.Expected, host_result.Confidence);
     printf("\nTotal execution time: %f s\n\n", CPU_timeSpent);
     printf("--------------------------------------------------\n");
     
     // GPU Monte Carlo
     printf("\nCVA execution on GPU...\n");
     CudaCheck( cudaEventRecord( d_start, 0 ));
-    dev_cvaEquityOption(&cva, BLOCKS, THREADS, SIMS);
+    dev_result = dev_cvaEquityOption(&cva, BLOCKS, THREADS, SIMS);
     CudaCheck( cudaEventRecord( d_stop, 0));
     CudaCheck( cudaEventSynchronize( d_stop ));
     CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
 
     printf("\nTotal execution time: %f ms\n\n", GPU_timeSpent);
-    printf("\nCVA: %f\n\n",cva.cva);
+    printf("\nCVA: %f\nConfidence Interval: %f\n\n",dev_result.Expected, dev_result.Confidence);
     printf("Speed up: %f\n\n",CPU_timeSpent/GPU_timeSpent);
     return 0;
 }
