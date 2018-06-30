@@ -66,7 +66,7 @@ int main(int argc, const char * argv[]) {
 	// Timer init
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
-    int i;
+    int i,k;
     int paths[5] = { 25, 50, 75, 250, 500};
     for(k=0;k<5;k++){
         SIMS = paths[k];
