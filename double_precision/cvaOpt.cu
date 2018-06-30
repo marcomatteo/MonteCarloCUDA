@@ -10,7 +10,7 @@
 #include "MonteCarlo.h"
 
 #define THREADS 128
-#define BLOCKS 128
+#define BLOCKS 256
 #define PATH 250
 #define SIMPB 131072
 
@@ -67,7 +67,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
     int i;
-    for(i=0; i<5; i++){
+    for(i=0; i<4; i++){
         // CPU Monte Carlo
         printf("\nPaths (25,50,75,250,500): ");
         scanf("%d",&SIMS);
