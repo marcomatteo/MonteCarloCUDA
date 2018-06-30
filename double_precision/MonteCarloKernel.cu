@@ -33,6 +33,18 @@ void MonteCarlo(dev_MonteCarloData *data);
 // Monte Carlo method for CVA - 1 black-scholes option
 void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_grid);
 
+/*
+ * Error handling from Cuda programming - shane cook
+ */
+void cuda_error_check(const char * prefix, const char * postfix){
+    if (cudaPeekAtLastError() != cudaSuccess){
+        printf("\n%s%s%s", prefix, cudaGetErrorString(cudaGetLastError()), postfix);
+        cudaDeviceReset();
+        //wait_exit();
+        exit(1);
+    }
+}
+
 ////////////////////////////////////////////////////////////////
 ////////////////    CONSTANT MEMORY     ////////////////////////
 ////////////////////////////////////////////////////////////////
