@@ -1,10 +1,11 @@
-//
-//  MonteCarlo.cu
-//  tesi
-//
-//  Created by Marco Matteo Buzzulini on 27/11/17.
-//  Copyright © 2017 Marco Matteo Buzzulini. All rights reserved.
-//
+/*
+ *  vanillaOpt.cu
+ *  Monte Carlo methods in CUDA
+ *  Dissertation project
+ *  Created on: 06/feb/2018
+ *  Author: Marco Matteo Buzzulini
+ *  Copyright © 2018 Marco Matteo Buzzulini. All rights reserved.
+*/
 
 #include "MonteCarlo.h"
 

@@ -1,16 +1,17 @@
-//
-//  MonteCarlo.cu
-//  tesi
-//
-//  Created by Marco Matteo Buzzulini on 27/11/17.
-//  Copyright © 2017 Marco Matteo Buzzulini. All rights reserved.
-//
+/*
+ *  cvaOpt.cu
+ *  Monte Carlo methods in CUDA
+ *  Dissertation project
+ *  Created on: 06/feb/2018
+ *  Author: Marco Matteo Buzzulini
+ *  Copyright © 2018 Marco Matteo Buzzulini. All rights reserved.
+ */
 
 #include "MonteCarlo.h"
 
 #define THREADS 128
 #define BLOCKS 512
-#define PATH 75
+#define PATH 25
 #define SIMPB 131072
 
 extern "C" OptionValue host_cvaEquityOption(CVA *, int);
@@ -27,7 +28,7 @@ const float V = 0.2;
 const float T = 1.f;
 
 int main(int argc, const char * argv[]) {
-    /*--------------------------- DATA INSTRUCTION -----------------------------------*/
+    
     CVA cva;
     cva.defInt = defInt;
     cva.lgd = (1 - recoveryRate);

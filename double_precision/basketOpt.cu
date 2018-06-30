@@ -1,10 +1,11 @@
-//
-//  MonteCarlo.cu
-//  tesi
-//
-//  Created by Marco Matteo Buzzulini on 27/11/17.
-//  Copyright © 2017 Marco Matteo Buzzulini. All rights reserved.
-//
+/*
+ *  basketOpt.cu
+ *  Monte Carlo methods in CUDA
+ *  Dissertation project
+ *  Created on: 06/feb/2018
+ *  Author: Marco Matteo Buzzulini
+ *  Copyright © 2018 Marco Matteo Buzzulini. All rights reserved.
+ */
 
 #include "MonteCarlo.h"
 
@@ -178,56 +179,4 @@ void pushVett( double* vet, double x ){
     int i;
     for(i=0;i<N;i++)
         vet[i] = x;
-}
-///////////////////////////////////
-//    ADJUST FUNCTIONS
-///////////////////////////////////
-
-void sizeAdjust(cudaDeviceProp *deviceProp, int *numBlocks, int *numThreads){
-    int maxGridSize = deviceProp->maxGridSize[0];
-    int maxBlockSize = deviceProp->maxThreadsPerBlock;
-    //    Replacing in case of wrong size
-    if(*numBlocks > maxGridSize){
-        *numBlocks = maxGridSize;
-        printf("Warning: maximum size of Grid is %d",*numBlocks);
-    }
-    if(*numThreads > maxBlockSize){
-        *numThreads = maxBlockSize;
-        printf("Warning: maximum size of Blocks is %d",*numThreads);
-    }
-}
-
-void memAdjust(cudaDeviceProp *deviceProp, int *numThreads){
-    size_t maxShared = deviceProp->sharedMemPerBlock;
-    size_t maxConstant = deviceProp->totalConstMem;
-    int sizeDouble = sizeof(double);
-    int numShared = sizeDouble * *numThreads * 2;
-    if(sizeof(MultiOptionData) > maxConstant){
-        printf("\nWarning: Excess use of constant memory: %zu\n",maxConstant);
-        printf("A double variable size is: %d\n",sizeDouble);
-        printf("In a MultiOptionData struct there's a consumption of %zu constant memory\n",sizeof(MultiOptionData));
-        printf("In this Basket Option there's %d stocks\n",N);
-        int maxDim = (int)maxConstant/(sizeDouble*5);
-        printf("The optimal number of dims should be: %d stocks\n",maxDim);
-    }
-    if(numShared > maxShared){
-        printf("\nWarning: Excess use of shared memory: %zu\n",maxShared);
-        printf("A double variable size is: %d\n",sizeDouble);
-        int maxThreads = (int)maxShared / (2*sizeDouble);
-        printf("The optimal number of thread should be: %d\n",maxThreads);
-    }
-}
-
-void Parameters(int *numBlocks, int *numThreads){
-    cudaDeviceProp deviceProp;
-    int i = 0;
-    CudaCheck(cudaGetDeviceProperties(&deviceProp, 0));
-    *numBlocks = BLOCKS;
-    for (i=0; i<NTHREADS; i++) {
-        printf("\nParametri Threads (max 1024):\n");
-        printf("Scegli il numero di Threads n^ %d: ",i);
-        scanf("%d",&numThreads[i]);
-        sizeAdjust(&deviceProp,numBlocks, &numThreads[i]);
-        memAdjust(&deviceProp, &numThreads[i]);
-    }
 }

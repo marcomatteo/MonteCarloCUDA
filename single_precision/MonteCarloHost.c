@@ -1,8 +1,9 @@
 /*
- * MonteCarloHost.c
- *
+ *  MonteCarloHost.c
+ *  Monte Carlo methods in CUDA
+ *  Dissertation project
  *  Created on: 06/feb/2018
- *  Author: marco
+ *  Author: Marco Matteo Buzzulini
  */
 
 #include "MonteCarlo.h"
@@ -14,9 +15,9 @@ _a > _b ? _a : _b; })
 void MonteCarlo(MonteCarloData *data);
 
 
-///////////////////////////////////
-//    PRINT FUNCTIONS
-///////////////////////////////////
+/////////////////////////////////////////
+////////    PRINT FUNCTIONS     /////////
+/////////////////////////////////////////
 void printVect( float *mat, int c ){
     int i,j,r=1;
     for(i=0; i<r; i++){
@@ -170,7 +171,7 @@ static float geomBrownian(float s, float t, float r, float v){
 // Call payoff
 static float callPayoff( OptionData option ){
     float value = option.s * expf((option.r-0.5*option.v*option.v) * option.t + gaussian(0,1) * sqrtf(option.t) * option.v) - option.k;
-    return (value>0) ? (value):(0);
+    return max(value,0);
 }
 
 // Call payoff di un vettore di sottostanti

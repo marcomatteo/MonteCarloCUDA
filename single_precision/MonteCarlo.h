@@ -1,8 +1,9 @@
 /*
- * MonteCarlo.h
- *
+ *  MonteCarlo.h
+ *  Monte Carlo methods in CUDA
+ *  Dissertation project
  *  Created on: 06/feb/2018
- *      Author: marco
+ *  Author: Marco Matteo Buzzulini
  */
 
 #ifndef MONTECARLO_H_

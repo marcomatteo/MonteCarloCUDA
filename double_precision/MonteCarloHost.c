@@ -1,11 +1,16 @@
 /*
- * MonteCarloHost.c
- *
+ *  MonteCarloHost.c
+ *  Monte Carlo methods in CUDA
+ *  Dissertation project
  *  Created on: 06/feb/2018
- *  Author: marco
+ *  Author: Marco Matteo Buzzulini
  */
 
 #include "MonteCarlo.h"
+#define max(a,b) \
+({ __typeof__ (a) _a = (a); \
+__typeof__ (b) _b = (b); \
+_a > _b ? _a : _b; })
 
 void MonteCarlo(MonteCarloData *data);
 
@@ -100,7 +105,7 @@ void Chol( double c[N][N], double a[N][N] ){
 }
 
 //////////////////////////////////////////////////////
-//////////   FINANCE FUNCTIONS
+/////////////   FINANCE FUNCTIONS     ////////////////
 //////////////////////////////////////////////////////
 
 double randMinMax(double min, double max){
@@ -164,7 +169,7 @@ static double geomBrownian(double s, double t, double r, double v){
 // Call payoff
 static double callPayoff( OptionData option ){
     double value = option.s * exp((option.r-0.5*option.v*option.v) * option.t + gaussian(0,1) * sqrt(option.t) * option.v) - option.k;
-    return (value>0) ? (value):(0);
+    return max(value,0);
 }
 
 // Call payoff di un vettore di sottostanti
@@ -206,9 +211,7 @@ void MonteCarlo(MonteCarloData *data){
             multiStockValue(data->mopt.s, data->mopt.v, bt, data->mopt.t, data->mopt.r, N, s);
             for(j=0;j<N;j++)
                 st_sum += s[j]*data->mopt.w[j];
-            price = (double)st_sum - data->mopt.k;
-            if(price<0)
-                price = 0.0f;
+            price = max((double)st_sum - data->mopt.k, 0);
             sum += price;
             var_sum += price*price;
         }

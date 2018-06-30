@@ -1,8 +1,9 @@
 /*
- * MonteCarloKernel.cu
- *
+ *  MonteCarloKernel.cu
+ *  Monte Carlo methods in CUDA
+ *  Dissertation project
  *  Created on: 06/feb/2018
- *  Author: marco
+ *  Author: Marco Matteo Buzzulini
  */
 
 #include <curand.h>
@@ -23,40 +24,41 @@ typedef struct{
     int numBlocks, numThreads, numOpt, path;
 } dev_MonteCarloData;
 
-/*
- * Error handling from Cuda programming - shane cook
- */
-void cuda_error_check(const char * prefix, const char * postfix){
-    if (cudaPeekAtLastError() != cudaSuccess){
-        printf("\n%s%s%s", prefix, cudaGetErrorString(cudaGetLastError()), postfix);
-        cudaDeviceReset();
-        //wait_exit();
-        exit(1);
-    }
-}
-
-// Inizializzazione per Monte Carlo da svolgere una volta sola
+// Memory initialization for MC
 void MonteCarlo_init(dev_MonteCarloData *data);
-// Liberazione della memoria da svolgere una volta sola
+// Freeing memory after MC
 void MonteCarlo_closing(dev_MonteCarloData *data);
-// Metodo Monte Carlo
+// Monte Carlo method for Option Pricing
 void MonteCarlo(dev_MonteCarloData *data);
-// Metodo Monte Carlo per il calcolo di un CVA
+// Monte Carlo method for CVA - 1 black-scholes option
 void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_grid);
 
 ////////////////////////////////////////////////////////////////
 ////////////////    CONSTANT MEMORY     ////////////////////////
 ////////////////////////////////////////////////////////////////
 
+// Basket Option
 __device__ __constant__ MultiOptionData MOPTION;
+// Vanilla Call Option
 __device__ __constant__ OptionData OPTION;
+// Number of underlyings, num simulations per block and the sims for CVA
 __device__ __constant__ int N_OPTION, N_PATH, N_GRID;
+// Financial parameters for CVA: Default intensity and Loss given default
 __device__ __constant__ double INTDEF, LGD;
 
 ////////////////////////////////////////////////////////////////
 ////////////////    KERNEL FUNCTIONS    ////////////////////////
 ////////////////////////////////////////////////////////////////
 
+/*  *   *   *   *   ONLY DEVICE   *   *   *   *   */
+// Call Option payoff
+__device__ double callPayoff(curandState *threadState){
+    double z = curand_normal(threadState);
+    double s = OPTION.s * exp((OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(OPTION.t) * z);
+    return max(s - OPTION.k,0);
+}
+
+// Basket option random number
 __device__ void brownianVect(double *bt, curandState *threadState){
     int i,j;
     double g[N];
@@ -71,7 +73,7 @@ __device__ void brownianVect(double *bt, curandState *threadState){
     for(i=0;i<N_OPTION;i++)
         bt[i] += MOPTION.d[i];
 }
-
+// Basket option payoff
 __device__ double basketPayoff(double *bt){
     int j;
     double s[N], st_sum=0, price;
@@ -86,18 +88,13 @@ __device__ double basketPayoff(double *bt){
     return max(price,0);
 }
 
+// Simulating Geometric Brownian path
 __device__ double geomBrownian( double s, double t, double z ){
     double x = (OPTION.r - 0.5 * OPTION.v * OPTION.v) * t + OPTION.v * sqrt(t) * z;
     return s * exp(x);
 }
 
-__device__ double callPayoff(curandState *threadState){
-    double z = curand_normal(threadState);
-    double s = OPTION.s * exp((OPTION.r - 0.5 * OPTION.v * OPTION.v) * OPTION.t + OPTION.v * sqrt(OPTION.t) * z);
-    return max(s - OPTION.k,0);
-}
-
-// Approssimazione di Hastings della funzione cumulata di una v.a. gaussiana
+// Hastings approximation of cumulative normal distribution
 __device__ double cnd(double d){
     const double       A1 = 0.31938153;
     const double       A2 = -0.356563782;
@@ -112,28 +109,27 @@ __device__ double cnd(double d){
     else
         return cnd;
 }
-
-// Prezzo di una opzione call secondo la formula di Black & Scholes
+// Black & Scholes price formula for vanilla options
 __device__ double device_bsCall ( double s, double t){
     double d1 = ( log(s / OPTION.k) + (OPTION.r + 0.5 * OPTION.v * OPTION.v) * t) / (OPTION.v * sqrt(t));
     double d2 = d1 - OPTION.v * sqrt(t);
     return s * cnd(d1) - OPTION.k * exp(- OPTION.r * t) * cnd(d2);
 }
 
+/*  *   *   *   *   GLOBAL  *   *   *   *   */
+// Basket Option Kernel
 __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallValue){
-    int i;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
-    
-    /*------------------ SHARED MEMORY DICH ----------------*/
+    /*  - SHARED MEMORY -  */
     extern __shared__ double s_Sum[];
     
     // Global thread index
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     // Copy random number state to local memory
     curandState threadState = randseed[tid];
-    
+    int i;
     OptionValue sum = {0, 0};
     
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
@@ -161,19 +157,18 @@ __global__ void basketOptMonteCarlo(curandState * randseed, OptionValue *d_CallV
         __syncthreads();
         halfblock /= 2;
     }while ( halfblock != 0 );
+    // Copy to the global memory
     if (sumIndex == 0){
         d_CallValue[blockIdx.x].Expected = s_Sum[sumIndex];
         d_CallValue[blockIdx.x].Confidence = s_Sum[sum2Index];
     }
 }
-
+// Vanilla Option call Kernel
 __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_CallValue){
-    int i;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
-    
-    /*------------------ SHARED MEMORY DICH ----------------*/
+    /*  - SHARED MEMORY -  */
     extern __shared__ double s_Sum[];
     
     // Global thread index
@@ -182,7 +177,7 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
     curandState threadState = randseed[tid];
     
     OptionValue sum = {0, 0};
-    
+    int i;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
         double price=0.0f;
         // Price simulation with the vanilla call option payoff function
@@ -205,6 +200,7 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
         __syncthreads();
         halfblock /= 2;
     }while ( halfblock != 0 );
+    // Copy to the global memory
     if (sumIndex == 0){
         d_CallValue[blockIdx.x].Expected = s_Sum[sumIndex];
         d_CallValue[blockIdx.x].Confidence = s_Sum[sum2Index];
@@ -212,12 +208,10 @@ __global__ void vanillaOptMonteCarlo(curandState * randseed, OptionValue *d_Call
 }
 
 __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
-    int i,j;
     // Parameters for shared memory
     int sumIndex = threadIdx.x;
     int sum2Index = sumIndex + blockDim.x;
-    
-    /*------------------ SHARED MEMORY DICH ----------------*/
+    /*  - SHARED MEMORY -  */
     extern __shared__ double s_Sum[];
     
     // Global thread index
@@ -231,7 +225,7 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
     // Step 2: calcolo CVA per ogni traiettoria e sommarlo alla variabile mean_price
     // Step 3: salvare nella memoria condivisa i CVA calcolati
     OptionValue sum = {0, 0};
-    
+    int i,j;
     for( i=sumIndex; i<N_PATH; i+=blockDim.x){
         double s, ee, t;
         double mean_price = 0;
@@ -269,6 +263,7 @@ __global__ void cvaCallOptMC(curandState * randseed, OptionValue *d_CallValue){
         __syncthreads();
         halfblock /= 2;
     }while ( halfblock != 0 );
+    // Copy to the global memory
     if (sumIndex == 0){
         d_CallValue[blockIdx.x].Expected = s_Sum[sumIndex];
         d_CallValue[blockIdx.x].Confidence = s_Sum[sum2Index];
@@ -339,7 +334,6 @@ void MonteCarlo_closing(dev_MonteCarloData *data){
     CudaCheck( cudaEventCreate( &start ));
     CudaCheck( cudaEventCreate( &stop ));
     float time;
-    
     
     CudaCheck( cudaEventRecord( start, 0 ));
     //Free memory space
@@ -476,12 +470,14 @@ void cvaMonteCarlo(dev_MonteCarloData *data, double intdef, double lgd, int n_gr
 
 extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
+    // Option
     data.mopt = *option;
+    // Kernel parameters
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
     data.numOpt = N;
     data.path = sims / numBlocks;
-    
+    // Core
     MonteCarlo_init(&data);
     MonteCarlo(&data);
     MonteCarlo_closing(&data);
@@ -491,12 +487,14 @@ extern "C" OptionValue dev_basketOpt(MultiOptionData *option, int numBlocks, int
 
 extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
+    // Option
     data.sopt = *opt;
+    // Kernel parameters
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
     data.numOpt = 1;
     data.path = sims / numBlocks;
-    
+    // Core
     MonteCarlo_init(&data);
     MonteCarlo(&data);
     MonteCarlo_closing(&data);
@@ -506,18 +504,15 @@ extern "C" OptionValue dev_vanillaOpt(OptionData *opt, int numBlocks, int numThr
 
 extern "C" OptionValue dev_cvaEquityOption(CVA *cva, int numBlocks, int numThreads, int sims){
     dev_MonteCarloData data;
-    // Option
     data.sopt = cva->option;
-    
     // Kernel parameters
     data.numBlocks = numBlocks;
     data.numThreads = numThreads;
     data.numOpt = 1;
     data.path = sims / numBlocks;
-    
+    // Core
     MonteCarlo_init(&data);
     cvaMonteCarlo(&data, (double)cva->defInt, (double)cva->lgd, cva->n);
-    
     // Closing
     MonteCarlo_closing(&data);
     
