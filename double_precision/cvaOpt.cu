@@ -11,7 +11,7 @@
 
 #define THREADS 128
 #define BLOCKS 512
-#define PATH 500
+#define PATH 250
 #define SIMPB 131072
 
 extern "C" OptionValue host_cvaEquityOption(CVA *, int);
