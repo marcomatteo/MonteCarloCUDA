@@ -10,7 +10,7 @@
 #include "MonteCarlo.h"
 
 #define THREADS 128
-#define BLOCKS 256
+#define BLOCKS 512
 #define PATH 250
 #define SIMPB 131072
 
@@ -67,46 +67,45 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
     int i;
-    for(i=0; i<4; i++){
-        // CPU Monte Carlo
-        printf("\nPaths (25,50,75,250,500): ");
-        scanf("%d",&SIMS);
-        // Display
-        printf("\n \t Now running:\n");
-        printf("\nMonte Carlo simulations: %d\n",SIMPB);
-        printf("CVA simulation path: %d\n",SIMS);
-        printf("Loop interactions: %d\n",SIMS*SIMPB);
-        cva.n = SIMS;
+    int paths[5] = { 25, 50, 75, 250, 500};
+    for(k=0;k<5;k++){
+        SIMS = paths[k];
+        for(i=0; i<4; i++){
+            // Display
+            printf("\n \t Now running:\n");
+            printf("\nMonte Carlo simulations: %d\n",SIMPB);
+            printf("CVA simulation path: %d\n",SIMS);
+            printf("Loop interactions: %d\n",SIMS*SIMPB);
+            cva.n = SIMS;
+            /*
+            printf("\nCVA execution on CPU...\n");
+            CudaCheck( cudaEventRecord( d_start, 0 ));
+            host_result = host_cvaEquityOption(&cva, SIMPB);
+            CudaCheck( cudaEventRecord( d_stop, 0));
+            CudaCheck( cudaEventSynchronize( d_stop ));
+            CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
         
-        printf("\nCVA execution on CPU...\n");
-        CudaCheck( cudaEventRecord( d_start, 0 ));
-        host_result = host_cvaEquityOption(&cva, SIMPB);
-        CudaCheck( cudaEventRecord( d_stop, 0));
-        CudaCheck( cudaEventSynchronize( d_stop ));
-        CudaCheck( cudaEventElapsedTime( &CPU_timeSpent, d_start, d_stop ));
-    
-        printf("\nCVA: \n%f \n",host_result.Expected);
-        printf("\nTotal execution time: (ms) \n%f \n\n", CPU_timeSpent);
-        printf("--------------------------------------------------\n");
-    
-        // GPU Monte Carlo
-        printf("\nCVA execution on GPU...\n");
-        
-    
-        int j, th;
-        th = 2;
-        for(j=0;j<(i+6);j++)
-            th *= 2;
-        printf("\n %d BLOCKS / %d THREADS / %d SIMS\n",BLOCKS, th, SIMPB);
-        CudaCheck( cudaEventRecord( d_start, 0 ));
-        dev_result = dev_cvaEquityOption(&cva, BLOCKS, th, SIMPB);
-        CudaCheck( cudaEventRecord( d_stop, 0));
-        CudaCheck( cudaEventSynchronize( d_stop ));
-        CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
+            printf("\nCVA: \n%f \n",host_result.Expected);
+            printf("\nTotal execution time: (ms) \n%f \n\n", CPU_timeSpent);
+            printf("--------------------------------------------------\n");
+             */
+            // GPU Monte Carlo
+            printf("\nCVA execution on GPU...\n");
+            int j, th;
+            th = 2;
+            for(j=0;j<(i+6);j++)
+                th *= 2;
+            printf("\n %d BLOCKS / %d THREADS / %d SIMS\n",BLOCKS, th, SIMPB);
+            CudaCheck( cudaEventRecord( d_start, 0 ));
+            dev_result = dev_cvaEquityOption(&cva, BLOCKS, th, SIMPB);
+            CudaCheck( cudaEventRecord( d_stop, 0));
+            CudaCheck( cudaEventSynchronize( d_stop ));
+            CudaCheck( cudaEventElapsedTime( &GPU_timeSpent, d_start, d_stop ));
 
-        printf("\nTotal execution time: (ms) \n%f \n", GPU_timeSpent);
-        printf("\nGPU speedup: \n%f \n",CPU_timeSpent/GPU_timeSpent);
-        printf("\nCVA: \n%f \n\n",dev_result.Expected);
+            printf("\nTotal execution time: (ms) \n%f \n", GPU_timeSpent);
+            printf("\nGPU speedup: \n%f \n",CPU_timeSpent/GPU_timeSpent);
+            printf("\nCVA: \n%f \n\n",dev_result.Expected);
+        }
     }
     return 0;
 }
