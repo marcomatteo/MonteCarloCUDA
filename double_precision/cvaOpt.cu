@@ -67,7 +67,7 @@ int main(int argc, const char * argv[]) {
     CudaCheck( cudaEventCreate( &d_start ));
     CudaCheck( cudaEventCreate( &d_stop ));
     int i;
-    for(i=0; i<4; i++){
+    for(i=0; i<5; i++){
         // CPU Monte Carlo
         printf("\nPaths (25,50,75,250,500): ");
         scanf("%d",&SIMS);
