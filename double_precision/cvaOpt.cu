@@ -10,7 +10,7 @@
 #include "MonteCarlo.h"
 
 #define THREADS 128
-#define BLOCKS 512
+#define BLOCKS 1024
 #define PATH 250
 #define SIMPB 131072
 
