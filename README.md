@@ -1,4 +1,4 @@
-# Master degree dissertation: Monte Carlo methods in CUDA
+# Metodi Monte Carlo in CUDA
 
 Lo scopo di questo elaborato è dimostrare l’accelerazione del metodo Monte Carlo
 nelle applicazioni finanziarie attraverso le unità di elaborazione grafica (GPU). Si è
